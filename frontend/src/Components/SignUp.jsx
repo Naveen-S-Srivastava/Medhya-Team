@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Badge } from './ui/badge';
-import { Alert, AlertDescription } from './ui/alert';
-import { Progress } from './ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Checkbox } from './ui/checkbox';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Label } from '../ui/Label';
+import { Textarea } from '../ui/TextArea';
+import { Badge } from '../ui/Badge';
+import { Alert, AlertDescription } from '../ui/Alert';
+import { Progress } from '../ui/Progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
+import { Checkbox } from '../ui/Checkbox';
 import { 
   Heart, Shield, Eye, EyeOff, Building2, GraduationCap, 
   UserPlus, Lock, Globe, CheckCircle, AlertTriangle,

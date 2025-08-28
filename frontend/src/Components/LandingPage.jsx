@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Progress } from './ui/progress';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Progress } from '../ui/Progress';
 import { 
   Heart, Brain, Shield, Users, TrendingUp, Globe, Smartphone, Award, 
   CheckCircle, ArrowRight, BarChart3, MessageCircle, Calendar, BookOpen,

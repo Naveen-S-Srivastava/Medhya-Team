@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
-import { Alert, AlertDescription } from './ui/alert';
-import { ScrollArea } from './ui/scroll-area';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Badge } from '../ui/Badge';
+import { Alert, AlertDescription } from '../ui/Alert';
+import { ScrollArea } from '../ui/ScrollArea';
 import { Send, Bot, User, AlertTriangle, Heart, Phone } from 'lucide-react';
 
 const AIChat = () => {

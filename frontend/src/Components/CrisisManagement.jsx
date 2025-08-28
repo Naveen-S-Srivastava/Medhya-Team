@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Alert, AlertDescription } from './ui/alert';
-import { Progress } from './ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Alert, AlertDescription } from '../ui/Alert';
+import { Progress } from '../ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { 
   AlertTriangle, Shield, Phone, Clock, Users, Brain, Heart, 
   CheckCircle, X, ArrowRight, TrendingUp, MapPin, Bell, Eye,

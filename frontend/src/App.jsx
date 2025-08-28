@@ -1,25 +1,25 @@
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
-import { Button } from './components/ui/button';
-import { Badge } from './components/ui/badge';
-import { Alert, AlertDescription } from './components/ui/alert';
-import { Progress } from './components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs.jsx';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/Card.jsx';
+import { Button } from './ui/Button.jsx';
+import { Badge } from './ui/Badge.jsx';
+import { Alert, AlertDescription } from './ui/Alert.jsx';
+import { Progress } from './ui/Progress.jsx';
 import {
   MessageCircle, Calendar, BookOpen, Users, BarChart3, Shield, Heart, Brain, Phone,
   Star, TrendingUp, Globe, Zap, Award, CheckCircle, ArrowRight, Menu, X, Map,
   Smartphone, Lock, Database, Clock, AlertTriangle, Target, Users2, Building2
 } from 'lucide-react';
-import AIChat from './CAIChat.jsx';
-import AppointmentBooking from './AppointmentBooking.jsx';
-import ResourceHub from './ResourceHub.jsx';
-import PeerSupport from './PeerSupport.jsx';
-import AdminDashboard from './AdminDashboard.jsx';
-import LandingPage from './LandingPage.jsx';
-import CrisisManagement from './CrisisManagement.jsx';
-import InnovationShowcase from './InnovationShowcase.jsx';
-import Login from './lLogin.jsx';
-import Signup from './SignUp.jsx';
+import AIChat from './Components/AiChat.jsx';
+import AppointmentBooking from './Components/AppointmentBooking.jsx';
+import ResourceHub from './Components/ResourceHub.jsx';
+import PeerSupport from './Components/PeerSupport.jsx';
+import AdminDashboard from './Components/AdminDashboard.jsx';
+import LandingPage from './Components/LandingPage.jsx';
+import InnovationShowcase from './Components/InnovationShowcase.jsx';
+import Login from './Components/Login.jsx';
+import Signup from './Components/SignUp.jsx';
+import CrisisManagement from './Components/CrisisManagement.jsx';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('landing'); // 'landing', 'login', 'signup', 'app'
