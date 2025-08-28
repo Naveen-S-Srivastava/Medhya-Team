@@ -118,48 +118,58 @@ export default function App() {
                   <p className="text-sm text-muted-foreground">Advanced Digital Psychological Intervention System</p>
                 </div>
               </div>
-
-              <div className="hidden md:flex items-center gap-2">
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  System Active
-                </Badge>
-                <Badge variant="secondary">{systemStats.activeUsers.toLocaleString()} Active Users</Badge>
-              </div>
+              
+              {userRole !== 'guest' && (
+                <div className="hidden md:flex items-center gap-2">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    System Active
+                  </Badge>
+                  <Badge variant="secondary">{systemStats.activeUsers.toLocaleString()} Active Users</Badge>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2">
-                <Badge variant={userRole === 'admin' ? 'default' : 'secondary'}>
-                  {userRole === 'admin' ? 'Administrator' : 'Student Portal'}
-                </Badge>
-                {userRole === 'student' && (
-                  <Badge variant="outline" className="text-blue-600">
-                    Wellness Score: {studentStats.wellnessScore}%
-                  </Badge>
-                )}
-              </div>
-              {user && (
-                <div className="hidden md:block text-sm">
-                  Welcome, <span className="font-medium">{user.name}</span>
+              {userRole === 'guest' ? (
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={() => handleLogin('student')}>
+                    Student Login
+                  </Button>
+                  <Button onClick={() => handleLogin('admin')}>
+                    Admin Portal
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <div className="hidden md:flex items-center gap-2">
+                    <Badge variant={userRole === 'admin' ? 'default' : 'secondary'}>
+                      {userRole === 'admin' ? 'Administrator' : 'Student Portal'}
+                    </Badge>
+                    {userRole === 'student' && (
+                      <Badge variant="outline" className="text-blue-600">
+                        Wellness Score: {studentStats.wellnessScore}%
+                      </Badge>
+                    )}
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={handleLogout}>
+                    Logout
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="md:hidden"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  >
+                    {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  </Button>
                 </div>
               )}
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                Logout
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="md:hidden"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-              >
-                {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </Button>
             </div>
           </div>
 
           {/* Mobile Menu */}
-          {isMenuOpen && (
+          {isMenuOpen && userRole !== 'guest' && (
             <div className="md:hidden mt-4 pb-4 border-t pt-4">
               <div className="space-y-2">
                 <Badge variant={userRole === 'admin' ? 'default' : 'secondary'} className="w-full justify-center">
@@ -170,17 +180,11 @@ export default function App() {
                     Wellness Score: {studentStats.wellnessScore}%
                   </Badge>
                 )}
-                {user && (
-                  <div className="text-center text-sm text-muted-foreground">
-                    Welcome, {user.name}
-                  </div>
-                )}
               </div>
             </div>
           )}
         </div>
       </header>
-
       <div className="container mx-auto px-4 py-6">
         {userRole === 'admin' ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
