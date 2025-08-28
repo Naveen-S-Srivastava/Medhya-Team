@@ -269,7 +269,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
@@ -293,7 +293,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
                 <SelectTrigger className={errors.institutionId ? 'border-red-500' : ''}>
                   <SelectValue placeholder="Select your institution" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                   {institutions.map((institution) => (
                     <SelectItem key={institution.id} value={institution.id}>
                       {institution.name}
@@ -322,7 +322,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
                 <SelectTrigger className={errors.course ? 'border-red-500' : ''}>
                   <SelectValue placeholder="Select your course" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                   {courses.map((course) => (
                     <SelectItem key={course} value={course}>
                       {course}
@@ -340,7 +340,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
                   <SelectTrigger className={errors.year ? 'border-red-500' : ''}>
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                     <SelectItem value="1">1st Year</SelectItem>
                     <SelectItem value="2">2nd Year</SelectItem>
                     <SelectItem value="3">3rd Year</SelectItem>
@@ -427,7 +427,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
                 <SelectTrigger className={errors.securityQuestion ? 'border-red-500' : ''}>
                   <SelectValue placeholder="Choose a security question" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                   {securityQuestions.map((question, index) => (
                     <SelectItem key={index} value={question}>
                       {question}
