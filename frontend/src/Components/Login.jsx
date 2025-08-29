@@ -99,7 +99,9 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
       if (onLogin) {
         onLogin(loginType);
       }
-      navigate("/contact-choice");
+      if (loginType === "student") {
+        navigate("/contact-choice");
+      }
     }, 2000);
   };
 
