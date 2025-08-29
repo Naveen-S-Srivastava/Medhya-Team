@@ -108,9 +108,6 @@ const LandingPage = ({ onLogin, systemStats }) => {
       {/* Hero Section */}
       <section className="text-center space-y-8 py-12">
         <div className="space-y-4">
-          <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2">
-            🏆 Smart India Hackathon 2024 Solution
-          </Badge>
           <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
             Transforming Student Mental Health Across India
           </h1>
@@ -177,7 +174,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 px-4 md:grid-cols-2 lg:grid-cols-4">
           {problemStats.map((stat, index) => (
             <Card key={index} className="text-center p-6">
               <CardContent className="space-y-4">
@@ -185,13 +182,13 @@ const LandingPage = ({ onLogin, systemStats }) => {
                   {stat.value}
                 </div>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <Progress value={parseInt(stat.value)} className="h-2" />
+                <Progress value={parseInt(stat.value.replace('%', ''))} className="h-2" />
               </CardContent>
             </Card>
           ))}
         </div>
 
-        <Card className="bg-red-50 border-red-200">
+        <Card className="bg-red-50 p-6 mx-8 border-red-200">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <AlertTriangle className="w-8 h-8 text-red-600 flex-shrink-0 mt-1" />
@@ -211,7 +208,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
       </section>
 
       {/* Solution Features */}
-      <section className="space-y-12">
+      <section className="space-y-12 px-8">
         <div className="text-center space-y-4">
           <h2 className="text-3xl font-bold">Comprehensive Solution Architecture</h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
@@ -358,7 +355,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
       </section>
 
       {/* Testimonials */}
-      <section className="space-y-8">
+      <section className="space-y-8 px-8">
         <div className="text-center space-y-4">
           <h2 className="text-3xl font-bold">Trusted by Leading Institutions</h2>
           <p className="text-lg text-muted-foreground">
@@ -387,8 +384,8 @@ const LandingPage = ({ onLogin, systemStats }) => {
       </section>
 
       {/* Impact & Scalability */}
-      <section className="space-y-8 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-8">
-        <div className="text-center space-y-4">
+      <section className="space-y-8  bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-8 mx-8">
+        <div className="text-center space-y-4 ">
           <h2 className="text-3xl font-bold">Measurable Impact & Scalability</h2>
           <p className="text-lg text-muted-foreground">
             Built for nationwide deployment across all Indian educational institutions
