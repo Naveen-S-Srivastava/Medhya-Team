@@ -121,7 +121,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
           <Button 
             size="lg" 
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8"
-            onClick={() => onLogin('student')}
+            onClick={onLogin}
           >
             Experience Student Portal
             <ArrowRight className="w-5 h-5 ml-2" />
@@ -129,7 +129,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
           <Button 
             size="lg" 
             variant="outline"
-            onClick={() => onLogin('admin')}
+            onClick={onLogin}
           >
             View Admin Dashboard
           </Button>
@@ -306,7 +306,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
               </div>
               <Button 
                 className={`w-full ${selectedDemo === 'student' ? 'bg-blue-600' : ''}`}
-                onClick={() => onLogin('student')}
+                onClick={onLogin}
               >
                 Launch Student Portal
               </Button>
@@ -345,7 +345,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
               </div>
               <Button 
                 className={`w-full ${selectedDemo === 'admin' ? 'bg-purple-600' : ''}`}
-                onClick={() => onLogin('admin')}
+                onClick={onLogin}
               >
                 Access Admin Dashboard
               </Button>
@@ -452,7 +452,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
           <Button 
             size="lg" 
             className="bg-white text-blue-600 hover:bg-blue-50"
-            onClick={() => onLogin('student')}
+            onClick={onLogin}
           >
             Start Student Demo
             <ArrowRight className="w-5 h-5 ml-2" />
@@ -461,7 +461,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
             size="lg" 
             variant="outline"
             className="border-white text-white hover:bg-white hover:text-blue-600"
-            onClick={() => onLogin('admin')}
+            onClick={onLogin}
           >
             View Institution Dashboard
           </Button>

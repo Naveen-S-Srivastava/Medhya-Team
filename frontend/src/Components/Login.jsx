@@ -14,7 +14,7 @@ import {
     Phone, Mail, MapPin
 } from 'lucide-react';
 
-const Login = ({ onLogin, onShowSignup, onShowUserSignup }) => {
+const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
     const [loginType, setLoginType] = useState('student');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
