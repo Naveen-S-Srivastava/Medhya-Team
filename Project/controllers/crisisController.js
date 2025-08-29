@@ -1,4 +1,4 @@
-import CrisisAlert from "../models/crisesalerModel.js";
+import CrisisAlert from "../models/crisisAlertModel.js";
 import ActivityLog from "../models/activityLogModel.js";
 
 export const createCrisisAlert = async (req, res) => {
