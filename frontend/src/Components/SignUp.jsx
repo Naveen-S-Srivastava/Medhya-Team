@@ -168,11 +168,67 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
     
     setIsLoading(true);
     
-    // Simulate account creation
-    setTimeout(() => {
+    try {
+      // Prepare the complete user data
+      const userData = {
+        // Basic information (from UserSignup)
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        
+        // Academic information
+        institutionId: formData.institutionId,
+        studentId: formData.studentId,
+        course: formData.course,
+        year: formData.year,
+        department: formData.department,
+        
+        // Security information
+        password: formData.password,
+        passwordConfirm: formData.confirmPassword,
+        securityQuestion: formData.securityQuestion,
+        securityAnswer: formData.securityAnswer,
+        
+        // Consent information
+        privacyConsent: formData.privacyConsent,
+        dataProcessingConsent: formData.dataProcessingConsent,
+        emergencyContact: formData.emergencyContact,
+        emergencyPhone: formData.emergencyPhone,
+        mentalHealthConsent: formData.mentalHealthConsent,
+        communicationConsent: formData.communicationConsent
+      };
+
+      // Send signup request to backend
+      const response = await fetch('http://localhost:5000/api/users/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Signup failed');
+      }
+
+      // Success - user created and verification email sent
+      console.log('✅ Signup successful:', result);
+      
+      // Show success message and redirect to login
+      alert('Account created successfully! Please check your email for verification.');
+      onShowLogin();
+      
+    } catch (error) {
+      console.error('❌ Signup error:', error);
+      alert(`Signup failed: ${error.message}`);
+    } finally {
       setIsLoading(false);
-      onLogin('student');
-    }, 3000);
+    }
   };
 
   const getStepIcon = (step) => {

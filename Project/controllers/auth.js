@@ -42,57 +42,143 @@ const createSendToken = (user, statusCode, res, message) => {
 };
 
 export const signup = catchAsync(async (req, res, next) => {
-  const { email, password, passwordConfirm, username } = req.body;
-
-  const existingUser = await User.findOne({ email });
-
-  if (existingUser) return next(new AppError("Email already registerd", 400));
-
-  const otp = generateOtp();
-
-  const otpExpires = Date.now() + 10 * 60 * 1000;
-
-  const role = "student";
-  const isVerified = false;
-
-  const newUser = await User.create({
-    username,
+  // Extract all the data from the request body
+  const {
+    // Basic user information (from UserSignup.jsx)
+    firstName,
+    lastName,
     email,
+    phone,
+    dateOfBirth,
+    gender,
+    
+    // Academic information (from SignUp.jsx step 1)
+    institutionId,
+    studentId,
+    course,
+    year,
+    department,
+    
+    // Account security (from SignUp.jsx step 2)
     password,
     passwordConfirm,
+    securityQuestion,
+    securityAnswer,
+    
+    // Consent & privacy (from SignUp.jsx step 3)
+    privacyConsent,
+    dataProcessingConsent,
+    emergencyContact,
+    emergencyPhone,
+    mentalHealthConsent,
+    communicationConsent
+  } = req.body;
+
+  // Validate required fields
+  if (!firstName || !lastName || !email || !phone || !dateOfBirth || !gender) {
+    return next(new AppError("Please provide all basic information", 400));
+  }
+
+  if (!institutionId || !studentId || !course || !year) {
+    return next(new AppError("Please provide all academic information", 400));
+  }
+
+  if (!password || !passwordConfirm || !securityQuestion || !securityAnswer) {
+    return next(new AppError("Please provide all security information", 400));
+  }
+
+  if (!privacyConsent || !dataProcessingConsent || !emergencyContact || !emergencyPhone || !mentalHealthConsent) {
+    return next(new AppError("Please provide all consent information", 400));
+  }
+
+  // Check if user already exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return next(new AppError("Email already registered", 400));
+  }
+
+  // Check if student ID already exists
+  const existingStudent = await User.findOne({ studentId });
+  if (existingStudent) {
+    return next(new AppError("Student ID already registered", 400));
+  }
+
+  // Generate OTP for email verification
+  const otp = generateOtp();
+  const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+  // Create username from email
+  const username = email.split('@')[0];
+
+  // Create new user with all the data
+  const newUser = await User.create({
+    // Basic information
+    firstName,
+    lastName,
+    username,
+    email,
+    phone,
+    dateOfBirth: new Date(dateOfBirth),
+    gender,
+    
+    // Academic information
+    institutionId,
+    studentId,
+    course,
+    year,
+    department,
+    
+    // Security information
+    password,
+    passwordConfirm,
+    securityQuestion,
+    securityAnswer,
+    
+    // Consent information
+    privacyConsent,
+    dataProcessingConsent,
+    emergencyContact,
+    emergencyPhone,
+    mentalHealthConsent,
+    communicationConsent: communicationConsent || false,
+    
+    // System fields
+    role: "student",
+    isVerified: false,
     otp,
-    otpExpires,
-    role,
-    isVerified,
+    otpExpires
   });
 
   try {
+    // Send verification email
     await sendEmail({
       email: newUser.email,
-      subject: "Glubs Email Verification - Your OTP Code",
+      subject: "MindCare Email Verification - Your OTP Code",
       html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 8px; background-color: #f9f9f9; color: #333; border: 1px solid #ddd;">
-              <h2 style="color: #569c9fff;">🎉 Welcome to Glubs!</h2>
-              <p>Hello there 👋,</p>
-              <p>Thank you for signing up on <strong>Glubs</strong>, your gateway to discovering and managing college events.</p>
-              <p>To complete your registration, please use the OTP below to verify your email address:</p>
-              <h1 style="color: #528b83ff; font-size: 2.5em; letter-spacing: 4px; margin: 20px 0;">${otp}</h1>
-              <p>This OTP is valid for <strong>10 minutes</strong>.</p>
-              <hr style="margin: 30px 0;" />
-              <p style="font-size: 0.9em; color: #666;">
-                If you did not initiate this request, please ignore this email. Your data is safe with us.
-              </p>
-              <p style="font-size: 0.9em; color: #888;">— The Glubs Team </p>
-            </div>
-          `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 8px; background-color: #f9f9f9; color: #333; border: 1px solid #ddd;">
+          <h2 style="color: #569c9fff;">🎉 Welcome to MindCare!</h2>
+          <p>Hello ${firstName} 👋,</p>
+          <p>Thank you for signing up on <strong>MindCare</strong>, your comprehensive mental health support platform.</p>
+          <p>To complete your registration, please use the OTP below to verify your email address:</p>
+          <h1 style="color: #528b83ff; font-size: 2.5em; letter-spacing: 4px; margin: 20px 0;">${otp}</h1>
+          <p>This OTP is valid for <strong>10 minutes</strong>.</p>
+          <hr style="margin: 30px 0;" />
+          <p style="font-size: 0.9em; color: #666;">
+            If you did not initiate this request, please ignore this email. Your data is safe with us.
+          </p>
+          <p style="font-size: 0.9em; color: #888;">— The MindCare Team </p>
+        </div>
+      `
     });
 
-    createSendToken(newUser, 200, res, "Registration successful");
+    // Return success response with token
+    createSendToken(newUser, 201, res, "Registration successful! Please check your email for verification.");
   } catch (error) {
     console.error("❌ Error sending email:", error);
+    // Delete the user if email sending fails
     await User.findByIdAndDelete(newUser.id);
     return next(
-      new AppError("There is an error sending the email, Try Again", 500)
+      new AppError("There is an error sending the email. Please try again.", 500)
     );
   }
 });
@@ -157,12 +243,12 @@ export const resentOTP = catchAsync(async (req, res, next) => {
   try {
     await sendEmail({
       email: user.email,
-      subject: "Glubs - Your Resend OTP Code",
+      subject: "MindCare - Your Resend OTP Code",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 8px; background-color: #f9f9f9; color: #333; border: 1px solid #ddd;">
-          <h2 style="color: #569c9fff ;">🔄 Resend OTP - Glubs Verification</h2>
+          <h2 style="color: #569c9fff ;">🔄 Resend OTP - MindCare Verification</h2>
           <p>Hello again 👋,</p>
-          <p>It looks like you requested a new OTP for verifying your email on <strong>Glubs</strong>.</p>
+          <p>It looks like you requested a new OTP for verifying your email on <strong>MindCare</strong>.</p>
           <p>Your new One-Time Password (OTP) is:</p>
           <h1 style="color: #528b83ff; font-size: 2.5em; letter-spacing: 4px; margin: 20px 0;">${newOtp}</h1>
           <p>This OTP is valid for <strong>10 minutes</strong>. Please do not share it with anyone.</p>
@@ -170,7 +256,7 @@ export const resentOTP = catchAsync(async (req, res, next) => {
           <p style="font-size: 0.9em; color: #666;">
             Didn't request this? You can safely ignore this email. No action will be taken unless the OTP is used.
           </p>
-          <p style="font-size: 0.9em; color: #888;">— The Glubs Team </p>
+          <p style="font-size: 0.9em; color: #888;">— The MindCare Team </p>
         </div>
       `
     });
@@ -253,12 +339,12 @@ export const forgetPassword = catchAsync(async (req, res, next) => {
   try {
     await sendEmail({
       email: user.email,
-      subject: "Glubs - Password Reset OTP",
+      subject: "MindCare - Password Reset OTP",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 8px; background-color: #f9f9f9; color: #333; border: 1px solid #ddd;">
           <h2 style="color: #569c9fff;">🔐 Password Reset Request</h2>
           <p>Hello,</p>
-          <p>We received a request to reset your password for your <strong>Glubs</strong> account.</p>
+          <p>We received a request to reset your password for your <strong>MindCare</strong> account.</p>
           <p>Please use the OTP below to continue with your password reset:</p>
           <h1 style="color: #528b83ff; font-size: 2.5em; letter-spacing: 4px; margin: 20px 0;">${otp}</h1>
           <p>This OTP is valid for <strong>5 minutes</strong>. Please do not share it with anyone.</p>
@@ -266,7 +352,7 @@ export const forgetPassword = catchAsync(async (req, res, next) => {
           <p style="font-size: 0.9em; color: #666;">
             Didn't request this? You can safely ignore this email. Your password will remain unchanged.
           </p>
-          <p style="font-size: 0.9em; color: #888;">— The Glubs Team 💜</p>
+          <p style="font-size: 0.9em; color: #888;">— The MindCare Team 💜</p>
         </div>
       `,
     });
