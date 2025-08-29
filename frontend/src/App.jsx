@@ -17,8 +17,10 @@ import PeerSupport from './Components/PeerSupport.jsx';
 import CrisisManagement from './Components/CrisisManagement.jsx';
 import InnovationShowcase from './Components/InnovationShowcase.jsx';
 
-// Dummy Wellness & Institutions components for routing
-const Wellness = () => <div className="p-6 bg-white rounded-lg shadow">Wellness Center Content</div>;
+// Import Wellness component
+import Wellness from './Components/Wellness.jsx';
+
+// Dummy Institutions component for routing
 const Institutions = () => <div className="p-6 bg-white rounded-lg shadow">Institutions Management Content</div>;
 
 // Protected Route Component
