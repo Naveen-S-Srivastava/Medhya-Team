@@ -9,9 +9,16 @@ import {
   Zap, Lock, Database, Map, Star, Target, AlertTriangle, Phone, Building2,
   Play
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const LandingPage = ({ onLogin, systemStats }) => {
   const [selectedDemo, setSelectedDemo] = useState('student');
+  const navigate = useNavigate()
+
+  const handleNavigation = (e) => {
+    e.preventDefault();
+    navigate("/login")
+  }
 
   const problemStats = [
     { label: "Indian students experiencing mental health issues", value: "70%", color: "text-red-600" },
@@ -129,7 +136,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
           <Button 
             size="lg" 
             variant="outline"
-            onClick={onLogin}
+            onClick={handleNavigation}
           >
             View Admin Dashboard
           </Button>
