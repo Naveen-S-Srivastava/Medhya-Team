@@ -347,5 +347,28 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
 };
 
 export default Login;
+<<<<<<< HEAD
+=======
+
+
+// import { SignIn } from "@clerk/clerk-react";
+
+// export default function Login() {
+//   return (
+//     <div className="flex items-center justify-center min-h-screen bg-gray-50">
+//       <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-6">
+//         <h4 className="text-2xl font-bold text-center mb-4">
+//           MindCare by Tuastra
+//         </h4>
+//         <SignIn
+//           path="/login"
+//           routing="path"
+//           signUpUrl="/signup"  // redirect to signup if user doesn’t have an account
+//         />
+//       </div>
+//     </div>
+//   );
+// }
+>>>>>>> 53d0bee (changes abort)
 
 
