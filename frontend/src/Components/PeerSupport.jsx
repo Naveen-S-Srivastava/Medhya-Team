@@ -195,11 +195,8 @@ const PeerSupport = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={() => setShowNewPostForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Post
-            </Button>
           </div>
+
 
           {showNewPostForm && (
             <Card>
@@ -475,6 +472,17 @@ const PeerSupport = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Floating centered New Post button */}
+      <button
+        type="button"
+        onClick={() => setShowNewPostForm(true)}
+        aria-label="Create new post"
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 inline-flex items-center gap-2 justify-center h-12 px-6 rounded-full shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+      >
+        <Plus className="w-5 h-5" />
+        New Post
+      </button>
     </div>
   );
 };
