@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -38,6 +39,7 @@ import {
 } from "lucide-react";
 
 const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
+  const navigate = useNavigate();
   const [loginType, setLoginType] = useState("student");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,7 +96,10 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
     // Simulate authentication
     setTimeout(() => {
       setIsLoading(false);
-      onLogin(loginType);
+      if (onLogin) {
+        onLogin(loginType);
+      }
+      navigate("/contact-choice");
     }, 2000);
   };
 

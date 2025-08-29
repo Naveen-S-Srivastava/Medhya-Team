@@ -6,6 +6,7 @@ import Signup from './Components/SignUp'
 import App from './App'
 import ForgotPassword from './Components/ForgotPassword'
 import AIChat from './Components/AIChat'
+import ContactChoice from './Components/ContactChoice'
 
 export default function Router() {
   return (
@@ -17,6 +18,8 @@ export default function Router() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/app" element={<App />} />
         <Route path="/ai" element={<AIChat/>} />
+        <Route path="/contact-choice" element={<ContactChoice />} />
+        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       </Routes>
     </div>
   )
