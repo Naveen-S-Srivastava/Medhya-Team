@@ -187,7 +187,7 @@ const PeerSupport = () => {
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                 {categories.map((category) => (
                   <SelectItem key={category.value} value={category.value}>
                     {category.label}
@@ -217,7 +217,7 @@ const PeerSupport = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                       {categories.slice(1).map((category) => (
                         <SelectItem key={category.value} value={category.value}>
                           {category.label}

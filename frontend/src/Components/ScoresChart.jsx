@@ -147,7 +147,7 @@ export default function ScoresChart({ timeRange: initialTimeRange = '7d', title 
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                 <SelectItem value="7d">7 Days</SelectItem>
                 <SelectItem value="30d">30 Days</SelectItem>
                 <SelectItem value="90d">90 Days</SelectItem>

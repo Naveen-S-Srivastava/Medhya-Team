@@ -289,7 +289,7 @@ const CrisisManagement = () => {
                     <SelectTrigger className="w-[150px]">
                       <SelectValue placeholder="Filter by Status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                       <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
@@ -300,7 +300,7 @@ const CrisisManagement = () => {
                     <SelectTrigger className="w-[150px]">
                       <SelectValue placeholder="Filter by Severity" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                       <SelectItem value="all">All Severity</SelectItem>
                       <SelectItem value="critical">Critical</SelectItem>
                       <SelectItem value="high">High</SelectItem>

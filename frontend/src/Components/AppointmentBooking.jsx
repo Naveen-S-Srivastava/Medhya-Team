@@ -219,7 +219,7 @@ const AppointmentBooking = () => {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                   <SelectItem value="oncampus">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
@@ -333,7 +333,7 @@ const AppointmentBooking = () => {
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                 <SelectItem value="routine">Routine - Regular support session</SelectItem>
                 <SelectItem value="urgent">Urgent - Need support soon</SelectItem>
                 <SelectItem value="crisis">Crisis - Immediate attention needed</SelectItem>

@@ -256,7 +256,7 @@ const ResourceHub = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Category" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                       {categories.map((category) => (
                         <SelectItem key={category.value} value={category.value}>
                           {category.label}
@@ -271,7 +271,7 @@ const ResourceHub = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Language" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                       {languages.map((language) => (
                         <SelectItem key={language.value} value={language.value}>
                           {language.label}
@@ -286,7 +286,7 @@ const ResourceHub = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
                       {types.map((type) => (
                         <SelectItem key={type.value} value={type.value}>
                           {type.label}
