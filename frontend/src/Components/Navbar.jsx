@@ -120,7 +120,7 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
                   <Heart className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="hidden sm:block text-xl font-bold text-slate-800">MindSupport Pro</h1>
+                  <h1 className="hidden sm:block text-xl font-bold text-slate-800">MEDHYA </h1>
                   <p className="hidden md:block text-xs text-slate-500">Advanced Digital Psychological Intervention System</p>
                 </div>
               </Link>
@@ -181,7 +181,7 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
               <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg shadow-md">
                 <Heart className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-slate-800">MindSupport Pro</h1>
+              <h1 className="text-xl font-bold text-slate-800">MEDHYA</h1>
             </Link>
             <button onClick={() => setIsMenuOpen(false)} className="p-2 rounded-md hover:bg-slate-100">
               <X className="h-6 w-6 text-slate-500" />

@@ -274,7 +274,7 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            © 2024 MindSupport Pro - Built for Smart India Hackathon
+            © 2024 MEDHYA - Built for Smart India Hackathon
           </p>
         </div>
       </div>

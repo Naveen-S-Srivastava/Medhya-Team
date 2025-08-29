@@ -3,36 +3,35 @@ import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
 import User from "../models/usermodel.js";
 
-export const isAuthenticated = catchAsync(async (req, res, next) => {
- try{ const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+export const protect = catchAsync(async (req, res, next) => {
+  try {
+    // Check for Clerk user ID in headers (sent from frontend)
+    const clerkId = req.headers['x-clerk-user-id'];
 
-  if (!token) {
-    return next(
-      new AppError("You are not logged in. Please login to access", 401)
-    );
+    if (!clerkId) {
+      return next(
+        new AppError("You are not logged in. Please login to access", 401)
+      );
+    }
+
+    // Find user by Clerk ID
+    const currentUser = await User.findOne({ clerkId });
+
+    if (!currentUser) {
+      return next(
+        new AppError("User not found. Please complete your profile setup.", 401)
+      );
+    }
+
+    req.user = currentUser;
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid authentication", error: err.message });
   }
-
-  const decode = jwt.verify(token, process.env.JWT_SECRET);
-
-  const currentUser = await User.findById(decode.id);
-
-  if (!currentUser) {
-    return next(
-      new AppError("The user belonging to this token does not exist", 401)
-    );
-  }
-
-//   if (!currentUser.isVerified) {
-//     return next(new AppError("Please verify your email to continue.", 403));
-//   }
-
-  req.user = currentUser;
-
-  next();
-} catch (err) {
-  return res.status(401).json({ message: "Invalid token, authorization denied" });
-}
 });
+
+// Alias for backward compatibility
+export const isAuthenticated = protect;
 
 
 export const restrictTo = (...roles) => {

@@ -1,34 +1,224 @@
 import mongoose from "mongoose";
 
-const availabilitySlotSchema = new mongoose.Schema({
-  dayOfWeek: { type: Number, min: 0, max: 6, required: true }, // 0=Sun
-  startTime: { type: String, required: true }, // e.g. "09:00"
-  endTime: { type: String, required: true },   // e.g. "17:00"
-}, { _id: false });
-
 const counselorSchema = new mongoose.Schema({
-  firstName: { type: String, required: true, trim: true },
-  lastName: { type: String, required: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  phone: { type: String },
+  name: {
+    type: String,
+    required: [true, "Counselor name is required"],
+    trim: true
+  },
+  email: {
+    type: String,
+    required: [true, "Email is required"],
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  phone: {
+    type: String,
+    required: [true, "Phone number is required"],
+    trim: true
+  },
+  specialization: [{
+    type: String,
+    required: [true, "At least one specialization is required"],
+    enum: [
+      "Anxiety", "Depression", "Stress Management", "Academic Stress", 
+      "Relationship Issues", "Social Anxiety", "Career Counseling", 
+      "Trauma", "PTSD", "Family Issues", "Eating Disorders", 
+      "Substance Abuse", "Grief and Loss", "Self-Esteem", "Mindfulness", "General",
+      "Body Image Issues", "Addiction", "Behavioral Therapy", "Bereavement", "Life Transitions"
+    ]
+  }],
+  languages: [{
+    type: String,
+    required: [true, "At least one language is required"],
+    enum: ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Marathi", "Gujarati", "Kannada", "Malayalam", "Punjabi", "Urdu"]
+  }],
+  appointmentType: {
+    type: String,
+    required: [true, "Appointment type is required"],
+    enum: ["oncampus", "online", "both"],
+    default: "both"
+  },
+  availability: {
+    monday: {
+      available: { type: Boolean, default: false },
+      slots: [{
+        startTime: String,
+        endTime: String,
+        isAvailable: { type: Boolean, default: true }
+      }]
+    },
+    tuesday: {
+      available: { type: Boolean, default: false },
+      slots: [{
+        startTime: String,
+        endTime: String,
+        isAvailable: { type: Boolean, default: true }
+      }]
+    },
+    wednesday: {
+      available: { type: Boolean, default: false },
+      slots: [{
+        startTime: String,
+        endTime: String,
+        isAvailable: { type: Boolean, default: true }
+      }]
+    },
+    thursday: {
+      available: { type: Boolean, default: false },
+      slots: [{
+        startTime: String,
+        endTime: String,
+        isAvailable: { type: Boolean, default: true }
+      }]
+    },
+    friday: {
+      available: { type: Boolean, default: false },
+      slots: [{
+        startTime: String,
+        endTime: String,
+        isAvailable: { type: Boolean, default: true }
+      }]
+    },
+    saturday: {
+      available: { type: Boolean, default: false },
+      slots: [{
+        startTime: String,
+        endTime: String,
+        isAvailable: { type: Boolean, default: true }
+      }]
+    },
+    sunday: {
+      available: { type: Boolean, default: false },
+      slots: [{
+        startTime: String,
+        endTime: String,
+        isAvailable: { type: Boolean, default: true }
+      }]
+    }
+  },
+  rating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5
+  },
+  totalRatings: {
+    type: Number,
+    default: 0
+  },
+  experience: {
+    type: Number,
+    required: [true, "Years of experience is required"],
+    min: 0
+  },
+  education: {
+    degree: {
+      type: String,
+      required: [true, "Degree is required"]
+    },
+    institution: {
+      type: String,
+      required: [true, "Institution is required"]
+    },
+    year: {
+      type: Number,
+      required: [true, "Graduation year is required"]
+    }
+  },
+  license: {
+    number: {
+      type: String,
+      required: [true, "License number is required"],
+      unique: true
+    },
+    issuingAuthority: {
+      type: String,
+      required: [true, "Issuing authority is required"]
+    },
+    expiryDate: {
+      type: Date,
+      required: [true, "License expiry date is required"]
+    }
+  },
+  bio: {
+    type: String,
+    maxlength: 1000,
+    trim: true
+  },
+  profileImage: {
+    type: String,
+    default: null
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  maxAppointmentsPerDay: {
+    type: Number,
+    default: 8,
+    min: 1,
+    max: 12
+  },
+  sessionDuration: {
+    type: Number,
+    default: 60, // in minutes
+    enum: [30, 45, 60, 90, 120]
+  },
+  hourlyRate: {
+    type: Number,
+    default: 0, // 0 for free campus counseling
+    min: 0
+  },
+  emergencyAvailable: {
+    type: Boolean,
+    default: false
+  },
+  crisisIntervention: {
+    type: Boolean,
+    default: false
+  }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
 
-  institutionId: { type: String, required: true, index: true },
+// Virtual for average rating calculation
+counselorSchema.virtual('averageRating').get(function() {
+  if (this.totalRatings === 0) return 0;
+  return Math.round((this.rating / this.totalRatings) * 10) / 10;
+});
 
-  specialties: [{ type: String, trim: true }], // e.g., depression, anxiety, crisis
-  languages: [{ type: String, trim: true }],   // e.g., English, Hindi
+// Instance methods
+counselorSchema.methods.updateRating = function(newRating) {
+  this.rating += newRating;
+  this.totalRatings += 1;
+  return this.save();
+};
 
-  availability: [availabilitySlotSchema],
+counselorSchema.methods.isAvailableOnDate = function(date) {
+  const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+  return this.availability[dayOfWeek]?.available || false;
+};
 
-  active: { type: Boolean, default: true, index: true },
+counselorSchema.methods.getAvailableSlotsForDate = function(date) {
+  const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+  if (!this.availability[dayOfWeek]?.available) {
+    return [];
+  }
+  
+  return this.availability[dayOfWeek].slots.filter(slot => slot.isAvailable);
+};
 
-  // load management
-  maxConcurrent: { type: Number, default: 5, min: 1 },
-  currentOpenAssignments: { type: Number, default: 0, min: 0 },
-  lastAssignedAt: { type: Date },
-}, { timestamps: true });
-
-counselorSchema.index({ institutionId: 1, active: 1 });
-counselorSchema.index({ lastAssignedAt: 1 });
+// Indexes for better query performance
+counselorSchema.index({ specialization: 1 });
+counselorSchema.index({ languages: 1 });
+counselorSchema.index({ appointmentType: 1 });
+counselorSchema.index({ isActive: 1 });
+counselorSchema.index({ rating: -1 });
+counselorSchema.index({ name: 'text', bio: 'text' });
 
 export default mongoose.model("Counselor", counselorSchema);
 

@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Calendar } from '../ui/Calendar';
 import { Badge } from '../ui/Badge';
 import { Alert, AlertDescription } from '../ui/Alert';
-import { Calendar as CalendarIcon, Clock, User, MapPin, Phone, Video, Shield, Loader2, CheckCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, MapPin, Phone, Video, Shield, Loader2, CheckCircle, Search } from 'lucide-react';
 import { appointmentAPI } from '../services/api';
 import { useApi, useOptimisticUpdate } from '../hooks/useApi';
+import { useCounselors } from '../hooks/useCounselors';
 
 const AppointmentBooking = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -22,7 +23,7 @@ const AppointmentBooking = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Mock student ID - in real app this would come from user context
+  // Student ID - in real app this would come from user context
   const studentId = 'demo-student-123';
 
   // Fetch existing appointments for the student
@@ -36,46 +37,60 @@ const AppointmentBooking = () => {
     (appointmentData) => appointmentAPI.createAppointment(appointmentData)
   );
 
-  const counselors = [
-    {
-      id: '1',
-      name: 'Dr. Sarah Johnson',
-      specialization: ['Anxiety', 'Depression', 'Academic Stress'],
-      languages: ['English', 'Hindi'],
-      availability: ['Monday', 'Tuesday', 'Wednesday', 'Friday'],
-      type: 'oncampus',
-      rating: 4.8
-    },
-    {
-      id: '2',
-      name: 'Dr. Raj Patel',
-      specialization: ['Relationship Issues', 'Social Anxiety', 'Career Counseling'],
-      languages: ['English', 'Hindi', 'Gujarati'],
-      availability: ['Tuesday', 'Thursday', 'Friday', 'Saturday'],
-      type: 'oncampus',
-      rating: 4.9
-    },
-    {
-      id: '3',
-      name: 'Dr. Priya Sharma',
-      specialization: ['Trauma', 'PTSD', 'Family Issues'],
-      languages: ['English', 'Hindi', 'Punjabi'],
-      availability: ['Monday', 'Wednesday', 'Thursday', 'Saturday'],
-      type: 'online',
-      rating: 4.7
-    }
-  ];
+  // Counselor data hook
+  const { 
+    counselors, 
+    loading: counselorsLoading, 
+    error: counselorsError,
+    getCounselors,
+    getAvailableSlots 
+  } = useCounselors();
 
-  const timeSlots = [
-    { time: '09:00 AM', available: true },
-    { time: '10:00 AM', available: false },
-    { time: '11:00 AM', available: true },
-    { time: '12:00 PM', available: true },
-    { time: '02:00 PM', available: false },
-    { time: '03:00 PM', available: true },
-    { time: '04:00 PM', available: true },
-    { time: '05:00 PM', available: true }
-  ];
+  // Available time slots for selected counselor and date
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Fetch counselors on component mount
+  useEffect(() => {
+    getCounselors();
+  }, []);
+
+  // Fetch available slots when counselor or date changes
+  useEffect(() => {
+    if (selectedCounselor && selectedDate) {
+      fetchAvailableSlots();
+    } else {
+      setAvailableSlots([]);
+    }
+  }, [selectedCounselor, selectedDate]);
+
+  const fetchAvailableSlots = async () => {
+    if (!selectedCounselor || !selectedDate) return;
+    
+    setSlotsLoading(true);
+    try {
+      const slots = await getAvailableSlots(selectedCounselor, selectedDate.toISOString().split('T')[0]);
+      setAvailableSlots(slots || []);
+    } catch (error) {
+      console.error('Error fetching available slots:', error);
+      setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  // Filter counselors based on search term and appointment type
+  const filteredCounselors = counselors.filter(counselor => {
+    const matchesSearch = counselor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         counselor.specialization.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesType = counselor.appointmentType === appointmentType || counselor.appointmentType === 'both';
+    return matchesSearch && matchesType;
+  });
+
+
+
+
 
   const handleBookAppointment = async () => {
     if (!selectedDate || !selectedCounselor || !selectedTime) return;
@@ -83,17 +98,17 @@ const AppointmentBooking = () => {
     setIsSubmitting(true);
     
     try {
-      const appointmentData = {
-        student: studentId,
-        counselor: selectedCounselor,
-        institutionId: 'demo-institution-123', // Mock institution ID
-        appointmentType,
-        date: selectedDate.toISOString(),
-        timeSlot: selectedTime,
-        urgencyLevel,
-        reason: reason.trim() || undefined,
-        status: 'pending'
-      };
+             const appointmentData = {
+         student: studentId,
+         counselor: selectedCounselor,
+         institutionId: 'demo-institution-123',
+         appointmentType,
+         date: selectedDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+         timeSlot: selectedTime,
+         urgencyLevel,
+         reason: reason.trim() || undefined,
+         status: 'pending'
+       };
 
       await updateOptimistically(appointmentData, (prevData) => {
         // Optimistic update - add new appointment to the list
@@ -119,16 +134,16 @@ const AppointmentBooking = () => {
     }
   };
 
-  const selectedCounselorData = counselors.find(c => c.id === selectedCounselor);
+  const selectedCounselorData = counselors.find(c => c._id === selectedCounselor);
 
   // Check if selected time slot conflicts with existing appointments
-  const isTimeSlotConflict = (time) => {
+  const isTimeSlotConflict = (timeSlot) => {
     if (!existingAppointments) return false;
     
-    const selectedDateStr = selectedDate.toDateString();
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
     return existingAppointments.some(appointment => {
-      const appointmentDate = new Date(appointment.date).toDateString();
-      return appointmentDate === selectedDateStr && appointment.timeSlot === time;
+      const appointmentDate = appointment.date;
+      return appointmentDate === selectedDateStr && appointment.timeSlot === timeSlot;
     });
   };
 
@@ -207,118 +222,187 @@ const AppointmentBooking = () => {
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Date & Time</CardTitle>
-            <CardDescription>Choose your preferred appointment date and time</CardDescription>
+        <Card className="shadow-sm border-gray-200">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-semibold text-gray-900">Select Date & Time</CardTitle>
+            <CardDescription className="text-gray-600">Choose your preferred appointment date and time</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <Label>Appointment Type</Label>
+          <CardContent className="space-y-6 pt-0">
+            <div className="space-y-3">
+              <Label className="text-base font-medium text-gray-900">Appointment Type</Label>
               <Select value={appointmentType} onValueChange={setAppointmentType}>
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectValue placeholder="Choose appointment type" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
-                  <SelectItem value="oncampus">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      In-Person (On Campus)
+                  <SelectItem value="oncampus" className="py-3">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <div className="font-medium">In-Person (On Campus)</div>
+                        <div className="text-xs text-gray-500">Meet at the counseling center</div>
+                      </div>
                     </div>
                   </SelectItem>
-                  <SelectItem value="online">
-                    <div className="flex items-center gap-2">
-                      <Video className="w-4 h-4" />
-                      Online Session
+                  <SelectItem value="online" className="py-3">
+                    <div className="flex items-center gap-3">
+                      <Video className="w-5 h-5 text-green-600" />
+                      <div>
+                        <div className="font-medium">Online Session</div>
+                        <div className="text-xs text-gray-500">Video call from anywhere</div>
+                      </div>
                     </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div>
-              <Label>Select Date</Label>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                disabled={(date) => date < new Date() || date.getDay() === 0} // Disable past dates and Sundays
-                className="rounded-md border"
+            <div className="space-y-3">
+              <Label className="text-base font-medium text-gray-900">Select Date</Label>
+              <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  disabled={(date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return date < today || date.getDay() === 0; // Disable past dates and Sundays
+                  }}
+                  className="w-full"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Sundays and past dates are not available for booking
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-base font-medium text-gray-900">Available Time Slots</Label>
+              {slotsLoading ? (
+                <div className="flex items-center justify-center py-6 bg-gray-50 rounded-lg">
+                  <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                  <span className="ml-3 text-sm text-gray-600">Loading available slots...</span>
+                </div>
+              ) : availableSlots.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {availableSlots.map((slot) => {
+                    const isConflict = isTimeSlotConflict(slot.timeSlot);
+                    const isAvailable = !isConflict;
+                    
+                    return (
+                      <Button
+                        key={slot.timeSlot}
+                        variant={selectedTime === slot.timeSlot ? "default" : "outline"}
+                        size="sm"
+                        disabled={!isAvailable}
+                        onClick={() => setSelectedTime(slot.timeSlot)}
+                        className={`justify-start h-10 ${
+                          selectedTime === slot.timeSlot 
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                            : 'hover:bg-gray-50'
+                        } ${!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span className="font-medium">{slot.timeSlot}</span>
+                        {isConflict && <span className="ml-1 text-xs text-red-600">(Booked)</span>}
+                      </Button>
+                    );
+                  })}
+                </div>
+              ) : selectedCounselor && selectedDate ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <Clock className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">No available slots for this counselor on the selected date.</p>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <CalendarIcon className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">Please select a counselor and date to see available time slots.</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-gray-200">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-semibold text-gray-900">Select Counselor</CardTitle>
+            <CardDescription className="text-gray-600">Choose a counselor based on your needs and preferences</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-0">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Search counselors by name or specialization..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
 
-            <div>
-              <Label>Available Time Slots</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {timeSlots.map((slot) => {
-                  const isConflict = isTimeSlotConflict(slot.time);
-                  const isAvailable = slot.available && !isConflict;
-                  
-                  return (
-                    <Button
-                      key={slot.time}
-                      variant={selectedTime === slot.time ? "default" : "outline"}
-                      size="sm"
-                      disabled={!isAvailable}
-                      onClick={() => setSelectedTime(slot.time)}
-                      className="justify-start"
-                    >
-                      <Clock className="w-4 h-4 mr-2" />
-                      {slot.time}
-                      {isConflict && <span className="ml-1 text-xs text-red-600">(Booked)</span>}
-                    </Button>
-                  );
-                })}
+            {counselorsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="ml-2">Loading counselors...</span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Counselor</CardTitle>
-            <CardDescription>Choose a counselor based on your needs and preferences</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {counselors
-              .filter(counselor => counselor.type === appointmentType)
-              .map((counselor) => (
-                <Card 
-                  key={counselor.id}
-                  className={`cursor-pointer transition-colors ${
-                    selectedCounselor === counselor.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                  }`}
-                  onClick={() => setSelectedCounselor(counselor.id)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <h4 className="font-medium">{counselor.name}</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {counselor.specialization.map((spec) => (
-                            <Badge key={spec} variant="secondary" className="text-xs">
-                              {spec}
-                            </Badge>
-                          ))}
+            ) : counselorsError ? (
+              <div className="text-center py-8">
+                <p className="text-red-600">Error loading counselors: {counselorsError}</p>
+              </div>
+            ) : (
+              <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
+                {filteredCounselors.length > 0 ? (
+                  filteredCounselors.map((counselor) => (
+                    <Card 
+                      key={counselor._id}
+                      className={`cursor-pointer transition-colors ${
+                        selectedCounselor === counselor._id ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() => setSelectedCounselor(counselor._id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <h4 className="font-medium">{counselor.name}</h4>
+                            <div className="flex flex-wrap gap-1">
+                              {counselor.specialization.map((spec) => (
+                                <Badge key={spec} variant="secondary" className="text-xs">
+                                  {spec}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>Languages: {counselor.languages.join(', ')}</span>
+                              <span>★ {counselor.averageRating?.toFixed(1) || 'N/A'}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {counselor.appointmentType === 'oncampus' ? (
+                              <MapPin className="w-4 h-4 text-muted-foreground" />
+                            ) : counselor.appointmentType === 'online' ? (
+                              <Video className="w-4 h-4 text-muted-foreground" />
+                            ) : (
+                              <div className="flex gap-1">
+                                <MapPin className="w-3 h-3 text-muted-foreground" />
+                                <Video className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>Languages: {counselor.languages.join(', ')}</span>
-                          <span>★ {counselor.rating}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {counselor.type === 'oncampus' ? (
-                          <MapPin className="w-4 h-4 text-muted-foreground" />
-                        ) : (
-                          <Video className="w-4 h-4 text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No counselors found matching your search criteria.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
-        </Card>
+         </Card>
       </div>
 
       <Card>

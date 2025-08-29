@@ -9,13 +9,12 @@ const appointmentSchema = new mongoose.Schema({
   },
   counselor: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
+    ref: "Counselor", 
     required: true, 
     index: true 
   },
   institutionId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "Institution", 
+    type: String, 
     required: true 
   },
 

@@ -3,6 +3,7 @@ import fs from "fs";
 import Appointment from "./models/appointmentModel.js"; // adjust your model path
 import crisisAlertModel from "./models/crisisAlertModel.js";
 import Assessment from "./models/assessmentModel.js";
+import Counselor from "./models/counselorModel.js";
 
 import dotenv from "dotenv";
 
@@ -19,10 +20,13 @@ try {
     console.log("All existing crisis alerts deleted.");
     await Assessment.deleteMany({});
     console.log("All existing assessments deleted.");
+    await Counselor.deleteMany({});
+    console.log("All existing counselors deleted.");
     // Read JSON file
     const appointments = JSON.parse(fs.readFileSync("json_files/appointments_sample.json", "utf-8"));
     const crisisAlerts = JSON.parse(fs.readFileSync("json_files/crisis_alerts.json", "utf-8"));
     const assessments = JSON.parse(fs.readFileSync("json_files/synthetic_mental_health_data.json", "utf-8"));
+    const counselors = JSON.parse(fs.readFileSync("json_files/counselors_dataset.json", "utf-8"));
     // Insert into DB
     const result = await Appointment.insertMany(appointments);
     console.log("Appointments inserted successfully:", result.length);
@@ -32,6 +36,9 @@ try {
 
     const assessmentResult = await Assessment.insertMany(assessments);
     console.log("Assessments inserted successfully:", assessmentResult.length);
+
+    const counselorResult = await Counselor.insertMany(counselors);
+    console.log("Counselors inserted successfully:", counselorResult.length);
 
 } catch (err) {
     console.error("Error inserting appointments:", err);

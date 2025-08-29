@@ -117,12 +117,20 @@ import validator from "validator";
 
 
 const userSchema = new mongoose.Schema({
+  // Clerk integration
+  clerkId: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true
+  },
+
   firstName: { type: String, required: true, trim: true },
   lastName: { type: String, required: true, trim: true },
 
   username: {
     type: String,
-    required: [true, "Please provide username"],
+    required: false, // Made optional for Clerk users
     trim: true,
     minlength: 3,
     maxlength: 30,
@@ -130,30 +138,30 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: [true, "Please Proovide an email"],
+    required: [true, "Please provide an email"],
     unique: true,
     lowercase: true,
     validate: [validator.isEmail, "Please provide a valid email"],
   },
-  phone: { type: String, required: true },
-  dateOfBirth: { type: Date, required: true },
-  gender: { type: String, enum: ["male", "female", "other", "prefer-not-to-say"] },
+  phone: { type: String, required: false }, // Made optional for Clerk users
+  dateOfBirth: { type: Date, required: false }, // Made optional for Clerk users
+  gender: { type: String, enum: ["male", "female", "other", "prefer-not-to-say"], required: false }, // Made optional for Clerk users
 
-  institutionId: { type: String, required: true },
-  studentId: { type: String, required: true },
-  course: { type: String, required: true },
-  year: { type: String, required: true },
+  institutionId: { type: String, required: false }, // Made optional for Clerk users
+  studentId: { type: String, required: false }, // Made optional for Clerk users
+  course: { type: String, required: false }, // Made optional for Clerk users
+  year: { type: String, required: false }, // Made optional for Clerk users
   department: { type: String },
   password: {
     type: String,
-    required: [true, "Please Provide a password"],
+    required: false, // Made optional for Clerk users
     minlength: 8,
     select: false,
   },
 
   passwordConfirm: {
     type: String,
-    required: [true, "Please Confirm your password"],
+    required: false, // Made optional for Clerk users
     validate: {
       validator: function (el) {
         return el === this.password;
@@ -161,19 +169,23 @@ const userSchema = new mongoose.Schema({
       message: "Passwords are not same",
     },
   },
-  securityQuestion: { type: String, required: true },
-  securityAnswer: { type: String, required: true },
-  privacyConsent: { type: Boolean, required: true },
-  dataProcessingConsent: { type: Boolean, required: true },
-  emergencyContact: { type: String, required: true },
-  emergencyPhone: { type: String, required: true },
-  mentalHealthConsent: { type: Boolean, required: true },
+  securityQuestion: { type: String, required: false }, // Made optional for Clerk users
+  securityAnswer: { type: String, required: false }, // Made optional for Clerk users
+  privacyConsent: { type: Boolean, required: false }, // Made optional for Clerk users
+  dataProcessingConsent: { type: Boolean, required: false }, // Made optional for Clerk users
+  emergencyContact: { type: String, required: false }, // Made optional for Clerk users
+  emergencyPhone: { type: String, required: false }, // Made optional for Clerk users
+  mentalHealthConsent: { type: Boolean, required: false }, // Made optional for Clerk users
   communicationConsent: { type: Boolean, default: false },
   role: { type: String, enum: ["student", "admin"], default: "student" },
-  createdAt: { type: Date, default: Date.now },
   assessments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Assessment" }],
   appointments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Appointment" }],
   activityLogs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
+
+  isEmailVerified: {
+    type: Boolean,
+    default: false,
+  },
 
   isVerified: {
     type: Boolean,

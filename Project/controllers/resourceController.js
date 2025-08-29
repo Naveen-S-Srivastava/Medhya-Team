@@ -1,0 +1,422 @@
+import Resource from "../models/resourceModel.js";
+import UserResource from "../models/userResourceModel.js";
+import ActivityLog from "../models/activityLogModel.js";
+import catchAsync from "../utils/catchAsync.js";
+import AppError from "../utils/appError.js";
+
+// Create a new resource (Admin only)
+export const createResource = catchAsync(async (req, res, next) => {
+  const resource = await Resource.create(req.body);
+  
+  // Log activity
+  await ActivityLog.create({
+    user: req.user._id,
+    action: "CREATE_RESOURCE",
+    details: `Created resource: ${resource.title}`,
+    resourceId: resource._id
+  });
+
+  res.status(201).json({
+    status: "success",
+    data: resource
+  });
+});
+
+// Get all resources with filtering, searching, and pagination
+export const getAllResources = catchAsync(async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 12;
+  const skip = (page - 1) * limit;
+
+  // Build filter object
+  const filter = { isActive: true };
+  
+  if (req.query.category && req.query.category !== 'all') {
+    filter.category = req.query.category;
+  }
+  
+  if (req.query.type && req.query.type !== 'all') {
+    filter.type = req.query.type;
+  }
+  
+  if (req.query.resourceLanguage && req.query.resourceLanguage !== 'all') {
+    filter.resourceLanguage = req.query.resourceLanguage;
+  }
+  
+  if (req.query.difficulty && req.query.difficulty !== 'all') {
+    filter.difficulty = req.query.difficulty;
+  }
+
+  // Build search query
+  let searchQuery = {};
+  if (req.query.search) {
+    searchQuery = {
+      $or: [
+        { title: { $regex: req.query.search, $options: 'i' } },
+        { description: { $regex: req.query.search, $options: 'i' } },
+        { tags: { $in: [new RegExp(req.query.search, 'i')] } }
+      ]
+    };
+  }
+
+  // Combine filters and search
+  const finalFilter = { ...filter, ...searchQuery };
+
+  // Execute query
+  const resources = await Resource.find(finalFilter)
+    .sort({ isFeatured: -1, publishDate: -1 })
+    .skip(skip)
+    .limit(limit)
+    .populate('ratings.userId', 'firstName lastName');
+
+  // Get total count for pagination
+  const total = await Resource.countDocuments(finalFilter);
+
+  // Calculate pagination info
+  const totalPages = Math.ceil(total / limit);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
+
+  res.status(200).json({
+    status: "success",
+    results: resources.length,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems: total,
+      hasNextPage,
+      hasPrevPage,
+      limit
+    },
+    data: resources
+  });
+});
+
+// Get featured resources
+export const getFeaturedResources = catchAsync(async (req, res, next) => {
+  const limit = parseInt(req.query.limit) || 6;
+  
+  const featuredResources = await Resource.find({ 
+    isFeatured: true, 
+    isActive: true 
+  })
+  .sort({ publishDate: -1 })
+  .limit(limit)
+  .populate('ratings.userId', 'firstName lastName');
+
+  res.status(200).json({
+    status: "success",
+    results: featuredResources.length,
+    data: featuredResources
+  });
+});
+
+// Get resource by ID
+export const getResource = catchAsync(async (req, res, next) => {
+  const resource = await Resource.findById(req.params.id)
+    .populate('ratings.userId', 'firstName lastName');
+
+  if (!resource) {
+    return next(new AppError("Resource not found", 404));
+  }
+
+  // Increment view count
+  await resource.incrementViews();
+
+  // Log activity if user is authenticated
+  if (req.user) {
+    await ActivityLog.create({
+      user: req.user._id,
+      action: "VIEW_RESOURCE",
+      details: `Viewed resource: ${resource.title}`,
+      resourceId: resource._id
+    });
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: resource
+  });
+});
+
+// Update resource (Admin only)
+export const updateResource = catchAsync(async (req, res, next) => {
+  const resource = await Resource.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  });
+
+  if (!resource) {
+    return next(new AppError("Resource not found", 404));
+  }
+
+  // Log activity
+  await ActivityLog.create({
+    user: req.user._id,
+    action: "UPDATE_RESOURCE",
+    details: `Updated resource: ${resource.title}`,
+    resourceId: resource._id
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: resource
+  });
+});
+
+// Delete resource (Admin only)
+export const deleteResource = catchAsync(async (req, res, next) => {
+  const resource = await Resource.findByIdAndDelete(req.params.id);
+
+  if (!resource) {
+    return next(new AppError("Resource not found", 404));
+  }
+
+  // Log activity
+  await ActivityLog.create({
+    user: req.user._id,
+    action: "DELETE_RESOURCE",
+    details: `Deleted resource: ${resource.title}`,
+    resourceId: resource._id
+  });
+
+  res.status(204).json({
+    status: "success",
+    data: null
+  });
+});
+
+// Rate a resource
+export const rateResource = catchAsync(async (req, res, next) => {
+  const { rating, review } = req.body;
+  const resourceId = req.params.id;
+
+  if (!rating || rating < 1 || rating > 5) {
+    return next(new AppError("Please provide a valid rating between 1 and 5", 400));
+  }
+
+  const resource = await Resource.findById(resourceId);
+  if (!resource) {
+    return next(new AppError("Resource not found", 404));
+  }
+
+  // Add or update rating
+  await resource.addRating(req.user._id, rating, review);
+
+  // Log activity
+  await ActivityLog.create({
+    user: req.user._id,
+    action: "RATE_RESOURCE",
+    details: `Rated resource: ${resource.title} with ${rating} stars`,
+    resourceId: resource._id
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "Resource rated successfully",
+    data: resource
+  });
+});
+
+// Save resource to user library
+export const saveResource = catchAsync(async (req, res, next) => {
+  const { resourceId } = req.body;
+
+  // Check if resource exists
+  const resource = await Resource.findById(resourceId);
+  if (!resource) {
+    return next(new AppError("Resource not found", 404));
+  }
+
+  // Check if already saved
+  const existingUserResource = await UserResource.findOne({
+    user: req.user._id,
+    resource: resourceId
+  });
+
+  if (existingUserResource) {
+    return next(new AppError("Resource already saved to your library", 400));
+  }
+
+  // Save to user library
+  const userResource = await UserResource.create({
+    user: req.user._id,
+    resource: resourceId,
+    status: "saved"
+  });
+
+  // Log activity
+  await ActivityLog.create({
+    user: req.user._id,
+    action: "SAVE_RESOURCE",
+    details: `Saved resource: ${resource.title} to library`,
+    resourceId: resource._id
+  });
+
+  res.status(201).json({
+    status: "success",
+    message: "Resource saved to library successfully",
+    data: userResource
+  });
+});
+
+// Get user's library
+export const getUserLibrary = catchAsync(async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 12;
+  const skip = (page - 1) * limit;
+
+  const userResources = await UserResource.find({ user: req.user._id })
+    .populate({
+      path: 'resource',
+      populate: {
+        path: 'ratings.userId',
+        select: 'firstName lastName'
+      }
+    })
+    .sort({ savedAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const total = await UserResource.countDocuments({ user: req.user._id });
+  const totalPages = Math.ceil(total / limit);
+
+  res.status(200).json({
+    status: "success",
+    results: userResources.length,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems: total,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+      limit
+    },
+    data: userResources
+  });
+});
+
+// Remove resource from library
+export const removeFromLibrary = catchAsync(async (req, res, next) => {
+  const userResource = await UserResource.findOneAndDelete({
+    user: req.user._id,
+    resource: req.params.resourceId
+  });
+
+  if (!userResource) {
+    return next(new AppError("Resource not found in your library", 404));
+  }
+
+  // Log activity
+  await ActivityLog.create({
+    user: req.user._id,
+    action: "REMOVE_RESOURCE",
+    details: `Removed resource from library`,
+    resourceId: req.params.resourceId
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "Resource removed from library successfully"
+  });
+});
+
+// Update user resource (progress, notes, etc.)
+export const updateUserResource = catchAsync(async (req, res, next) => {
+  const userResource = await UserResource.findOneAndUpdate(
+    {
+      user: req.user._id,
+      resource: req.params.resourceId
+    },
+    req.body,
+    {
+      new: true,
+      runValidators: true
+    }
+  );
+
+  if (!userResource) {
+    return next(new AppError("Resource not found in your library", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: userResource
+  });
+});
+
+// Mark resource as downloaded
+export const markAsDownloaded = catchAsync(async (req, res, next) => {
+  const userResource = await UserResource.findOne({
+    user: req.user._id,
+    resource: req.params.resourceId
+  });
+
+  if (!userResource) {
+    return next(new AppError("Resource not found in your library", 404));
+  }
+
+  await userResource.markAsDownloaded();
+
+  // Also increment download count on the resource
+  const resource = await Resource.findById(req.params.resourceId);
+  if (resource) {
+    await resource.incrementDownloads();
+  }
+
+  // Log activity
+  await ActivityLog.create({
+    user: req.user._id,
+    action: "DOWNLOAD_RESOURCE",
+    details: `Downloaded resource: ${resource.title}`,
+    resourceId: resource._id
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "Resource marked as downloaded"
+  });
+});
+
+// Get resource statistics
+export const getResourceStats = catchAsync(async (req, res, next) => {
+  const [
+    totalResources,
+    totalCategories,
+    totalLanguages,
+    categoryStats,
+    languageStats,
+    typeStats
+  ] = await Promise.all([
+    Resource.countDocuments({ isActive: true }),
+    Resource.distinct('category'),
+    Resource.distinct('resourceLanguage'),
+    Resource.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]),
+    Resource.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: "$resourceLanguage", count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]),
+    Resource.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: "$type", count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ])
+  ]);
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      totalResources,
+      totalCategories: totalCategories.length,
+      totalLanguages: totalLanguages.length,
+      categories: categoryStats,
+      languages: languageStats,
+      types: typeStats
+    }
+  });
+});

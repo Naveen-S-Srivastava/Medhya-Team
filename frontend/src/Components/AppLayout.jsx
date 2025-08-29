@@ -58,7 +58,7 @@ const AppLayout = ({ userRole, user, onLogout, systemStats }) => {
       {/* Footer */}
       <footer className="border-t bg-white mt-12">
         <div className="container mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
-          <p>© 2024 MindSupport Pro. Built for Smart India Hackathon 2024.</p>
+          <p>© 2024 MEDHYA . Built for Smart India Hackathon 2024.</p>
         </div>
       </footer>
     </div>

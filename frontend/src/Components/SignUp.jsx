@@ -552,7 +552,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
           </div>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              {userData ? 'Complete Your Registration' : 'Join MindSupport Pro'}
+              {userData ? 'Complete Your Registration' : 'Join MEDHYA'}
             </h1>
             <p className="text-muted-foreground">
               {userData ? 'Continue with academic details and security setup' : 'Create your secure student account for mental health support'}
@@ -725,7 +725,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            © 2024 MindSupport Pro - Built for Smart India Hackathon
+            © 2024 MEDHYA - Built for Smart India Hackathon
           </p>
         </div>
       </div>

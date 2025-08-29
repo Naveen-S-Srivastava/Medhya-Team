@@ -93,7 +93,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
     {
       name: "Dr. Priya Sharma",
       role: "Dean of Student Affairs, IIT Delhi",
-      text: "MindSupport Pro has revolutionized how we approach student mental health. The early detection system has helped us identify and support struggling students before they reach crisis points.",
+      text: "MEDHYA Pro has revolutionized how we approach student mental health. The early detection system has helped us identify and support struggling students before they reach crisis points.",
       rating: 5
     },
     {

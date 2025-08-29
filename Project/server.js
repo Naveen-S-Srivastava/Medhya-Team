@@ -8,24 +8,27 @@ import appointmentRoutes from "./routes/appointmentRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import crisisRoutes from "./routes/crisisRoutes.js";
+import resourceRoutes from "./routes/resourceRoutes.js";
+import counselorRoutes from "./routes/counselorRoutes.js";
+import clerkRoutes from "./routes/clerkRoutes.js";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("✅ MongoDB connected"))
-.catch(err => console.error("❌ MongoDB error:", err));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB error:", err));
 app.use("/api/users", userRoutes);
 app.use("/api/assessments", assessmentRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/crisis", crisisRoutes);
+app.use("/api/resources", resourceRoutes);
+app.use("/api/counselors", counselorRoutes);
+app.use("/api/clerk", clerkRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

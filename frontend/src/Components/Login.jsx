@@ -143,7 +143,7 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
           </div>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Welcome to MindSupport Pro
+              Welcome to MEDHYA
             </h1>
             <p className="text-muted-foreground">
               Secure access to your mental health support platform
@@ -325,7 +325,7 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
                 </h3>
               </div>
               <p className="text-xs text-muted-foreground">
-                Try out MindSupport Pro without signing up. Explore features
+                Try out MEDHYA without signing up. Explore features
                 with demo data instantly.
               </p>
               <Button
@@ -398,7 +398,7 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
               Emergency Support: <strong>1800-599-0019</strong> (iCALL)
             </p>
             <p className="mt-1">
-              © 2024 MindSupport Pro - Built for Smart India Hackathon
+              © 2024 MEDHYA - Built for Smart India Hackathon
             </p>
           </div>
         </div>
