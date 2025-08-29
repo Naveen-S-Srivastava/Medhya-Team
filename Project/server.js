@@ -6,6 +6,8 @@ import userRoutes from "./routes/userRoutes.js";
 import assessmentRoutes from "./routes/assessmentRoutes.js";
 import appointmentRoutes from "./routes/appointmentRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
+import crisisRoutes from "./routes/crisisRoutes.js";
 
 dotenv.config();
 
@@ -22,6 +24,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/assessments", assessmentRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/activity", activityRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/crisis", crisisRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

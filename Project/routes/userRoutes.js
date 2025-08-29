@@ -1,14 +1,9 @@
 import express from "express";
-import User from "../models/usermodel.js";
+import { registerUser, loginUser, getProfile } from "../controllers/userController.js";
 
 const router = express.Router();
-router.post("/signup", async (req, res) => {
-  try {
-    const newUser = new User(req.body);
-    await newUser.save();
-    res.status(201).json({ message: "User registered successfully", user: newUser });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
+router.post("/signup", registerUser);
+router.post("/login", loginUser);
+router.get("/:id", getProfile);
+
 export default router;

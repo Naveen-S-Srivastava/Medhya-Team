@@ -1,9 +1,10 @@
 {
-  "name": "mindcare",
+  "name": "mindcare-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node Project/server.js",
+    "start": "node Project/server.js"
   },
   "repository": {
     "type": "git",
@@ -18,9 +19,10 @@
   "homepage": "https://github.com/sarafkushagra/MindCare#readme",
   "description": "",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "moongose": "^1.0.0"
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.8.0"
   }
 }
