@@ -14,7 +14,7 @@ import {
     Phone, Mail, MapPin
 } from 'lucide-react';
 
-const Login = ({ onLogin, onShowSignup }) => {
+const Login = ({ onLogin, onShowSignup, onShowUserSignup }) => {
     const [loginType, setLoginType] = useState('student');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -299,7 +299,7 @@ const Login = ({ onLogin, onShowSignup }) => {
     <Button 
       variant="outline" 
       className="w-full border-purple-200 hover:bg-purple-100 hover:text-purple-800 transition"
-      onClick={onShowSignup}
+      onClick={onShowUserSignup}
       type="button"
     >
       <GraduationCap className="w-4 h-4 mr-2" />

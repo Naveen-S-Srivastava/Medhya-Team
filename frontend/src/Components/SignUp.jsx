@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -16,35 +16,35 @@ import {
   FileText, Users, Clock
 } from 'lucide-react';
 
-const Signup = ({ onLogin, onShowLogin }) => {
+const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [formData, setFormData] = useState({
-    // Step 1: Personal Information
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    dateOfBirth: '',
-    gender: '',
+    // Basic User Information (from UserSignup)
+    firstName: userData?.firstName || '',
+    lastName: userData?.lastName || '',
+    email: userData?.email || '',
+    phone: userData?.phone || '',
+    dateOfBirth: userData?.dateOfBirth || '',
+    gender: userData?.gender || '',
     
-    // Step 2: Academic Information
+    // Step 1: Academic Information
     institutionId: '',
     studentId: '',
     course: '',
     year: '',
     department: '',
     
-    // Step 3: Account Security
+    // Step 2: Account Security
     password: '',
     confirmPassword: '',
     securityQuestion: '',
     securityAnswer: '',
     
-    // Step 4: Consent & Privacy
+    // Step 3: Consent & Privacy
     privacyConsent: false,
     dataProcessingConsent: false,
     emergencyContact: '',
@@ -54,6 +54,21 @@ const Signup = ({ onLogin, onShowLogin }) => {
   });
 
   const [errors, setErrors] = useState({});
+
+  // Update form data when userData changes
+  useEffect(() => {
+    if (userData) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        dateOfBirth: userData.dateOfBirth || '',
+        gender: userData.gender || '',
+      }));
+    }
+  }, [userData]);
 
   const institutions = [
     { id: 'iit-delhi', name: 'Indian Institute of Technology, Delhi' },
@@ -97,29 +112,13 @@ const Signup = ({ onLogin, onShowLogin }) => {
     
     switch (step) {
       case 1:
-        if (!formData.firstName) newErrors.firstName = 'First name is required';
-        if (!formData.lastName) newErrors.lastName = 'Last name is required';
-        if (!formData.email) {
-          newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-          newErrors.email = 'Please enter a valid email address';
-        }
-        if (!formData.phone) {
-          newErrors.phone = 'Phone number is required';
-        } else if (!/^\+?[\d\s-()]{10,}$/.test(formData.phone)) {
-          newErrors.phone = 'Please enter a valid phone number';
-        }
-        if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-        break;
-        
-      case 2:
         if (!formData.institutionId) newErrors.institutionId = 'Institution is required';
         if (!formData.studentId) newErrors.studentId = 'Student ID is required';
         if (!formData.course) newErrors.course = 'Course is required';
         if (!formData.year) newErrors.year = 'Academic year is required';
         break;
         
-      case 3:
+      case 2:
         if (!formData.password) {
           newErrors.password = 'Password is required';
         } else if (formData.password.length < 8) {
@@ -134,7 +133,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
         if (!formData.securityAnswer) newErrors.securityAnswer = 'Security answer is required';
         break;
         
-      case 4:
+      case 3:
         if (!formData.privacyConsent) newErrors.privacyConsent = 'Privacy consent is required';
         if (!formData.dataProcessingConsent) newErrors.dataProcessingConsent = 'Data processing consent is required';
         if (!formData.mentalHealthConsent) newErrors.mentalHealthConsent = 'Mental health service consent is required';
@@ -156,7 +155,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      setCurrentStep(prev => Math.min(prev + 1, 3));
     }
   };
 
@@ -165,7 +164,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(4)) return;
+    if (!validateStep(3)) return;
     
     setIsLoading(true);
     
@@ -178,20 +177,18 @@ const Signup = ({ onLogin, onShowLogin }) => {
 
   const getStepIcon = (step) => {
     const icons = {
-      1: <UserPlus className="w-5 h-5" />,
-      2: <GraduationCap className="w-5 h-5" />,
-      3: <Lock className="w-5 h-5" />,
-      4: <Shield className="w-5 h-5" />
+      1: <GraduationCap className="w-5 h-5" />,
+      2: <Lock className="w-5 h-5" />,
+      3: <Shield className="w-5 h-5" />
     };
     return icons[step];
   };
 
   const getStepTitle = (step) => {
     const titles = {
-      1: 'Personal Information',
-      2: 'Academic Details',
-      3: 'Account Security',
-      4: 'Consent & Privacy'
+      1: 'Academic Details',
+      2: 'Account Security',
+      3: 'Consent & Privacy'
     };
     return titles[step];
   };
@@ -199,89 +196,6 @@ const Signup = ({ onLogin, onShowLogin }) => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder="Enter your first name"
-                  className={errors.firstName ? 'border-red-500' : ''}
-                />
-                {errors.firstName && <p className="text-sm text-red-600">{errors.firstName}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder="Enter your last name"
-                  className={errors.lastName ? 'border-red-500' : ''}
-                />
-                {errors.lastName && <p className="text-sm text-red-600">{errors.lastName}</p>}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="student@university.edu"
-                className={errors.email ? 'border-red-500' : ''}
-              />
-              {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number *</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="+91 XXXXX XXXXX"
-                className={errors.phone ? 'border-red-500' : ''}
-              />
-              {errors.phone && <p className="text-sm text-red-600">{errors.phone}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                  className={errors.dateOfBirth ? 'border-red-500' : ''}
-                />
-                {errors.dateOfBirth && <p className="text-sm text-red-600">{errors.dateOfBirth}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
-                <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 2:
         return (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -364,7 +278,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
           </div>
         );
 
-      case 3:
+      case 2:
         return (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -452,7 +366,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
           </div>
         );
 
-      case 4:
+      case 3:
         return (
           <div className="space-y-6">
             <div className="space-y-4">
@@ -582,10 +496,10 @@ const Signup = ({ onLogin, onShowLogin }) => {
           </div>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Join MindSupport Pro
+              {userData ? 'Complete Your Registration' : 'Join MindSupport Pro'}
             </h1>
             <p className="text-muted-foreground">
-              Create your secure student account for mental health support
+              {userData ? 'Continue with academic details and security setup' : 'Create your secure student account for mental health support'}
             </p>
           </div>
         </div>
@@ -595,15 +509,37 @@ const Signup = ({ onLogin, onShowLogin }) => {
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Step {currentStep} of 4</span>
-                <span>{Math.round((currentStep / 4) * 100)}% Complete</span>
+                <span>{userData ? `Step ${currentStep + 1} of 4` : `Step ${currentStep} of 3`}</span>
+                <span>{userData ? Math.round(((currentStep + 1) / 4) * 100) : Math.round((currentStep / 3) * 100)}% Complete</span>
               </div>
-              <Progress value={(currentStep / 4) * 100} className="h-2" />
+              <Progress value={userData ? ((currentStep + 1) / 4) * 100 : (currentStep / 3) * 100} className="h-2" />
             </div>
 
             {/* Step Indicator */}
             <div className="flex justify-between items-center">
-              {[1, 2, 3, 4].map((step) => (
+              {userData ? [1, 2, 3, 4].map((step) => (
+                <div key={step} className="flex items-center">
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
+                    step === 1 ? 'bg-green-600 border-green-600 text-white' :
+                    step <= currentStep + 1 
+                      ? 'bg-blue-600 border-blue-600 text-white' 
+                      : 'border-gray-300 text-gray-400'
+                  }`}>
+                    {step === 1 ? (
+                      <CheckCircle className="w-5 h-5" />
+                    ) : step < currentStep + 1 ? (
+                      <CheckCircle className="w-5 h-5" />
+                    ) : (
+                      getStepIcon(step - 1)
+                    )}
+                  </div>
+                  {step < 4 && (
+                    <div className={`w-12 h-0.5 mx-2 ${
+                      step < currentStep + 1 ? 'bg-blue-600' : 'bg-gray-300'
+                    }`} />
+                  )}
+                </div>
+              )) : [1, 2, 3].map((step) => (
                 <div key={step} className="flex items-center">
                   <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
                     step <= currentStep 
@@ -616,7 +552,7 @@ const Signup = ({ onLogin, onShowLogin }) => {
                       getStepIcon(step)
                     )}
                   </div>
-                  {step < 4 && (
+                  {step < 3 && (
                     <div className={`w-12 h-0.5 mx-2 ${
                       step < currentStep ? 'bg-blue-600' : 'bg-gray-300'
                     }`} />
@@ -631,10 +567,19 @@ const Signup = ({ onLogin, onShowLogin }) => {
                 {getStepTitle(currentStep)}
               </CardTitle>
               <CardDescription className="mt-2">
-                {currentStep === 1 && 'Let\'s start with your basic information'}
-                {currentStep === 2 && 'Tell us about your academic background'}
-                {currentStep === 3 && 'Secure your account with a strong password'}
-                {currentStep === 4 && 'Review and accept our privacy agreements'}
+                {userData ? (
+                  <>
+                    {currentStep === 1 && 'Tell us about your academic background'}
+                    {currentStep === 2 && 'Secure your account with a strong password'}
+                    {currentStep === 3 && 'Review and accept our privacy agreements'}
+                  </>
+                ) : (
+                  <>
+                    {currentStep === 1 && 'Tell us about your academic background'}
+                    {currentStep === 2 && 'Secure your account with a strong password'}
+                    {currentStep === 3 && 'Review and accept our privacy agreements'}
+                  </>
+                )}
               </CardDescription>
             </div>
           </CardHeader>
@@ -645,16 +590,21 @@ const Signup = ({ onLogin, onShowLogin }) => {
             {/* Navigation Buttons */}
             <div className="flex justify-between pt-6">
               <div>
-                {currentStep > 1 && (
+                {userData && currentStep === 1 ? (
+                  <Button variant="outline" onClick={onBackToUserSignup}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Basic Info
+                  </Button>
+                ) : currentStep > 1 ? (
                   <Button variant="outline" onClick={prevStep}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Previous
                   </Button>
-                )}
+                ) : null}
               </div>
               
               <div className="flex gap-2">
-                {currentStep < 4 ? (
+                {currentStep < 3 ? (
                   <Button onClick={nextStep} className="bg-gradient-to-r from-blue-600 to-purple-600">
                     Next
                     <ArrowRight className="w-4 h-4 ml-2" />

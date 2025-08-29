@@ -19,14 +19,16 @@ import LandingPage from './Components/LandingPage.jsx';
 import InnovationShowcase from './Components/InnovationShowcase.jsx';
 import Login from './Components/Login.jsx';
 import Signup from './Components/SignUp.jsx';
+import UserSignup from './Components/UserSignup.jsx';
 import CrisisManagement from './Components/CrisisManagement.jsx';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('landing'); // 'landing', 'login', 'signup', 'app'
+  const [currentView, setCurrentView] = useState('landing'); // 'landing', 'login', 'signup', 'userSignup', 'app'
   const [activeTab, setActiveTab] = useState('dashboard');
   const [userRole, setUserRole] = useState('guest');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
 
   const studentStats = {
     totalSessions: 47,
@@ -68,8 +70,21 @@ export default function App() {
     setCurrentView('signup');
   };
 
+  const showUserSignup = () => {
+    setCurrentView('userSignup');
+  };
+
   const showLanding = () => {
     setCurrentView('landing');
+  };
+
+  const handleUserSignupComplete = (data) => {
+    setUserData(data);
+    setCurrentView('signup');
+  };
+
+  const handleBackToUserSignup = () => {
+    setCurrentView('userSignup');
   };
 
   // Landing Page View
@@ -83,6 +98,18 @@ export default function App() {
       <Login
         onLogin={handleLogin}
         onShowSignup={showSignup}
+        onShowUserSignup={showUserSignup}
+        onBack={showLanding}
+      />
+    );
+  }
+
+  // UserSignup Page View
+  if (currentView === 'userSignup') {
+    return (
+      <UserSignup
+        onNext={handleUserSignupComplete}
+        onShowLogin={showLogin}
         onBack={showLanding}
       />
     );
@@ -94,6 +121,8 @@ export default function App() {
       <Signup
         onLogin={handleLogin}
         onShowLogin={showLogin}
+        userData={userData}
+        onBackToUserSignup={handleBackToUserSignup}
         onBack={showLanding}
       />
     );
