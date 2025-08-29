@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Alert, AlertDescription } from '../ui/Alert';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { BarChart3, Users, MessageCircle, Calendar, AlertTriangle, TrendingUp, Download, Filter, Eye, Shield } from 'lucide-react';
+import ScoresChart from './ScoresChart';
+import { runAssessmentTests } from '../utils/testAssessmentData';
 
 const AdminDashboard = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
@@ -120,6 +122,10 @@ const AdminDashboard = () => {
               <SelectItem value="1y">Last year</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={runAssessmentTests}>
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Test Assessment Data
+          </Button>
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Export Report
@@ -221,25 +227,10 @@ const AdminDashboard = () => {
 
         <TabsContent value="usage" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Weekly Usage Patterns</CardTitle>
-                <CardDescription>System usage across different features</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={usageData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="chatSessions" fill="#8884d8" name="Chat Sessions" />
-                    <Bar dataKey="appointments" fill="#82ca9d" name="Appointments" />
-                    <Bar dataKey="forumPosts" fill="#ffc658" name="Forum Posts" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <ScoresChart 
+              timeRange="7d" 
+              title="Weekly Assessment Patterns" 
+            />
 
             <Card>
               <CardHeader>

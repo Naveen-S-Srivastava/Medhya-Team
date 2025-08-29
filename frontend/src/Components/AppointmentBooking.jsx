@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -8,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Calendar } from '../ui/Calendar';
 import { Badge } from '../ui/Badge';
 import { Alert, AlertDescription } from '../ui/Alert';
-import { Calendar as CalendarIcon, Clock, User, MapPin, Phone, Video, Shield } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, MapPin, Phone, Video, Shield, Loader2, CheckCircle } from 'lucide-react';
+import { appointmentAPI } from '../services/api';
+import { useApi, useOptimisticUpdate } from '../hooks/useApi';
 
 const AppointmentBooking = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -18,6 +20,21 @@ const AppointmentBooking = () => {
   const [reason, setReason] = useState('');
   const [urgencyLevel, setUrgencyLevel] = useState('routine');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Mock student ID - in real app this would come from user context
+  const studentId = 'demo-student-123';
+
+  // Fetch existing appointments for the student
+  const { data: existingAppointments, loading: appointmentsLoading, refetch: refetchAppointments } = useApi(
+    () => appointmentAPI.getStudentAppointments(studentId),
+    []
+  );
+
+  // Optimistic updates for appointment creation
+  const { updateOptimistically } = useOptimisticUpdate(
+    (appointmentData) => appointmentAPI.createAppointment(appointmentData)
+  );
 
   const counselors = [
     {
@@ -60,23 +77,60 @@ const AppointmentBooking = () => {
     { time: '05:00 PM', available: true }
   ];
 
-  const handleBookAppointment = () => {
+  const handleBookAppointment = async () => {
     if (!selectedDate || !selectedCounselor || !selectedTime) return;
     
-    // Simulate booking process
-    setShowSuccess(true);
+    setIsSubmitting(true);
     
-    // Reset form after success
-    setTimeout(() => {
-      setShowSuccess(false);
-      setSelectedCounselor('');
-      setSelectedTime('');
-      setReason('');
-      setUrgencyLevel('routine');
-    }, 3000);
+    try {
+      const appointmentData = {
+        student: studentId,
+        counselor: selectedCounselor,
+        institutionId: 'demo-institution-123', // Mock institution ID
+        appointmentType,
+        date: selectedDate.toISOString(),
+        timeSlot: selectedTime,
+        urgencyLevel,
+        reason: reason.trim() || undefined,
+        status: 'pending'
+      };
+
+      await updateOptimistically(appointmentData, (prevData) => {
+        // Optimistic update - add new appointment to the list
+        return prevData ? [...prevData, { ...appointmentData, _id: 'temp-id', bookedAt: new Date() }] : [appointmentData];
+      });
+
+      setShowSuccess(true);
+      
+      // Reset form after success
+      setTimeout(() => {
+        setShowSuccess(false);
+        setSelectedCounselor('');
+        setSelectedTime('');
+        setReason('');
+        setUrgencyLevel('routine');
+        refetchAppointments(); // Refresh the appointments list
+      }, 3000);
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      // Show error message to user
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const selectedCounselorData = counselors.find(c => c.id === selectedCounselor);
+
+  // Check if selected time slot conflicts with existing appointments
+  const isTimeSlotConflict = (time) => {
+    if (!existingAppointments) return false;
+    
+    const selectedDateStr = selectedDate.toDateString();
+    return existingAppointments.some(appointment => {
+      const appointmentDate = new Date(appointment.date).toDateString();
+      return appointmentDate === selectedDateStr && appointment.timeSlot === time;
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -94,12 +148,62 @@ const AppointmentBooking = () => {
 
       {showSuccess && (
         <Alert className="border-green-200 bg-green-50">
-          <Shield className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
             Your appointment has been booked successfully! You'll receive a confidential confirmation email shortly. 
             Remember, all sessions are completely private and secure.
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Existing Appointments */}
+      {existingAppointments && existingAppointments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5" />
+              Your Upcoming Appointments
+            </CardTitle>
+            <CardDescription>Manage your scheduled sessions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {existingAppointments
+                .filter(appointment => new Date(appointment.date) >= new Date())
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .slice(0, 3)
+                .map((appointment) => (
+                  <div key={appointment._id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {appointment.appointmentType === 'oncampus' ? (
+                          <MapPin className="w-4 h-4 text-blue-600" />
+                        ) : (
+                          <Video className="w-4 h-4 text-green-600" />
+                        )}
+                        <span className="font-medium">
+                          {new Date(appointment.date).toLocaleDateString()} at {appointment.timeSlot}
+                        </span>
+                      </div>
+                      <Badge variant={
+                        appointment.urgencyLevel === 'crisis' ? 'destructive' : 
+                        appointment.urgencyLevel === 'urgent' ? 'default' : 'secondary'
+                      }>
+                        {appointment.urgencyLevel.charAt(0).toUpperCase() + appointment.urgencyLevel.slice(1)}
+                      </Badge>
+                    </div>
+                    <Badge variant={
+                      appointment.status === 'confirmed' ? 'default' :
+                      appointment.status === 'pending' ? 'secondary' :
+                      appointment.status === 'cancelled' ? 'destructive' : 'outline'
+                    }>
+                      {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                    </Badge>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -146,19 +250,25 @@ const AppointmentBooking = () => {
             <div>
               <Label>Available Time Slots</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
-                {timeSlots.map((slot) => (
-                  <Button
-                    key={slot.time}
-                    variant={selectedTime === slot.time ? "default" : "outline"}
-                    size="sm"
-                    disabled={!slot.available}
-                    onClick={() => setSelectedTime(slot.time)}
-                    className="justify-start"
-                  >
-                    <Clock className="w-4 h-4 mr-2" />
-                    {slot.time}
-                  </Button>
-                ))}
+                {timeSlots.map((slot) => {
+                  const isConflict = isTimeSlotConflict(slot.time);
+                  const isAvailable = slot.available && !isConflict;
+                  
+                  return (
+                    <Button
+                      key={slot.time}
+                      variant={selectedTime === slot.time ? "default" : "outline"}
+                      size="sm"
+                      disabled={!isAvailable}
+                      onClick={() => setSelectedTime(slot.time)}
+                      className="justify-start"
+                    >
+                      <Clock className="w-4 h-4 mr-2" />
+                      {slot.time}
+                      {isConflict && <span className="ml-1 text-xs text-red-600">(Booked)</span>}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
@@ -287,10 +397,17 @@ const AppointmentBooking = () => {
             </Alert>
             <Button 
               onClick={handleBookAppointment}
-              disabled={!selectedDate || !selectedCounselor || !selectedTime}
+              disabled={!selectedDate || !selectedCounselor || !selectedTime || isSubmitting}
               className="min-w-[120px]"
             >
-              Book Appointment
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Booking...
+                </>
+              ) : (
+                'Book Appointment'
+              )}
             </Button>
           </div>
         </CardContent>
