@@ -1,9 +1,9 @@
-const User = require("../schema/user");
-const AppError = require("../utils/appError");
-const catchAsync = require("../utils/catchAsync");
-const sendEmail = require("../utils/email");
-const generateOtp = require("../utils/generateOtp");
-const jwt = require("jsonwebtoken");
+import User from "../models/usermodel.js";
+import AppError from "../utils/appError.js";
+import catchAsync from "../utils/catchAsync.js";
+import sendEmail from "../utils/email.js";
+import generateOtp from "../utils/generateOtp.js";
+import jwt from "jsonwebtoken";
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -41,7 +41,7 @@ const createSendToken = (user, statusCode, res, message) => {
   });
 };
 
-exports.signup = catchAsync(async (req, res, next) => {
+export const signup = catchAsync(async (req, res, next) => {
   const { email, password, passwordConfirm, username } = req.body;
 
   const existingUser = await User.findOne({ email });
@@ -97,7 +97,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.verifyAccount = catchAsync(async (req, res, next) => {
+export const verifyAccount = catchAsync(async (req, res, next) => {
   const { otp } = req.body;
 
   if (!otp) {
@@ -130,7 +130,7 @@ exports.verifyAccount = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.resentOTP = catchAsync(async (req, res, next) => {
+export const resentOTP = catchAsync(async (req, res, next) => {
   const { email } = req.user;
 
   if (!email) {
@@ -193,7 +193,7 @@ exports.resentOTP = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.login = catchAsync(async (req, res, next) => {
+export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -222,7 +222,7 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res, "Login Successfull");
 });
 
-exports.logout = catchAsync(async (req, res, next) => {
+export const logout = catchAsync(async (req, res, next) => {
   res.cookie("token", "loggedout", {
     expires: new Date(Date.now() + 1000),
     httpOnly: true,
@@ -235,7 +235,7 @@ exports.logout = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.forgetPassword = catchAsync(async (req, res, next) => {
+export const forgetPassword = catchAsync(async (req, res, next) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
 
@@ -289,7 +289,7 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.resetPassword = catchAsync(async (req, res, next) => {
+export const resetPassword = catchAsync(async (req, res, next) => {
   const { email, otp, password, passwordConfirm } = req.body;
 
   const user = await User.findOne({

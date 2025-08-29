@@ -8,7 +8,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-module.exports = async function sendQRMail(email, qrImage, eventTitle) {
+export default async function sendQRMail(email, qrImage, eventTitle) {
   await transporter.sendMail({
     from: "Glubs <no-reply@glubs.com>",
     to: email,

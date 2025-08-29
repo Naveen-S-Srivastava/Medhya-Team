@@ -1,9 +1,9 @@
-const jwt = require("jsonwebtoken");
-const catchAsync = require("../utils/catchAsync");
-const AppError = require("../utils/appError");
-const User = require("../schema/user");
+import jwt from "jsonwebtoken";
+import catchAsync from "../utils/catchAsync.js";
+import AppError from "../utils/appError.js";
+import User from "../models/usermodel.js";
 
-exports.isAuthenticated = catchAsync(async (req, res, next) => {
+export const isAuthenticated = catchAsync(async (req, res, next) => {
  try{ const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
 
   if (!token) {
@@ -35,7 +35,7 @@ exports.isAuthenticated = catchAsync(async (req, res, next) => {
 });
 
 
-exports.restrictTo = (...roles) => {
+export const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return next(

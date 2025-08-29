@@ -113,6 +113,8 @@
 
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import validator from "validator";
+
 
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true, trim: true },

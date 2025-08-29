@@ -1,8 +1,8 @@
 import express from "express";
 import { registerUser, loginUser, getProfile } from "../controllers/userController.js";
-const { signup, verifyAccount, resentOTP, login, logout, forgetPassword, resetPassword } = require('../controllers/auth');
-const { isAuthenticated, restrictTo } = require('../middlewares/auth');
-const catchAsync = require('../utils/catchAsync');
+import { signup, verifyAccount, resentOTP, login, logout, forgetPassword, resetPassword } from '../controllers/auth.js';
+import { isAuthenticated, restrictTo } from '../middlewares/auth.js';
+import catchAsync from '../utils/catchAsync.js';
 
 const router = express.Router();
 // auths routes
