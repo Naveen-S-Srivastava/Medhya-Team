@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const crisisAlertSchema = new mongoose.Schema({
   alertId: { type: String, required: true, unique: true }, 
-  severity: { type: String, enum: ["critical", "high", "medium"], required: true },
+  severity: { type: String, enum: ["critical", "high", "medium" , "low"], required: true },
   type: { type: String, required: true }, 
   studentId: { type: String, required: true },
   timestamp: { type: Date, default: Date.now },
