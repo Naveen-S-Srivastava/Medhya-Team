@@ -35,8 +35,9 @@ import {
   AlertTriangle,
   Phone,
   Mail,
-  MapPin,
+  MapPin
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
   const navigate = useNavigate();
@@ -132,10 +133,13 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
+          
           <div className="flex items-center justify-center">
+            <Link to="/">
             <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg">
               <Heart className="w-8 h-8 text-white" />
             </div>
+            </Link>
           </div>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
