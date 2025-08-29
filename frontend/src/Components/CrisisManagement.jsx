@@ -1,71 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Alert, AlertDescription } from '../ui/Alert';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Input } from '../ui/Input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
 import { 
   AlertTriangle, Shield, Phone, Clock, Users, Brain, Heart, 
   CheckCircle, X, ArrowRight, TrendingUp, MapPin, Bell, Eye,
-  Activity, Zap, Target, MessageCircle, Calendar, UserCheck
+  Activity, Zap, Target, MessageCircle, Calendar, UserCheck,
+  Search, Filter, RefreshCw, Loader2
 } from 'lucide-react';
+import { crisisAPI } from '../services/api';
+import { useApi, useSearchAndFilter, useOptimisticUpdate } from '../hooks/useApi';
+import { testAPI, testCreateCrisisAlert } from '../utils/testApi';
 
 const CrisisManagement = () => {
   const [selectedAlert, setSelectedAlert] = useState(null);
-  const [filterSeverity, setFilterSeverity] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  
+  // Search and filter functionality
+  const {
+    searchTerm,
+    setSearchTerm,
+    filters,
+    updateFilter,
+    clearFilters,
+    getCombinedFilters,
+  } = useSearchAndFilter({
+    status: 'all',
+    severity: 'all',
+  });
 
-  const crisisAlerts = [
-    {
-      id: 'CR-001',
-      severity: 'critical',
-      type: 'suicide_risk',
-      studentId: 'ST-7823',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
-      source: 'ai_chat',
-      status: 'active',
-      aiConfidence: 97.8,
-      keywordsTrigger: ['end it all', 'no way out', 'worthless'],
-      location: 'Hostel Room 204, Block A',
-      previousAlerts: 0
+  // API data fetching
+  const { data: crisisAlerts, loading, error, refetch } = useApi(
+    () => {
+      const filters = getCombinedFilters();
+      // Remove 'all' values from API filters
+      const apiFilters = {};
+      if (filters.status && filters.status !== 'all') apiFilters.status = filters.status;
+      if (filters.severity && filters.severity !== 'all') apiFilters.severity = filters.severity;
+      return crisisAPI.getCrisisAlerts(apiFilters);
     },
-    {
-      id: 'CR-002',
-      severity: 'high',
-      type: 'self_harm',
-      studentId: 'ST-4156',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      source: 'forum_post',
-      status: 'in_progress',
-      aiConfidence: 89.2,
-      keywordsTrigger: ['hurt myself', 'cutting', 'pain'],
-      previousAlerts: 2
-    },
-    {
-      id: 'CR-003',
-      severity: 'high',
-      type: 'severe_depression',
-      studentId: 'ST-9341',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-      source: 'mood_tracker',
-      status: 'resolved',
-      aiConfidence: 85.7,
-      keywordsTrigger: ['empty', 'hopeless', 'dark thoughts'],
-      previousAlerts: 1
-    },
-    {
-      id: 'CR-004',
-      severity: 'medium',
-      type: 'panic_attack',
-      studentId: 'ST-2789',
-      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-      source: 'ai_chat',
-      status: 'resolved',
-      aiConfidence: 92.4,
-      keywordsTrigger: ['can\'t breathe', 'heart racing', 'dying'],
-      previousAlerts: 0
-    }
-  ];
+    [filters.status, filters.severity] // Removed searchTerm to prevent excessive re-renders
+  );
+
+  // Optimistic updates for status changes
+  const { updateOptimistically } = useOptimisticUpdate(
+    ({ alertId, status }) => crisisAPI.updateCrisisStatus(alertId, status)
+  );
+
+  // Manual refresh only - removed automatic refresh to prevent excessive API calls
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     refetch();
+  //   }, 60000);
+  //   return () => clearInterval(interval);
+  // }, [refetch]);
 
   const responseProtocols = {
     critical: {
@@ -106,21 +100,36 @@ const CrisisManagement = () => {
         'Peer support group suggestion',
         'Wellness activity recommendations'
       ]
+    },
+    low: {
+      color: 'bg-blue-500',
+      textColor: 'text-blue-900',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      responseTime: '< 24 hours',
+      actions: [
+        'Automated wellness check',
+        'Resource recommendations',
+        'Follow-up scheduling',
+        'Preventive care suggestions'
+      ]
     }
   };
 
-  const statsData = {
-    totalAlerts: 127,
-    activeAlerts: 3,
-    averageResponseTime: '4.2 minutes',
+  // Calculate stats from real data (optimized)
+  const statsData = React.useMemo(() => ({
+    totalAlerts: crisisAlerts?.length || 0,
+    activeAlerts: crisisAlerts?.filter(alert => alert.status === 'active').length || 0,
+    averageResponseTime: '4.2 minutes', // This would come from backend analytics
     successfulInterventions: 98.7,
     counselorsOnDuty: 12,
     emergencyContacts: 8
-  };
+  }), [crisisAlerts]);
 
   const getTimeAgo = (timestamp) => {
     const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - timestamp.getTime()) / (1000 * 60));
+    const alertTime = new Date(timestamp);
+    const diffInMinutes = Math.floor((now.getTime() - alertTime.getTime()) / (1000 * 60));
     
     if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
     const diffInHours = Math.floor(diffInMinutes / 60);
@@ -128,10 +137,74 @@ const CrisisManagement = () => {
     return `${Math.floor(diffInHours / 24)} days ago`;
   };
 
-  const handleAlertAction = (alertId, action) => {
-    console.log(`${action} for alert ${alertId}`);
-    // In real implementation, this would trigger actual interventions
+  const handleAlertAction = async (alertId, action) => {
+    try {
+      if (action === 'status_update') {
+        const newStatus = 'in_progress'; // This could be dynamic based on action
+        await updateOptimistically(
+          { alertId, status: newStatus },
+          (prevData) => prevData?.map(alert => 
+            alert._id === alertId ? { ...alert, status: newStatus } : alert
+          )
+        );
+      }
+      
+      console.log(`${action} for alert ${alertId}`);
+      // In real implementation, this would trigger actual interventions
+    } catch (error) {
+      console.error('Error updating alert:', error);
+    }
   };
+
+  const handleStatusUpdate = async (alertId, newStatus) => {
+    try {
+      await updateOptimistically(
+        { alertId, status: newStatus },
+        (prevData) => prevData?.map(alert => 
+          alert._id === alertId ? { ...alert, status: newStatus } : alert
+        )
+      );
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
+  // Filter alerts based on search term (optimized)
+  const filteredAlerts = React.useMemo(() => {
+    if (!crisisAlerts) return [];
+    
+    if (!searchTerm) return crisisAlerts;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return crisisAlerts.filter(alert => 
+      alert.studentId?.toLowerCase().includes(searchLower) ||
+      alert.type?.toLowerCase().includes(searchLower) ||
+      alert.source?.toLowerCase().includes(searchLower) ||
+      alert.keywordsTrigger?.some(keyword => 
+        keyword.toLowerCase().includes(searchLower)
+      )
+    );
+  }, [crisisAlerts, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAlerts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedAlerts = filteredAlerts.slice(startIndex, startIndex + itemsPerPage);
+
+  if (error) {
+    return (
+      <Alert className="border-red-200 bg-red-50">
+        <AlertTriangle className="h-4 w-4 text-red-600" />
+        <AlertDescription className="text-red-800">
+          Error loading crisis alerts: {error}
+          <Button variant="outline" size="sm" onClick={refetch} className="ml-2">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -196,109 +269,260 @@ const CrisisManagement = () => {
         </TabsList>
 
         <TabsContent value="alerts" className="space-y-6">
+          {/* Search and Filter Controls */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Input
+                      placeholder="Search by student ID, type, source, or keywords..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Select value={filters.status} onValueChange={(value) => updateFilter('status', value)}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Filter by Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filters.severity} onValueChange={(value) => updateFilter('severity', value)}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Filter by Severity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Severity</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" onClick={clearFilters}>
+                    <Filter className="w-4 h-4 mr-2" />
+                    Clear
+                  </Button>
+                  <Button variant="outline" onClick={refetch} disabled={loading}>
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                    )}
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Active Crisis Alerts */}
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Crisis Alerts ({crisisAlerts.length})</h3>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    <Bell className="w-4 h-4 mr-2" />
-                    Alert Settings
-                  </Button>
-                  <Button size="sm">
-                    <Phone className="w-4 h-4 mr-2" />
-                    Emergency Contacts
-                  </Button>
-                </div>
+                <h3 className="text-lg font-semibold">
+                  Crisis Alerts ({filteredAlerts.length})
+                  {loading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                </h3>
+                                 <div className="flex gap-2">
+                   <Button size="sm" variant="outline" onClick={testAPI} disabled={loading}>
+                     <Bell className="w-4 h-4 mr-2" />
+                     Test API
+                   </Button>
+                   <Button size="sm" variant="outline" onClick={testCreateCrisisAlert} disabled={loading}>
+                     <AlertTriangle className="w-4 h-4 mr-2" />
+                     Create Test Alert
+                   </Button>
+                   <Button size="sm" variant="outline" onClick={() => {
+                     console.log('🔍 Current state:', { crisisAlerts, loading, error });
+                     console.log('📊 Stats data:', statsData);
+                   }}>
+                     <Eye className="w-4 h-4 mr-2" />
+                     Debug State
+                   </Button>
+                   <Button size="sm" variant="outline" onClick={refetch} disabled={loading}>
+                     {loading ? (
+                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                     ) : (
+                       <RefreshCw className="w-4 h-4 mr-2" />
+                     )}
+                     Refresh
+                   </Button>
+                   <Button size="sm">
+                     <Phone className="w-4 h-4 mr-2" />
+                     Emergency Contacts
+                   </Button>
+                 </div>
               </div>
 
-              {crisisAlerts.map((alert) => {
-                const protocol = responseProtocols[alert.severity];
-                return (
-                  <Card 
-                    key={alert.id} 
-                    className={`${protocol.borderColor} cursor-pointer transition-all hover:shadow-md ${
-                      selectedAlert?.id === alert.id ? 'ring-2 ring-blue-500' : ''
-                    }`}
-                    onClick={() => setSelectedAlert(alert)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${protocol.color}`}></div>
-                            <Badge className={`${protocol.bgColor} ${protocol.textColor} border-0`}>
-                              {alert.severity.toUpperCase()}
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                  <span className="ml-2">Loading crisis alerts...</span>
+                </div>
+              ) : paginatedAlerts.length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">
+                      {searchTerm || Object.values(filters).some(f => f && f !== 'all') 
+                        ? 'No alerts match your search criteria' 
+                        : 'No crisis alerts found'}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  {paginatedAlerts.map((alert) => {
+                    const protocol = responseProtocols[alert.severity] || responseProtocols.medium;
+                    return (
+                      <Card 
+                        key={alert._id || alert.id} 
+                        className={`${protocol.borderColor} cursor-pointer transition-all hover:shadow-md ${
+                          selectedAlert?._id === alert._id ? 'ring-2 ring-blue-500' : ''
+                        }`}
+                        onClick={() => setSelectedAlert(alert)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-3 h-3 rounded-full ${protocol.color}`}></div>
+                                <Badge className={`${protocol.bgColor} ${protocol.textColor} border-0`}>
+                                  {alert.severity?.toUpperCase()}
+                                </Badge>
+                              </div>
+                              <Badge variant="outline">
+                                {alert.type?.replace('_', ' ').toUpperCase()}
+                              </Badge>
+                            </div>
+                            <Badge 
+                              variant={alert.status === 'active' ? 'destructive' : 
+                                      alert.status === 'in_progress' ? 'default' : 'secondary'}
+                            >
+                              {alert.status?.replace('_', ' ')}
                             </Badge>
                           </div>
-                          <Badge variant="outline">
-                            {alert.type.replace('_', ' ').toUpperCase()}
-                          </Badge>
-                        </div>
-                        <Badge 
-                          variant={alert.status === 'active' ? 'destructive' : 
-                                  alert.status === 'in_progress' ? 'default' : 'secondary'}
+
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="font-medium">Student ID: {alert.studentId}</span>
+                              <span className="text-muted-foreground">{getTimeAgo(alert.timestamp || alert.createdAt)}</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>Source: {alert.source?.replace('_', ' ')}</span>
+                              <span>AI Confidence: {alert.aiConfidence}%</span>
+                              {alert.previousAlerts > 0 && (
+                                <span className="text-orange-600">Previous alerts: {alert.previousAlerts}</span>
+                              )}
+                            </div>
+
+                            {alert.location && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <MapPin className="w-4 h-4 text-blue-600" />
+                                <span>{alert.location}</span>
+                              </div>
+                            )}
+
+                            {alert.keywordsTrigger && alert.keywordsTrigger.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {alert.keywordsTrigger.slice(0, 3).map((keyword, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs">
+                                    {keyword}
+                                  </Badge>
+                                ))}
+                                {alert.keywordsTrigger.length > 3 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{alert.keywordsTrigger.length - 3} more
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+
+                                                         {alert.status === 'active' && (
+                               <div className="flex gap-2 mt-3">
+                                 <Button 
+                                   size="sm" 
+                                   className="bg-red-600 hover:bg-red-700"
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleAlertAction(alert._id || alert.id, 'emergency_response');
+                                   }}
+                                 >
+                                   <Phone className="w-4 h-4 mr-2" />
+                                   Emergency Response
+                                 </Button>
+                                 <Button 
+                                   size="sm" 
+                                   variant="outline"
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleStatusUpdate(alert._id || alert.id, 'in_progress');
+                                   }}
+                                 >
+                                   <MessageCircle className="w-4 h-4 mr-2" />
+                                   Start Response
+                                 </Button>
+                                 <Button 
+                                   size="sm" 
+                                   variant="outline"
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleAlertAction(alert._id || alert.id, 'assign_counselor');
+                                   }}
+                                 >
+                                   <UserCheck className="w-4 h-4 mr-2" />
+                                   Assign Counselor
+                                 </Button>
+                               </div>
+                             )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredAlerts.length)} of {filteredAlerts.length} alerts
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
                         >
-                          {alert.status.replace('_', ' ')}
-                        </Badge>
+                          Previous
+                        </Button>
+                        <span className="flex items-center px-3 text-sm">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                        </Button>
                       </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="font-medium">Student ID: {alert.studentId}</span>
-                          <span className="text-muted-foreground">{getTimeAgo(alert.timestamp)}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>Source: {alert.source.replace('_', ' ')}</span>
-                          <span>AI Confidence: {alert.aiConfidence}%</span>
-                          {alert.previousAlerts > 0 && (
-                            <span className="text-orange-600">Previous alerts: {alert.previousAlerts}</span>
-                          )}
-                        </div>
-
-                        {alert.location && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <MapPin className="w-4 h-4 text-blue-600" />
-                            <span>{alert.location}</span>
-                          </div>
-                        )}
-
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {alert.keywordsTrigger.slice(0, 3).map((keyword, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {keyword}
-                            </Badge>
-                          ))}
-                          {alert.keywordsTrigger.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{alert.keywordsTrigger.length - 3} more
-                            </Badge>
-                          )}
-                        </div>
-
-                        {alert.status === 'active' && (
-                          <div className="flex gap-2 mt-3">
-                            <Button size="sm" className="bg-red-600 hover:bg-red-700">
-                              <Phone className="w-4 h-4 mr-2" />
-                              Emergency Response
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <MessageCircle className="w-4 h-4 mr-2" />
-                              Contact Student
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <UserCheck className="w-4 h-4 mr-2" />
-                              Assign Counselor
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Alert Details Panel */}
@@ -321,7 +545,7 @@ const CrisisManagement = () => {
                     <div>
                       <h4 className="font-medium mb-2">Response Protocol</h4>
                       <div className="space-y-2">
-                        {responseProtocols[selectedAlert.severity].actions.map((action, index) => (
+                        {responseProtocols[selectedAlert.severity]?.actions.map((action, index) => (
                           <div key={index} className="flex items-center gap-2 text-sm">
                             <CheckCircle className="w-4 h-4 text-green-600" />
                             <span>{action}</span>
@@ -335,12 +559,12 @@ const CrisisManagement = () => {
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span>Alert triggered</span>
-                          <span>{getTimeAgo(selectedAlert.timestamp)}</span>
+                          <span>{getTimeAgo(selectedAlert.timestamp || selectedAlert.createdAt)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Target response</span>
                           <span className="font-medium text-red-600">
-                            {responseProtocols[selectedAlert.severity].responseTime}
+                            {responseProtocols[selectedAlert.severity]?.responseTime}
                           </span>
                         </div>
                       </div>
@@ -364,7 +588,7 @@ const CrisisManagement = () => {
                       <div className="space-y-2">
                         <Button 
                           className="w-full bg-red-600 hover:bg-red-700"
-                          onClick={() => handleAlertAction(selectedAlert.id, 'emergency_response')}
+                          onClick={() => handleAlertAction(selectedAlert._id || selectedAlert.id, 'emergency_response')}
                         >
                           <AlertTriangle className="w-4 h-4 mr-2" />
                           Initiate Emergency Response
@@ -372,10 +596,10 @@ const CrisisManagement = () => {
                         <Button 
                           variant="outline" 
                           className="w-full"
-                          onClick={() => handleAlertAction(selectedAlert.id, 'escalate')}
+                          onClick={() => handleStatusUpdate(selectedAlert._id || selectedAlert.id, 'in_progress')}
                         >
                           <ArrowRight className="w-4 h-4 mr-2" />
-                          Escalate to Senior Counselor
+                          Start Response Process
                         </Button>
                       </div>
                     )}

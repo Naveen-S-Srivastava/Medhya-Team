@@ -17,6 +17,8 @@ import PeerSupport from './Components/PeerSupport.jsx';
 import CrisisManagement from './Components/CrisisManagement.jsx';
 import InnovationShowcase from './Components/InnovationShowcase.jsx';
 import ContactChoice from './Components/ContactChoice.jsx';
+import ErrorBoundary from './Components/ErrorBoundary.jsx';
+
 
 // Import Wellness component
 import Wellness from './Components/Wellness.jsx';
@@ -92,7 +94,7 @@ export default function App() {
 
           {/* Admin Routes */}
           <Route path="/admin" element={<ProtectedRoute userRole={userRole} requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/crisis" element={<ProtectedRoute userRole={userRole} requiredRole="admin"><CrisisManagement /></ProtectedRoute>} />
+          <Route path="/crisis" element={<ProtectedRoute userRole={userRole} requiredRole="admin"><ErrorBoundary><CrisisManagement /></ErrorBoundary></ProtectedRoute>} />
           <Route path="/innovation" element={<ProtectedRoute userRole={userRole} requiredRole="admin"><InnovationShowcase /></ProtectedRoute>} />
           <Route path="/institutions" element={<ProtectedRoute userRole={userRole} requiredRole="admin"><Institutions /></ProtectedRoute>} />
         </Route>
