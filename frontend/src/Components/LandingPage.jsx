@@ -311,10 +311,10 @@ const LandingPage = ({ onLogin, systemStats }) => {
         </section>
 
         {/* Student Challenges & Solutions */}
-        <section className="space-y-12 px-4 max-w-7xl mx-auto">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl font-bold text-gray-900">We Understand What Students Face</h2>
-            <p className="text-lg text-gray-600 max-w-4xl mx-auto">
+        <section className="space-y-16 px-4 max-w-7xl mx-auto">
+          <div className="text-center space-y-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">We Understand What Students Face</h2>
+            <p className="text-xl text-slate-600 max-w-4xl mx-auto font-light">
               Every challenge you're experiencing is valid. Our platform is built around the real struggles 
               Indian students face every day, offering solutions that actually work.
             </p>
@@ -322,14 +322,16 @@ const LandingPage = ({ onLogin, systemStats }) => {
 
           <div className="grid gap-8 md:grid-cols-2">
             {studentChallenges.map((item, index) => (
-              <Card key={index} className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-blue-400">
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    {item.icon}
+              <Card key={index} className="p-8 hover:shadow-lg transition-all duration-300 border-l-4 border-sky-400 rounded-2xl bg-white/80 backdrop-blur-sm">
+                <div className="space-y-6">
+                  <div className="flex items-start gap-6">
+                    <div className="p-3 bg-sky-50 rounded-xl">
+                      {item.icon}
+                    </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-2">{item.challenge}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{item.solution}</p>
-                      <Badge className="bg-blue-100 text-blue-800">
+                      <h3 className="font-semibold text-slate-800 mb-3 text-lg">{item.challenge}</h3>
+                      <p className="text-slate-600 mb-4 leading-relaxed">{item.solution}</p>
+                      <Badge className="bg-sky-50 text-sky-700 border border-sky-200 rounded-full px-3 py-1">
                         Specialized Support Available
                       </Badge>
                     </div>
@@ -341,64 +343,64 @@ const LandingPage = ({ onLogin, systemStats }) => {
         </section>
 
         {/* Problem Statement with Enhanced Visuals */}
-        <section className="space-y-12 px-4 max-w-7xl mx-auto">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl font-bold text-gray-900">The Reality of Student Mental Health in India</h2>
-            <p className="text-lg text-gray-600 max-w-4xl mx-auto">
+        <section className="space-y-16 px-4 max-w-7xl mx-auto">
+          <div className="text-center space-y-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">The Reality of Student Mental Health in India</h2>
+            <p className="text-xl text-slate-600 max-w-4xl mx-auto font-light">
               Behind every statistic is a student who deserves support, understanding, and hope.
             </p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-2">
             {problemStats.map((stat, index) => (
-              <Card key={index} className="text-center p-8 hover:shadow-lg transition-all duration-300">
+              <Card key={index} className="text-center p-8 hover:shadow-lg transition-all duration-300 rounded-2xl bg-white/80 backdrop-blur-sm">
                 <CardContent className="space-y-6">
-                  <div className={`text-5xl font-bold ${stat.color} mb-2`}>
+                  <div className={`text-6xl font-bold ${stat.color} mb-4`}>
                     {stat.value}
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">{stat.label}</h3>
-                  <p className="text-sm text-gray-600">{stat.description}</p>
-                  <Progress value={parseInt(stat.value.replace('%', ''))} className="h-3" />
+                  <h3 className="text-xl font-semibold text-slate-800 leading-relaxed">{stat.label}</h3>
+                  <p className="text-slate-600 leading-relaxed">{stat.description}</p>
+                  <Progress value={parseInt(stat.value.replace('%', ''))} className="h-3 bg-slate-100" />
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          <Card className="bg-gradient-to-r from-red-50 to-orange-50 p-8 border-red-200 max-w-4xl mx-auto">
+          <Card className="bg-gradient-to-r from-rose-50 to-orange-50 p-8 border-rose-200 max-w-5xl mx-auto rounded-2xl">
             <CardContent className="p-0">
-              <div className="flex items-start gap-6">
-                <div className="p-3 bg-red-100 rounded-full">
-                  <AlertTriangle className="w-8 h-8 text-red-600" />
+              <div className="flex items-start gap-8">
+                <div className="p-4 bg-rose-100 rounded-2xl">
+                  <AlertTriangle className="w-10 h-10 text-rose-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-red-900 mb-4 text-xl">Why Traditional Approaches Fall Short</h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <ul className="space-y-3 text-sm text-red-800">
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
-                        <span>Limited counselors for massive student populations</span>
+                  <h3 className="font-bold text-rose-900 mb-6 text-2xl">Why Traditional Approaches Fall Short</h3>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <ul className="space-y-4 text-slate-700">
+                      <li className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-rose-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="leading-relaxed">Limited counselors for massive student populations</span>
                       </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
-                        <span>Cultural stigma preventing help-seeking behavior</span>
+                      <li className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-rose-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="leading-relaxed">Cultural stigma preventing help-seeking behavior</span>
                       </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
-                        <span>Reactive rather than preventive mental health care</span>
+                      <li className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-rose-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="leading-relaxed">Reactive rather than preventive mental health care</span>
                       </li>
                     </ul>
-                    <ul className="space-y-3 text-sm text-red-800">
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
-                        <span>Lack of 24/7 support for urgent mental health needs</span>
+                    <ul className="space-y-4 text-slate-700">
+                      <li className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-rose-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="leading-relaxed">Lack of 24/7 support for urgent mental health needs</span>
                       </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
-                        <span>No data-driven insights for institutional planning</span>
+                      <li className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-rose-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="leading-relaxed">No data-driven insights for institutional planning</span>
                       </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
-                        <span>Language barriers in seeking mental health support</span>
+                      <li className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-rose-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="leading-relaxed">Language barriers in seeking mental health support</span>
                       </li>
                     </ul>
                   </div>
@@ -409,10 +411,10 @@ const LandingPage = ({ onLogin, systemStats }) => {
         </section>
 
         {/* Solution Features with Enhanced Design */}
-        <section className="space-y-12 px-4 max-w-7xl mx-auto">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl font-bold text-gray-900">Comprehensive Mental Health Ecosystem</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+        <section className="space-y-16 px-4 max-w-7xl mx-auto">
+          <div className="text-center space-y-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">Comprehensive Mental Health Ecosystem</h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto font-light">
               Six integrated tools designed with student mental health as the priority, 
               not an afterthought
             </p>
@@ -420,21 +422,21 @@ const LandingPage = ({ onLogin, systemStats }) => {
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, index) => (
-              <Card key={index} className="hover:shadow-xl transition-all duration-300 transform hover:scale-105 group">
-                <CardHeader>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-gray-100 transition-colors">
+              <Card key={index} className="hover:shadow-xl transition-all duration-300 transform hover:scale-105 group rounded-2xl bg-white/80 backdrop-blur-sm border-slate-200">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
                       {feature.icon}
                     </div>
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                    <CardTitle className="text-xl text-slate-800">{feature.title}</CardTitle>
                   </div>
-                  <div className="text-xs text-blue-600 font-semibold mb-2">
+                  <div className="text-xs text-sky-600 font-semibold mb-2 bg-sky-50 px-3 py-1 rounded-full inline-block">
                     {feature.highlight}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                  <Badge variant="outline" className="text-xs">
+                  <p className="text-slate-600 leading-relaxed">{feature.description}</p>
+                  <Badge variant="outline" className="text-xs border-slate-200 text-slate-600">
                     <Sparkles className="w-3 h-3 mr-1" />
                     {feature.metrics}
                   </Badge>
@@ -445,26 +447,26 @@ const LandingPage = ({ onLogin, systemStats }) => {
         </section>
 
         {/* Wellness Tools Preview */}
-        <section className="space-y-8 bg-gradient-to-r from-green-50 to-blue-50 rounded-3xl p-8 mx-4 max-w-7xl mx-auto">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">Daily Wellness Tools</h2>
-            <p className="text-lg text-gray-600">
+        <section className="space-y-12 bg-gradient-to-r from-emerald-50 to-sky-50 rounded-3xl p-12 mx-4 max-w-7xl mx-auto">
+          <div className="text-center space-y-6">
+            <h2 className="text-4xl font-bold text-slate-800 tracking-tight">Daily Wellness Tools</h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto font-light">
               Simple, effective tools you can use anytime to support your mental well-being
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             {wellnessTools.map((tool, index) => (
-              <Card key={index} className="text-center p-6 bg-white/80 backdrop-blur hover:bg-white transition-all duration-300">
-                <CardContent className="space-y-4">
+              <Card key={index} className="text-center p-8 bg-white/90 backdrop-blur hover:bg-white transition-all duration-300 rounded-2xl border-slate-200">
+                <CardContent className="space-y-6">
                   <div className="flex justify-center">
-                    <div className="p-3 bg-gray-50 rounded-full">
+                    <div className="p-4 bg-slate-50 rounded-2xl">
                       {tool.icon}
                     </div>
                   </div>
-                  <h3 className="font-semibold text-gray-900">{tool.title}</h3>
-                  <p className="text-sm text-gray-600">{tool.description}</p>
-                  <Button size="sm" variant="ghost" className="text-blue-600 hover:text-blue-700">
+                  <h3 className="font-semibold text-slate-800 text-lg">{tool.title}</h3>
+                  <p className="text-slate-600 leading-relaxed">{tool.description}</p>
+                  <Button size="sm" variant="ghost" className="text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-full">
                     Try Now <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </CardContent>
@@ -474,92 +476,92 @@ const LandingPage = ({ onLogin, systemStats }) => {
         </section>
 
         {/* Demo Selection with Enhanced UX */}
-        <section className="space-y-8 px-4 max-w-6xl mx-auto">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl font-bold text-gray-900">Experience MEDHYA Pro</h2>
-            <p className="text-lg text-gray-600">
+        <section className="space-y-12 px-4 max-w-6xl mx-auto">
+          <div className="text-center space-y-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">Experience MEDHYA Pro</h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto font-light">
               Choose your perspective to explore how we're transforming mental health support
             </p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-2">
-            <Card className={`cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+            <Card className={`cursor-pointer transition-all duration-300 transform hover:scale-105 rounded-2xl ${
               selectedDemo === 'student' 
-                ? 'ring-4 ring-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-xl' 
-                : 'hover:shadow-lg border-gray-200'
+                ? 'ring-4 ring-sky-500 bg-gradient-to-br from-sky-50 to-sky-100/50 shadow-xl' 
+                : 'hover:shadow-lg border-slate-200 bg-white/80 backdrop-blur-sm'
             }`}
                   onClick={() => setSelectedDemo('student')}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Users className="w-6 h-6 text-blue-600" />
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-4 text-2xl text-slate-800">
+                  <div className="p-3 bg-sky-100 rounded-xl">
+                    <Users className="w-8 h-8 text-sky-600" />
                   </div>
                   Student Experience
                 </CardTitle>
-                <CardDescription className="text-base">
+                <CardDescription className="text-lg text-slate-600">
                   Discover mental health tools designed specifically for student life
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-3">
+              <CardContent className="space-y-8">
+                <div className="space-y-4">
                   {[
                     { icon: MessageCircle, text: "AI companion that understands student stress" },
                     { icon: UserCheck, text: "Anonymous counselor appointments" },
                     { icon: Users, text: "Peer support groups and communities" },
                     { icon: Activity, text: "Personal wellness tracking & insights" }
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 text-sm">
-                      <item.icon className="w-4 h-4 text-green-600" />
-                      <span className="text-gray-700">{item.text}</span>
+                    <div key={i} className="flex items-center gap-4 text-slate-700">
+                      <item.icon className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                      <span className="leading-relaxed">{item.text}</span>
                     </div>
                   ))}
                 </div>
                 <Button 
-                  className={`w-full py-3 ${selectedDemo === 'student' ? 'bg-blue-600 shadow-lg' : 'bg-gray-600'} transition-all duration-200`}
+                  className={`w-full py-4 rounded-2xl font-medium transition-all duration-300 ${selectedDemo === 'student' ? 'bg-sky-600 shadow-lg hover:bg-sky-700' : 'bg-slate-600 hover:bg-slate-700'}`}
                   onClick={onLogin}
                 >
-                  <Heart className="w-4 h-4 mr-2" />
+                  <Heart className="w-5 h-5 mr-2" />
                   Launch Student Portal
                 </Button>
               </CardContent>
             </Card>
 
-            <Card className={`cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+            <Card className={`cursor-pointer transition-all duration-300 transform hover:scale-105 rounded-2xl ${
               selectedDemo === 'admin' 
-                ? 'ring-4 ring-purple-500 bg-gradient-to-br from-purple-50 to-purple-100 shadow-xl' 
-                : 'hover:shadow-lg border-gray-200'
+                ? 'ring-4 ring-violet-500 bg-gradient-to-br from-violet-50 to-violet-100/50 shadow-xl' 
+                : 'hover:shadow-lg border-slate-200 bg-white/80 backdrop-blur-sm'
             }`}
                   onClick={() => setSelectedDemo('admin')}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <BarChart3 className="w-6 h-6 text-purple-600" />
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-4 text-2xl text-slate-800">
+                  <div className="p-3 bg-violet-100 rounded-xl">
+                    <BarChart3 className="w-8 h-8 text-violet-600" />
                   </div>
                   Institution Dashboard
                 </CardTitle>
-                <CardDescription className="text-base">
+                <CardDescription className="text-lg text-slate-600">
                   Comprehensive oversight and analytics for administrators
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-3">
+              <CardContent className="space-y-8">
+                <div className="space-y-4">
                   {[
                     { icon: BarChart3, text: "Real-time mental health trends and analytics" },
                     { icon: AlertTriangle, text: "Early warning system for at-risk students" },
                     { icon: Building2, text: "Multi-campus management capabilities" },
                     { icon: Target, text: "Predictive intervention recommendations" }
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 text-sm">
-                      <item.icon className="w-4 h-4 text-green-600" />
-                      <span className="text-gray-700">{item.text}</span>
+                    <div key={i} className="flex items-center gap-4 text-slate-700">
+                      <item.icon className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                      <span className="leading-relaxed">{item.text}</span>
                     </div>
                   ))}
                 </div>
                 <Button 
-                  className={`w-full py-3 ${selectedDemo === 'admin' ? 'bg-purple-600 shadow-lg' : 'bg-gray-600'} transition-all duration-200`}
+                  className={`w-full py-4 rounded-2xl font-medium transition-all duration-300 ${selectedDemo === 'admin' ? 'bg-violet-600 shadow-lg hover:bg-violet-700' : 'bg-slate-600 hover:bg-slate-700'}`}
                   onClick={handleNavigation}
                 >
-                  <Building2 className="w-4 h-4 mr-2" />
+                  <Building2 className="w-5 h-5 mr-2" />
                   Access Admin Dashboard
                 </Button>
               </CardContent>
