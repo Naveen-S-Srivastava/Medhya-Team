@@ -175,6 +175,7 @@ const userSchema = new mongoose.Schema({
   mentalHealthConsent: { type: Boolean, required: false },
   communicationConsent: { type: Boolean, default: false },
   role: { type: String, enum: ["student", "admin", "counselor"], default: "student" },
+  counselorProfile: { type: mongoose.Schema.Types.ObjectId, ref: "Counselor" },
   assessments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Assessment" }],
   appointments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Appointment" }],
   activityLogs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],

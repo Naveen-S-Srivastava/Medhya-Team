@@ -13,6 +13,7 @@ import counselorRoutes from "./routes/counselorRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import communityRoutes from "./routes/communityRoutes.js";
 import journalRoutes from "./routes/journalRoutes.js";
+import counselorDashboardRoutes from "./routes/counselorDashboardRoutes.js";
 
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use("/api/counselors", counselorRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/journal", journalRoutes);
+app.use("/api/counselor-dashboard", counselorDashboardRoutes);
 
 
 app.get("/", (req, res) => {
