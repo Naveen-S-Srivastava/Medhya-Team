@@ -10,7 +10,7 @@ import Navbar from './Navbar.jsx';
 
 const studentNavItems = [
   { path: '/dashboard', label: 'Dashboard', icon: BarChart3 },
-  { path: '/chat', label: 'AI Support', icon: MessageCircle },
+  { path: '/chat', label: 'Medhya Support', icon: MessageCircle },
   { path: '/appointments', label: 'Appointments', icon: Calendar },
   { path: '/resources', label: 'Resources', icon: BookOpen },
   { path: '/community', label: 'Community', icon: Users },

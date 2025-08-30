@@ -45,9 +45,9 @@ export const useUserLibrary = () => {
     }
   };
 
-  const addToLibrary = async (resourceId) => {
+  const saveResource = async (resourceId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/resources/library/add`, {
+      const response = await fetch(`${API_BASE_URL}/resources/save`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
@@ -63,20 +63,19 @@ export const useUserLibrary = () => {
       const data = await response.json();
       return data;
     } catch (err) {
-      console.error('Error adding to library:', err);
+      console.error('Error saving resource:', err);
       throw err;
     }
   };
 
   const removeFromLibrary = async (resourceId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/resources/library/remove`, {
+      const response = await fetch(`${API_BASE_URL}/resources/library/${resourceId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ resourceId })
+        }
       });
 
       if (!response.ok) {
@@ -113,11 +112,12 @@ export const useUserLibrary = () => {
   };
 
   return {
-    userLibrary,
+    userResources: userLibrary,
     loading,
     error,
+    pagination: null,
     getUserLibrary,
-    addToLibrary,
+    saveResource,
     removeFromLibrary,
     getLibraryStats
   };

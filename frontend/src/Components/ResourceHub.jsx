@@ -5,7 +5,7 @@ import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
-import { BookOpen, Play, Headphones, Download, Search, Filter, Star, Clock, Eye, Loader2 } from 'lucide-react';
+import { BookOpen, Play, Headphones, Bookmark, Search, Filter, Star, Clock, Eye, Loader2, X, ExternalLink, BookmarkCheck } from 'lucide-react';
 import { useResources } from '../hooks/useResources';
 import { useUserLibrary } from '../hooks/useUserLibrary';
 
@@ -15,6 +15,9 @@ const ResourceHub = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedResourceUrl, setSelectedResourceUrl] = useState(null);
+  const [selectedResource, setSelectedResource] = useState(null);
+  const [showUrlPopup, setShowUrlPopup] = useState(false);
 
   // API hooks
   const { 
@@ -92,7 +95,7 @@ const ResourceHub = () => {
       case 'audio': return <Headphones className="w-4 h-4" />;
       case 'article': return <BookOpen className="w-4 h-4" />;
       case 'guide': return <BookOpen className="w-4 h-4" />;
-      case 'worksheet': return <Download className="w-4 h-4" />;
+      case 'worksheet': return <Bookmark className="w-4 h-4" />; // Changed from Download to Bookmark
       default: return <BookOpen className="w-4 h-4" />;
     }
   };
@@ -152,6 +155,127 @@ const ResourceHub = () => {
       </CardContent>
     </Card>
   );
+
+  // URL Popup Component
+  const UrlPopup = ({ url, resource, onClose }) => {
+    if (!url) return null;
+
+    const isVideo = resource?.type === 'video';
+    const isAudio = resource?.type === 'audio';
+    const isExternalLink = !isVideo && !isAudio;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg w-full max-w-4xl h-[80vh] flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h3 className="font-semibold">{resource?.title || 'Resource Viewer'}</h3>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(url, '_blank')}
+                className="flex items-center gap-1"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Open in New Tab
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="hover:bg-gray-100"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+          <div className="flex-1 p-4">
+            {isVideo || isAudio ? (
+              <div className="w-full h-full border rounded-lg overflow-hidden">
+                <iframe
+                  src={url}
+                  className="w-full h-full border-0"
+                  title={resource?.title || "Resource Content"}
+                  allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+                />
+              </div>
+            ) : (
+              <div className="w-full h-full border rounded-lg overflow-hidden bg-gray-50">
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center max-w-md">
+                    <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                    <h3 className="font-medium mb-2 text-lg">External Resource</h3>
+                    <p className="text-sm text-gray-500 mb-6">
+                      This resource is hosted externally and cannot be previewed here. 
+                      Click the button below to open it in a new tab.
+                    </p>
+                    <div className="space-y-3">
+                      <Button
+                        onClick={() => window.open(url, '_blank')}
+                        className="w-full"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Open Resource
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={onClose}
+                        className="w-full"
+                      >
+                        Close Preview
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Handle resource access
+  const handleAccessResource = (resource) => {
+    if (resource.url) {
+      setSelectedResourceUrl(resource.url);
+      setSelectedResource(resource);
+      setShowUrlPopup(true);
+    } else {
+      // Fallback for resources without URLs
+      alert('This resource is not available online. Please contact support for access.');
+    }
+  };
+
+  // Handle save/remove from library
+  const handleToggleSave = async (resourceId) => {
+    try {
+      const isInLibrary = userResources?.some(ur => ur.resource._id === resourceId);
+      
+      if (isInLibrary) {
+        await removeFromLibrary(resourceId);
+        // Show success message
+        console.log('Resource removed from library');
+      } else {
+        await saveResource(resourceId);
+        // Show success message
+        console.log('Resource added to library');
+      }
+      
+      // Refresh user library
+      getUserLibrary(1, 12);
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      // Show error message
+      alert('Failed to update library. Please try again.');
+    }
+  };
+
+  // Check if resource is in user's library
+  const isResourceInLibrary = (resourceId) => {
+    return userResources?.some(ur => ur.resource._id === resourceId) || false;
+  };
 
   return (
     <div className="space-y-6">
@@ -217,17 +341,27 @@ const ResourceHub = () => {
                           </div>
                         </div>
                         
-                        <div className="flex gap-2">
-                          <Button size="sm" className="flex-1">
+                                                 <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleAccessResource(resource)}
+                          >
                             {resource.type === 'video' ? 'Watch' : 
                              resource.type === 'audio' ? 'Listen' : 'Read'}
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => handleSaveResource(resource._id)}
+                            onClick={() => handleToggleSave(resource._id)}
+                            className={isResourceInLibrary(resource._id) ? 'bg-blue-50 border-blue-200' : ''}
+                            title={isResourceInLibrary(resource._id) ? 'Remove from library' : 'Add to library'}
                           >
-                            <Download className="w-4 h-4" />
+                            {isResourceInLibrary(resource._id) ? (
+                              <BookmarkCheck className="w-4 h-4 text-blue-600" />
+                            ) : (
+                              <Bookmark className="w-4 h-4" />
+                            )}
                           </Button>
                         </div>
                       </CardContent>
@@ -344,18 +478,28 @@ const ResourceHub = () => {
                         </div>
                       </div>
                       
-                      <div className="flex gap-2">
-                        <Button size="sm" className="flex-1">
-                          Access Resource
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleSaveResource(resource._id)}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </div>
+                                             <div className="flex gap-2">
+                         <Button 
+                           size="sm" 
+                           className="flex-1"
+                           onClick={() => handleAccessResource(resource)}
+                         >
+                           Access Resource
+                         </Button>
+                         <Button 
+                           variant="outline" 
+                           size="sm"
+                           onClick={() => handleToggleSave(resource._id)}
+                           className={isResourceInLibrary(resource._id) ? 'bg-blue-50 border-blue-200' : ''}
+                           title={isResourceInLibrary(resource._id) ? 'Remove from library' : 'Add to library'}
+                         >
+                           {isResourceInLibrary(resource._id) ? (
+                             <BookmarkCheck className="w-4 h-4 text-blue-600" />
+                           ) : (
+                             <Bookmark className="w-4 h-4" />
+                           )}
+                         </Button>
+                       </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -404,8 +548,8 @@ const ResourceHub = () => {
         <TabsContent value="my-library" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>My Saved Resources</CardTitle>
-              <CardDescription>Resources you've bookmarked and downloaded for offline access</CardDescription>
+                          <CardTitle>My Saved Resources</CardTitle>
+            <CardDescription>Resources you've bookmarked for easy access</CardDescription>
             </CardHeader>
             <CardContent>
               {libraryLoading ? (
@@ -441,7 +585,11 @@ const ResourceHub = () => {
                         </div>
                         
                         <div className="flex gap-2">
-                          <Button size="sm" className="flex-1">
+                          <Button 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleAccessResource(userResource.resource)}
+                          >
                             Access Resource
                           </Button>
                           <Button 
@@ -461,7 +609,7 @@ const ResourceHub = () => {
                   <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                   <h3 className="font-medium mb-2">No saved resources yet</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Start building your personal library by saving resources that are helpful to you.
+                    Start building your personal library by bookmarking resources that are helpful to you.
                   </p>
                   <Button onClick={() => document.querySelector('[value="browse"]')?.click()}>
                     Browse Resources
@@ -495,6 +643,18 @@ const ResourceHub = () => {
           </div>
         </CardContent>
       </Card>
+    {/* URL Popup */}
+    {showUrlPopup && (
+      <UrlPopup 
+        url={selectedResourceUrl} 
+        resource={selectedResource}
+        onClose={() => {
+          setShowUrlPopup(false);
+          setSelectedResourceUrl(null);
+          setSelectedResource(null);
+        }} 
+      />
+    )}
     </div>
   );
 };
