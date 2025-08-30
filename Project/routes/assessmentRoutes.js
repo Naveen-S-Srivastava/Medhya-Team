@@ -6,9 +6,10 @@ import {
   getFiveDayAverages,
   getTodayAssessment,
   getAssessmentStats,
-  deleteAssessment
+  deleteAssessment,
+  getAssessmentAnalytics
 } from '../controllers/assessmentController.js';
-import { protect } from '../middlewares/auth.js';
+import { protect, restrictTo } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -32,6 +33,9 @@ router.get('/today/:type', getTodayAssessment);
 
 // Get assessment statistics
 router.get('/stats', getAssessmentStats);
+
+// Get assessment analytics for admin dashboard
+router.get('/analytics', restrictTo('admin'), getAssessmentAnalytics);
 
 // Delete assessment
 router.delete('/:id', deleteAssessment);

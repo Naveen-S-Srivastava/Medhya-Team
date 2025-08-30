@@ -293,4 +293,126 @@ export const deleteAssessment = catchAsync(async (req, res) => {
   });
 });
 
+// Get assessment analytics for admin dashboard
+export const getAssessmentAnalytics = catchAsync(async (req, res) => {
+  const { timeRange = '7d' } = req.query;
 
+  // Parse time range
+  let days;
+  switch (timeRange) {
+    case '7d':
+      days = 7;
+      break;
+    case '30d':
+      days = 30;
+      break;
+    case '90d':
+      days = 90;
+      break;
+    default:
+      days = 7;
+  }
+
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  // Get all assessments within the time range
+  const assessments = await Assessment.find({
+    date: { $gte: startDate }
+  }).populate('user', 'firstName lastName email role');
+
+  // Calculate analytics
+  const totalAssessments = assessments.length;
+  const uniqueUsers = new Set(assessments.map(a => a.user._id.toString())).size;
+
+  // Group by type
+  const typeStats = {};
+  const scoreTrends = {};
+  const dailyStats = {};
+
+  assessments.forEach(assessment => {
+    // Type statistics
+    if (!typeStats[assessment.type]) {
+      typeStats[assessment.type] = {
+        count: 0,
+        totalScore: 0,
+        averageScore: 0
+      };
+    }
+    typeStats[assessment.type].count++;
+    typeStats[assessment.type].totalScore += assessment.score;
+
+    // Daily statistics
+    const dateKey = assessment.date.toISOString().split('T')[0];
+    if (!dailyStats[dateKey]) {
+      dailyStats[dateKey] = {
+        date: dateKey,
+        count: 0,
+        totalScore: 0,
+        averageScore: 0
+      };
+    }
+    dailyStats[dateKey].count++;
+    dailyStats[dateKey].totalScore += assessment.score;
+  });
+
+  // Calculate averages
+  Object.keys(typeStats).forEach(type => {
+    typeStats[type].averageScore = Math.round(
+      (typeStats[type].totalScore / typeStats[type].count) * 100
+    ) / 100;
+  });
+
+  // Calculate daily averages
+  const dailyData = Object.values(dailyStats).map(day => ({
+    ...day,
+    averageScore: Math.round((day.totalScore / day.count) * 100) / 100
+  })).sort((a, b) => a.date.localeCompare(b.date));
+
+  // Overall statistics
+  const totalScore = assessments.reduce((sum, a) => sum + a.score, 0);
+  const averageScore = totalAssessments > 0 ? Math.round((totalScore / totalAssessments) * 100) / 100 : 0;
+
+  // Score distribution
+  const scoreRanges = {
+    '0-5': 0,
+    '6-10': 0,
+    '11-15': 0,
+    '16-20': 0,
+    '21-27': 0
+  };
+
+  assessments.forEach(assessment => {
+    if (assessment.score <= 5) scoreRanges['0-5']++;
+    else if (assessment.score <= 10) scoreRanges['6-10']++;
+    else if (assessment.score <= 15) scoreRanges['11-15']++;
+    else if (assessment.score <= 20) scoreRanges['16-20']++;
+    else scoreRanges['21-27']++;
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      timeRange,
+      summary: {
+        totalAssessments,
+        uniqueUsers,
+        averageScore,
+        dateRange: {
+          start: startDate.toISOString().split('T')[0],
+          end: new Date().toISOString().split('T')[0]
+        }
+      },
+      typeBreakdown: typeStats,
+      dailyTrends: dailyData,
+      scoreDistribution: scoreRanges,
+      insights: {
+        mostActiveDay: dailyData.length > 0 ? dailyData.reduce((max, day) => 
+          day.count > max.count ? day : max, dailyData[0]) : null,
+        assessmentType: Object.keys(typeStats).length > 0 ? 
+          Object.keys(typeStats).reduce((a, b) => 
+            typeStats[a].count > typeStats[b].count ? a : b) : null
+      }
+    }
+  });
+});
