@@ -86,6 +86,7 @@ const ResourceHub = () => {
   ];
 
   const getTypeIcon = (type) => {
+    if (!type) return <BookOpen className="w-4 h-4" />;
     switch (type) {
       case 'video': return <Play className="w-4 h-4" />;
       case 'audio': return <Headphones className="w-4 h-4" />;
@@ -97,6 +98,7 @@ const ResourceHub = () => {
   };
 
   const getCategoryColor = (category) => {
+    if (!category) return 'bg-gray-100 text-gray-800';
     const colors = {
       anxiety: 'bg-red-100 text-red-800',
       depression: 'bg-blue-100 text-blue-800',
@@ -185,7 +187,7 @@ const ResourceHub = () => {
                 <ErrorMessage error={resourcesError} />
               ) : (
                 <div className="grid gap-6 md:grid-cols-2">
-                  {resources.filter(resource => resource.isFeatured).map((resource) => (
+                  {resources?.filter(resource => resource.isFeatured).map((resource) => (
                     <Card key={resource._id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between mb-4">
@@ -316,7 +318,7 @@ const ResourceHub = () => {
           ) : (
             <>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {resources.map((resource) => (
+                {resources?.map((resource) => (
                   <Card key={resource._id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
@@ -359,7 +361,7 @@ const ResourceHub = () => {
                 ))}
               </div>
 
-              {resources.length === 0 && (
+              {resources && resources.length === 0 && (
                 <Card>
                   <CardContent className="py-12 text-center">
                     <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -410,9 +412,9 @@ const ResourceHub = () => {
                 <LoadingSpinner />
               ) : libraryError ? (
                 <ErrorMessage error={libraryError} />
-              ) : userResources.length > 0 ? (
+              ) : userResources && userResources.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {userResources.map((userResource) => (
+                  {userResources?.map((userResource) => (
                     <Card key={userResource._id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-3">
