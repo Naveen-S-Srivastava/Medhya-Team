@@ -33,7 +33,17 @@ class ApiClient {
               'Content-Type': 'application/json'
             };
             const retryResponse = await fetch(`${this.baseURL}${endpoint}`, options);
-            return retryResponse;
+            
+            // Parse the retry response
+            const responseData = await retryResponse.json();
+            
+            if (!retryResponse.ok) {
+              const error = new Error(responseData.message || 'Request failed');
+              error.response = { status: retryResponse.status, data: responseData };
+              throw error;
+            }
+            
+            return responseData;
           }
         } catch (refreshErr) {
           console.error('Token refresh failed:', refreshErr);
@@ -44,7 +54,16 @@ class ApiClient {
         }
       }
       
-      return response;
+      // Parse the response
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        const error = new Error(responseData.message || 'Request failed');
+        error.response = { status: response.status, data: responseData };
+        throw error;
+      }
+      
+      return responseData;
     } catch (error) {
       console.error('API request failed:', error);
       throw error;
