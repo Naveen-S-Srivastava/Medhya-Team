@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -10,9 +10,8 @@ import {
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Label } from "../ui/Label";
-import { Badge } from "../ui/Badge";
 import { Alert, AlertDescription } from "../ui/Alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs";
+import { Tabs, TabsList, TabsTrigger } from "../ui/Tabs";
 import {
   Select,
   SelectContent,
@@ -34,19 +33,15 @@ import {
   CheckCircle,
   AlertTriangle,
   Phone,
-  Mail,
-  MapPin
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.js";
 import { testGoogleOAuth } from "../utils/googleOAuthTest.js";
 
-const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
+const Login = ({ onLogin, onShowUserSignup }) => {
   const navigate = useNavigate();
   const { login, googleAuth, loading, error } = useAuth();
   const [loginType, setLoginType] = useState("student");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -70,23 +65,19 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
 
   const validateForm = () => {
     const newErrors = {};
-
     if (!formData.email) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
     }
-
     if (!formData.password) {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
     }
-
     if (loginType === "student" && !formData.institutionId) {
       newErrors.institutionId = "Please select your institution";
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -94,115 +85,62 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-
-    setIsLoading(true);
-
     try {
       const user = await login(formData.email, formData.password);
-      
-      // Check user role from the response and call onLogin callback
-        if (onLogin) {
+      if (onLogin) {
         onLogin(user.role, user);
       }
-      
-      // The App component will handle navigation based on the authentication state
     } catch (err) {
       console.error('Login failed:', err);
-      // If login fails, show error but don't redirect
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true);
-
     try {
-      // Test Google OAuth configuration first
       testGoogleOAuth();
-
-      // Initialize Google OAuth
       const google = window.google;
-      if (!google) {
-        throw new Error('Google OAuth not available');
-      }
-
+      if (!google) throw new Error('Google OAuth not available');
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
       if (!clientId || clientId === 'your-google-client-id') {
         throw new Error('Google Client ID not configured');
       }
-
-      console.log('🔍 Starting Google OAuth with client ID:', clientId);
-
       google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: 'email profile',
         callback: async (response) => {
           try {
-            // Get user info from Google
             const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-              headers: {
-                'Authorization': `Bearer ${response.access_token}`
-              }
+              headers: { 'Authorization': `Bearer ${response.access_token}` }
             });
-
             const userInfo = await userInfoResponse.json();
-
-            // Send to backend with login type
             const user = await googleAuth({
               googleId: userInfo.id,
               email: userInfo.email,
               firstName: userInfo.given_name,
               lastName: userInfo.family_name,
               profilePicture: userInfo.picture,
-              loginType: loginType // Include the selected login type (admin/student)
+              loginType: loginType
             });
-
-            // Check user role and profile completeness
-            console.log('🔍 User profile check:', {
-              role: user.role,
-              phone: user.phone,
-              institutionId: user.institutionId,
-              studentId: user.studentId,
-              course: user.course,
-              year: user.year
-            });
-
-            // Call onLogin callback with user role and data
-              if (onLogin) {
+            if (onLogin) {
               onLogin(user.role, user);
-              }
-            
-            // The App component will handle navigation based on the authentication state
+            }
           } catch (err) {
             console.error('Google auth failed:', err);
-            // Show user-friendly error message
             if (err.message.includes('access blocked') || err.message.includes('invalid')) {
               alert('Google OAuth configuration issue. Please check the console for details.');
             }
-          } finally {
-            setIsLoading(false);
           }
         }
       }).requestAccessToken();
     } catch (err) {
       console.error('Google OAuth failed:', err);
-      setIsLoading(false);
     }
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-
-    // Clear error when user starts typing
+    setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ""
-      }));
+      setErrors(prev => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -224,53 +162,59 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center">
             <Link to="/">
-              <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg">
-                <Heart className="w-8 h-8 text-white" />
+              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                <Heart className="w-10 h-10 text-white" />
               </div>
             </Link>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
               Welcome to MEDHYA
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-gray-500">
               Secure access to your mental health support platform
             </p>
           </div>
         </div>
 
-        <Card className="shadow-xl border-0">
+        <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
           <CardHeader className="space-y-4">
             <Tabs
               value={loginType}
               onValueChange={setLoginType}
               className="w-full"
             >
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1.5 rounded-xl">
                 <TabsTrigger
                   value="student"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-600 rounded-lg transition-all duration-200"
                 >
                   <GraduationCap className="w-4 h-4" />
                   Student
                 </TabsTrigger>
-                <TabsTrigger value="counselor" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="counselor"
+                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-green-600 rounded-lg transition-all duration-200"
+                >
                   <UserCheck className="w-4 h-4" />
                   Counselor
                 </TabsTrigger>
-                <TabsTrigger value="admin" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="admin"
+                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-purple-600 rounded-lg transition-all duration-200"
+                >
                   <Building2 className="w-4 h-4" />
                   Administrator
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
-            <div className="text-center">
+            <div className="text-center pt-2">
               <CardTitle className="flex items-center justify-center gap-2">
                 {loginType === "student" ? (
                   <>
@@ -291,22 +235,21 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
               </CardTitle>
               <CardDescription className="mt-2">
                 {loginType === "student"
-                  ? "Access your personal mental health dashboard and support tools"
+                  ? "Access your personal mental health dashboard"
                   : loginType === "counselor"
-                  ? "Provide professional counseling and support to students"
-                  : "Manage institutional mental health programs and analytics"}
+                    ? "Provide professional counseling and support"
+                    : "Manage institutional programs and analytics"}
               </CardDescription>
             </div>
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Google OAuth Button */}
             <Button
               type="button"
               variant="outline"
-              className="w-full h-11 border-gray-300 hover:bg-gray-50"
+              className="w-full h-11 border-gray-300 hover:bg-gray-50 transition-colors rounded-lg"
               onClick={handleGoogleLogin}
-              disabled={isLoading}
+              disabled={loading}
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
@@ -346,7 +289,6 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Institution Selection for Students */}
               {loginType === 'student' && (
                 <div className="space-y-2">
                   <Label htmlFor="institution">Educational Institution</Label>
@@ -354,7 +296,7 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
                     value={formData.institutionId}
                     onValueChange={(value) => handleInputChange('institutionId', value)}
                   >
-                    <SelectTrigger className={errors.institutionId ? 'border-red-500' : ''}>
+                    <SelectTrigger className={`rounded-lg ${errors.institutionId ? 'border-red-500' : ''}`}>
                       <SelectValue placeholder="Select your institution" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
@@ -371,29 +313,21 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
                 </div>
               )}
 
-              {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder={
-                    loginType === "student"
-                      ? "student@university.edu"
-                      : loginType === "counselor"
-                      ? "counselor@institution.edu"
-                      : "admin@institution.edu"
-                  }
+                  placeholder="student@university.edu"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className={errors.email ? "border-red-500" : ""}
+                  className={`rounded-lg ${errors.email ? "border-red-500" : ""}`}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-600">{errors.email}</p>
                 )}
               </div>
 
-              {/* Password */}
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -402,12 +336,8 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={formData.password}
-                    onChange={(e) =>
-                      handleInputChange("password", e.target.value)
-                    }
-                    className={
-                      errors.password ? "border-red-500 pr-10" : "pr-10"
-                    }
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    className={`pr-10 rounded-lg ${errors.password ? "border-red-500" : ""}`}
                   />
                   <Button
                     type="button"
@@ -428,36 +358,33 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
                 )}
               </div>
 
-              {/* Remember Me & Forgot Password */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="remember"
                     checked={formData.rememberMe}
-                    onCheckedChange={(checked) =>
-                      handleInputChange("rememberMe", checked)
-                    }
+                    onCheckedChange={(checked) => handleInputChange("rememberMe", checked)}
                   />
                   <Label htmlFor="remember" className="text-sm">
                     Remember me
                   </Label>
                 </div>
-                <Button variant="link" className="text-sm p-0 h-auto">
+                <Button variant="link" className="text-sm p-0 h-auto text-blue-600 hover:text-blue-700">
                   Forgot password?
                 </Button>
               </div>
 
-              {/* Login Button */}
+              {/* CHANGE: Added flexbox properties and simplified loading state */}
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                disabled={isLoading}
+                className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg shadow-md hover:shadow-lg transition-all"
+                disabled={loading}
               >
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     Signing in...
-                  </div>
+                  </>
                 ) : (
                   <>
                     <Lock className="w-4 h-4 mr-2" />
@@ -467,7 +394,6 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
               </Button>
             </form>
 
-            {/* Demo Credentials */}
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 shadow-sm space-y-3 border border-blue-100">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-blue-600" />
@@ -476,12 +402,11 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
                 </h3>
               </div>
               <p className="text-xs text-muted-foreground">
-                Try out MEDHYA without signing up. Explore features
-                with demo data instantly.
+                Try out MEDHYA without signing up. Explore features with demo data instantly.
               </p>
               <Button
                 variant="outline"
-                className="w-full border-blue-200 hover:bg-blue-100 hover:text-blue-800 transition"
+                className="w-full border-blue-200 hover:bg-blue-100 hover:text-blue-800 transition rounded-lg"
                 onClick={fillDemoCredentials}
                 type="button"
               >
@@ -490,7 +415,6 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
               </Button>
             </div>
 
-            {/* Signup Link for Students */}
             {loginType === "student" && (
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 shadow-sm space-y-3 border border-purple-100">
                 <div className="flex items-center gap-2">
@@ -500,12 +424,11 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
                   </h3>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Don't have an account yet? Create your student profile and get
-                  started today.
+                  Don't have an account yet? Create your student profile and get started today.
                 </p>
                 <Button
                   variant="outline"
-                  className="w-full border-purple-200 hover:bg-purple-100 hover:text-purple-800 transition"
+                  className="w-full border-purple-200 hover:bg-purple-100 hover:text-purple-800 transition rounded-lg"
                   onClick={onShowUserSignup}
                   type="button"
                 >
@@ -515,13 +438,10 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
               </div>
             )}
 
-            {/* Security Notice */}
-            <Alert className="border-blue-200 bg-blue-50">
+            <Alert className="border-blue-200 bg-blue-50/80 rounded-lg">
               <Shield className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                <strong>Your privacy is protected.</strong> All sessions are
-                encrypted and HIPAA compliant. Your mental health data is kept
-                strictly confidential.
+              <AlertDescription className="text-blue-800 text-xs">
+                <strong>Your privacy is protected.</strong> All sessions are encrypted and HIPAA compliant.
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -530,16 +450,16 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
         {/* Additional Info */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Shield className="w-4 h-4" />
+            <div className="flex items-center gap-1.5">
+              <Shield className="w-4 h-4 text-green-600" />
               <span>Secure</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Globe className="w-4 h-4" />
+            <div className="flex items-center gap-1.5">
+              <Globe className="w-4 h-4 text-blue-600" />
               <span>15+ Languages</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Phone className="w-4 h-4" />
+            <div className="flex items-center gap-1.5">
+              <Phone className="w-4 h-4 text-purple-600" />
               <span>24/7 Support</span>
             </div>
           </div>
@@ -559,4 +479,3 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
 };
 
 export default Login;
-
