@@ -1,0 +1,29 @@
+{
+  "name": "PHQ-9",
+  "description": "Patient Health Questionnaire-9 (measures severity of depression)",
+  "questions": [
+    "Little interest or pleasure in doing things",
+    "Feeling down, depressed, or hopeless",
+    "Trouble sleeping (falling asleep, staying asleep, or sleeping too much)",
+    "Feeling tired or having little energy",
+    "Poor appetite or overeating",
+    "Feeling bad about yourself — or that you are a failure or have let yourself or your family down",
+    "Trouble concentrating on things, such as reading the newspaper or watching television",
+    "Moving or speaking so slowly that other people could have noticed, or being so fidgety or restless that you have been moving a lot more than usual",
+    "Thoughts that you would be better off dead, or of hurting yourself in some way"
+  ],
+  "scoring_scale": {
+    "Not at all": 0,
+    "Several days": 1,
+    "More than half the days": 2,
+    "Nearly every day": 3
+  },
+  "total_score_range": "0–27",
+  "interpretation": {
+    "0–4": "None to minimal",
+    "5–9": "Mild",
+    "10–14": "Moderate",
+    "15–19": "Moderately severe",
+    "20–27": "Severe"
+  }
+}
