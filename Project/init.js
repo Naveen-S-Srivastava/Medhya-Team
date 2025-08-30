@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import { faker } from "@faker-js/faker";
 
 // Import Models
-import User from "./models/userModel.js"
+import User from "./models/usermodel.js"
 import CrisisAlert from "./models/crisisAlertModel.js";
 import Assessment from "./models/assessmentModel.js";
 import Appointment from "./models/appointmentModel.js";

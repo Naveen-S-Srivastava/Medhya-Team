@@ -77,7 +77,7 @@ export default function Wellness() {
               </Button>
               <Button className="h-16 flex-col gap-2" variant="outline">
                 <TrendingUp className="w-6 h-6" />
-                <span>Wellness Insights</span>
+                <span>Wellness Insights (Journal)</span>
               </Button>
             </div>
           </div>

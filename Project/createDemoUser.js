@@ -1,55 +1,60 @@
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import User from './models/usermodel.js';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-const createDemoUser = async () => {
-  try {
-    // Connect to MongoDB
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/mindcare');
-    console.log('✅ Connected to MongoDB');
+const MONGO_URI = process.env.MONGO_URI;
 
-    // Check if demo user already exists
-    const existingUser = await User.findOne({ email: 'student@university.edu' });
-    if (existingUser) {
-      console.log('✅ Demo user already exists');
+async function createAdminUser() {
+  try {
+    await mongoose.connect(MONGO_URI);
+    console.log("MongoDB connected ✅");
+
+    // Check if admin user already exists
+    const existingAdmin = await User.findOne({ email: 'admin@mindcare.com' });
+    if (existingAdmin) {
+      console.log("Admin user already exists ✅");
       process.exit(0);
     }
 
-    // Create demo user
-    const demoUser = await User.create({
-      firstName: 'Demo',
-      lastName: 'Student',
-      username: 'demo_student',
-      email: 'student@university.edu',
-      phone: '9876543210',
-      dateOfBirth: new Date('2000-01-01'),
-      gender: 'prefer-not-to-say',
-      institutionId: 'iit-delhi',
-      studentId: '2024CS001',
-      course: 'Computer Science',
-      year: '3rd Year',
-      department: 'Computer Science',
-      password: 'demo123456',
-      passwordConfirm: 'demo123456',
+    // Create admin user
+    const adminUser = new User({
+      firstName: 'Admin',
+      lastName: 'User',
+      email: 'admin@mindcare.com',
+      password: 'admin123',
+      passwordConfirm: 'admin123',
+      phone: '1234567890',
+      institutionId: 'ADMIN001',
+      studentId: 'ADMIN001',
+      course: 'Administration',
+      year: '1',
+      department: 'IT',
       securityQuestion: 'What is your favorite color?',
-      securityAnswer: 'blue',
+      securityAnswer: 'Blue',
       privacyConsent: true,
       dataProcessingConsent: true,
-      emergencyContact: 'Demo Parent',
-      emergencyPhone: '9876543211',
+      emergencyContact: 'Emergency Contact',
+      emergencyPhone: '1234567890',
       mentalHealthConsent: true,
+      communicationConsent: true,
+      role: 'admin',
       isEmailVerified: true,
       isVerified: true
     });
 
-    console.log('✅ Demo user created successfully:', demoUser.email);
+    await adminUser.save();
+    console.log("Admin user created successfully ✅");
+    console.log("Email: admin@mindcare.com");
+    console.log("Password: admin123");
+    console.log("Role: admin");
+
     process.exit(0);
-  } catch (error) {
-    console.error('❌ Error creating demo user:', error.message);
+  } catch (err) {
+    console.error("Error creating admin user ❌", err);
     process.exit(1);
   }
-};
+}
 
-createDemoUser();
+createAdminUser();

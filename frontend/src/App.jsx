@@ -22,6 +22,7 @@ import ErrorBoundary from './Components/ErrorBoundary.jsx';
 
 // Import Wellness component
 import Wellness from './Components/Wellness.jsx';
+import CounselorDashboard from './Components/CounselorDashboard.jsx';
 
 // Dummy Institutions component for routing
 const Institutions = () => <div className="p-6 bg-white rounded-lg shadow">Institutions Management Content</div>;
@@ -74,7 +75,11 @@ export default function App() {
         <Route path="/user-signup" element={<UserSignup onNext={(data) => { setUserData(data); navigate('/signup'); }} onShowLogin={() => navigate('/login')} />} />
         <Route path="/signup" element={<Signup onLogin={handleLogin} onShowLogin={() => navigate('/login')} userData={userData} onBackToUserSignup={() => navigate('/user-signup')} />} />
         <Route path="/contact-choice" element={<ContactChoice />} />
-        
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/crisis" element={<CrisisManagement />} />
+        <Route path="/innovation" element={<InnovationShowcase />} />
+        <Route path="/institutions" element={<Institutions />} />
+        <Route path="/counsellordash" element={<CounselorDashboard />} />
         {/* --- PROTECTED APPLICATION ROUTES using AppLayout --- */}
         <Route 
           element={
@@ -93,10 +98,10 @@ export default function App() {
           <Route path="/wellness" element={<ProtectedRoute userRole={userRole} requiredRole="student"><Wellness /></ProtectedRoute>} />
 
           {/* Admin Routes */}
-          <Route path="/admin" element={<ProtectedRoute userRole={userRole} requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/crisis" element={<ProtectedRoute userRole={userRole} requiredRole="admin"><ErrorBoundary><CrisisManagement /></ErrorBoundary></ProtectedRoute>} />
-          <Route path="/innovation" element={<ProtectedRoute userRole={userRole} requiredRole="admin"><InnovationShowcase /></ProtectedRoute>} />
-          <Route path="/institutions" element={<ProtectedRoute userRole={userRole} requiredRole="admin"><Institutions /></ProtectedRoute>} />
+          {/* <Route path="/admin" element={<ProtectedRoute userRole={userRole} requiredRole="student"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/crisis" element={<ProtectedRoute userRole={userRole} requiredRole="student"><ErrorBoundary><CrisisManagement /></ErrorBoundary></ProtectedRoute>} />
+          <Route path="/innovation" element={<ProtectedRoute userRole={userRole} requiredRole="student"><InnovationShowcase /></ProtectedRoute>} />
+          <Route path="/institutions" element={<ProtectedRoute userRole={userRole} requiredRole="student"><Institutions /></ProtectedRoute>} /> */}
         </Route>
 
         {/* Catch-all Route */}
