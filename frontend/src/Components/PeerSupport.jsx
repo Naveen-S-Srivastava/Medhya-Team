@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -8,9 +8,25 @@ import { Alert, AlertDescription } from '../ui/Alert';
 import { Avatar, AvatarFallback } from '../ui/Avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
-import { Users, MessageCircle, Heart, Reply, Flag, Shield, Plus, Search, TrendingUp, Clock } from 'lucide-react';
+import { Users, MessageCircle, Heart, Reply, Flag, Shield, Plus, Search, TrendingUp, Clock, Loader2, Send } from 'lucide-react';
+import { useCommunity } from '../hooks/useCommunity.js';
+import { useAuth } from '../hooks/useAuth.js';
 
 const PeerSupport = () => {
+  const { user } = useAuth();
+  const { 
+    posts, 
+    loading, 
+    error, 
+    pagination, 
+    trendingTopics,
+    getCommunityPosts, 
+    createCommunityPost,
+    addComment,
+    togglePostLike,
+    toggleCommentLike
+  } = useCommunity();
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showNewPostForm, setShowNewPostForm] = useState(false);
@@ -21,6 +37,12 @@ const PeerSupport = () => {
     isAnonymous: true,
     tags: ''
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // State for reply functionality
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
 
   const categories = [
     { value: 'all', label: 'All Topics' },
@@ -32,90 +54,110 @@ const PeerSupport = () => {
     { value: 'general', label: 'General Wellbeing' }
   ];
 
-  const forumPosts = [
-    {
-      id: '1',
-      title: 'Dealing with exam anxiety - need some advice',
-      content: 'Hi everyone, I\'ve been struggling with severe anxiety during exams. My heart races, I can\'t concentrate, and sometimes I even feel like I might pass out. Has anyone found effective strategies for managing this? I\'ve tried breathing exercises but need more ideas.',
-      author: 'Student123',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      category: 'anxiety',
-      replies: 12,
-      hearts: 8,
-      isAnonymous: true,
-      tags: ['exam-stress', 'coping-strategies'],
-      isModerated: true
-    },
-    {
-      id: '2',
-      title: 'Success story: How I overcame social anxiety',
-      content: 'I wanted to share my journey with social anxiety because I know how isolating it can feel. Six months ago, I could barely speak in class. Today, I gave a presentation to 50 people! Here\'s what helped me...',
-      author: 'HopefulSoul',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-      category: 'anxiety',
-      replies: 24,
-      hearts: 45,
-      isAnonymous: true,
-      tags: ['success-story', 'social-anxiety', 'recovery'],
-      isModerated: true
-    },
-    {
-      id: '3',
-      title: 'Feeling overwhelmed with coursework - can anyone relate?',
-      content: 'I\'m in my third year and feeling completely overwhelmed. I have 3 major assignments due next week, and I feel like I\'m drowning. The pressure is affecting my sleep and appetite. How do you manage when everything feels too much?',
-      author: 'StudyStressed',
-      timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000), // 8 hours ago
-      category: 'academic',
-      replies: 18,
-      hearts: 15,
-      isAnonymous: true,
-      tags: ['time-management', 'overwhelm'],
-      isModerated: true
-    },
-    {
-      id: '4',
-      title: 'Creating a support network - let\'s connect',
-      content: 'I think it would be great if we could form study groups or support circles for students dealing with similar challenges. Anyone interested in connecting for regular check-ins and mutual support?',
-      author: 'CommunityBuilder',
-      timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-      category: 'general',
-      replies: 31,
-      hearts: 28,
-      isAnonymous: false,
-      tags: ['community', 'support-groups'],
-      isModerated: true
-    }
-  ];
+  // Load posts on component mount and when filters change
+  useEffect(() => {
+    getCommunityPosts({
+      page: currentPage,
+      limit: 10,
+      category: selectedCategory === 'all' ? null : selectedCategory,
+      search: searchTerm || null,
+      institutionId: user?.institutionId || null
+    });
+  }, [currentPage, selectedCategory, searchTerm, user?.institutionId]);
 
-  const trendingTopics = [
-    { tag: 'exam-stress', count: 45 },
-    { tag: 'sleep-issues', count: 32 },
-    { tag: 'social-anxiety', count: 28 },
-    { tag: 'time-management', count: 24 },
-    { tag: 'self-care', count: 19 }
-  ];
+  const filteredPosts = posts;
 
-  const filteredPosts = forumPosts.filter(post => {
-    const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    return matchesCategory && matchesSearch;
-  });
-
-  const handleCreatePost = () => {
+  const handleCreatePost = async () => {
     if (!newPost.title || !newPost.content || !newPost.category) return;
     
-    // Simulate post creation
-    setShowNewPostForm(false);
-    setNewPost({
-      title: '',
-      content: '',
-      category: '',
-      isAnonymous: true,
-      tags: ''
-    });
+    try {
+      const postData = {
+        title: newPost.title,
+        content: newPost.content,
+        category: newPost.category,
+        isAnonymous: newPost.isAnonymous,
+        tags: newPost.tags ? newPost.tags.split(',').map(tag => tag.trim()) : [],
+        institutionId: user?.institutionId || 'iit-delhi' // Default institution
+      };
+
+      await createCommunityPost(postData);
+      
+      setShowNewPostForm(false);
+      setNewPost({
+        title: '',
+        content: '',
+        category: '',
+        isAnonymous: true,
+        tags: ''
+      });
+    } catch (err) {
+      console.error('Failed to create post:', err);
+    }
+  };
+
+  const handleReply = async (postId) => {
+    if (!replyContent.trim()) return;
+    
+    setSubmittingReply(true);
+    try {
+      const commentData = {
+        content: replyContent,
+        isAnonymous: true // Default to anonymous for replies
+      };
+      
+      await addComment(postId, commentData);
+      
+      // Clear reply form
+      setReplyContent('');
+      setReplyingTo(null);
+      
+      // Refresh posts to show new comment
+      getCommunityPosts({
+        page: currentPage,
+        limit: 10,
+        category: selectedCategory === 'all' ? null : selectedCategory,
+        search: searchTerm || null,
+        institutionId: user?.institutionId || null
+      });
+    } catch (err) {
+      console.error('Failed to add reply:', err);
+    } finally {
+      setSubmittingReply(false);
+    }
+  };
+
+  const handleLikePost = async (postId) => {
+    try {
+      await togglePostLike(postId);
+      
+      // Refresh posts to show updated like count
+      getCommunityPosts({
+        page: currentPage,
+        limit: 10,
+        category: selectedCategory === 'all' ? null : selectedCategory,
+        search: searchTerm || null,
+        institutionId: user?.institutionId || null
+      });
+    } catch (err) {
+      console.error('Failed to toggle like:', err);
+    }
+  };
+
+  const handleLikeComment = async (postId, commentId) => {
+    try {
+      await toggleCommentLike(postId, commentId);
+      
+      // Refresh posts to show updated like count
+      getCommunityPosts({
+        page: currentPage,
+        limit: 10,
+        category: selectedCategory === 'all' ? null : selectedCategory,
+        search: searchTerm || null,
+        institutionId: user?.institutionId || null
+      });
+    } catch (err) {
+      console.error('Failed to toggle comment like:', err);
+    }
   };
 
   const getCategoryColor = (category) => {
@@ -141,6 +183,14 @@ const PeerSupport = () => {
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays === 1) return '1 day ago';
     return `${diffInDays} days ago`;
+  };
+
+  const isPostLiked = (post) => {
+    return post.likes?.some(like => like === user?._id);
+  };
+
+  const isCommentLiked = (comment) => {
+    return comment.likes?.some(like => like === user?._id);
   };
 
   return (
@@ -265,75 +315,16 @@ const PeerSupport = () => {
 
           <div className="grid gap-6 lg:grid-cols-4">
             <div className="lg:col-span-3 space-y-4">
-              {filteredPosts.map((post) => (
-                <Card key={post.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-8 h-8">
-                          <AvatarFallback>
-                            {post.isAnonymous ? '?' : post.author.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-medium">
-                            {post.isAnonymous ? 'Anonymous Student' : post.author}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {getTimeAgo(post.timestamp)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getCategoryColor(post.category)}>
-                          {post.category}
-                        </Badge>
-                        {post.isModerated && (
-                          <Badge variant="outline" className="text-green-600 border-green-600">
-                            <Shield className="w-3 h-3 mr-1" />
-                            Moderated
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    <h3 className="font-medium mb-2">{post.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">{post.content}</p>
-
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {post.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          #{tag}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="sm">
-                          <Heart className="w-4 h-4 mr-1" />
-                          {post.hearts}
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <MessageCircle className="w-4 h-4 mr-1" />
-                          {post.replies} replies
-                        </Button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Reply className="w-4 h-4 mr-1" />
-                          Reply
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Flag className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {filteredPosts.length === 0 && (
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                  <span>Loading posts...</span>
+                </div>
+              ) : error ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              ) : filteredPosts.length === 0 ? (
                 <Card>
                   <CardContent className="py-12 text-center">
                     <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -343,6 +334,189 @@ const PeerSupport = () => {
                     </p>
                   </CardContent>
                 </Card>
+              ) : (
+                filteredPosts.map((post) => (
+                  <Card key={post._id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-8 h-8">
+                            <AvatarFallback>
+                              {post.isAnonymous
+                                ? "🧑"
+                                : (post.author?.firstName?.charAt(0) || 'U').toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {post.isAnonymous ? 'Anonymous Student' : `${post.author?.firstName || 'User'} ${post.author?.lastName || ''}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {getTimeAgo(new Date(post.createdAt))}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getCategoryColor(post.category)}>
+                            {post.category}
+                          </Badge>
+                          {post.isModerated && (
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                              <Shield className="w-3 h-3 mr-1" />
+                              Moderated
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      <h3 className="font-medium mb-2">{post.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">{post.content}</p>
+
+                      <div className="flex flex-wrap gap-1 mb-4">
+                        {post.tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            #{tag}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleLikePost(post._id)}
+                            className={isPostLiked(post) ? "text-red-500" : ""}
+                          >
+                            <Heart className={`w-4 h-4 mr-1 ${isPostLiked(post) ? "fill-current" : ""}`} />
+                            {post.likes?.length || 0}
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <MessageCircle className="w-4 h-4 mr-1" />
+                            {post.comments?.length || 0} replies
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setReplyingTo(replyingTo === post._id ? null : post._id)}
+                          >
+                            <Reply className="w-4 h-4 mr-1" />
+                            Reply
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Flag className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Reply Form */}
+                      {replyingTo === post._id && (
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarFallback>
+                                {user?.firstName?.charAt(0) || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <Textarea
+                                placeholder="Write your reply..."
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                className="mb-3"
+                                rows={3}
+                              />
+                              <div className="flex items-center justify-between">
+                                <label className="flex items-center gap-2 text-sm">
+                                  <input
+                                    type="checkbox"
+                                    defaultChecked={true}
+                                    disabled
+                                  />
+                                  Reply anonymously
+                                </label>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setReplyingTo(null);
+                                      setReplyContent('');
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => handleReply(post._id)}
+                                    disabled={!replyContent.trim() || submittingReply}
+                                  >
+                                    {submittingReply ? (
+                                      <>
+                                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                        Posting...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Send className="w-4 h-4 mr-1" />
+                                        Post Reply
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Comments Section */}
+                      {post.comments && post.comments.length > 0 && (
+                        <div className="mt-4 space-y-3">
+                          <h4 className="text-sm font-medium text-gray-700">Replies</h4>
+                          {post.comments.map((comment) => (
+                            <div key={comment._id} className="ml-4 p-3 bg-gray-50 rounded-lg">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="w-6 h-6">
+                                    <AvatarFallback>
+                                      {comment.isAnonymous
+                                        ? "🧑"
+                                        : (comment.author?.firstName?.charAt(0) || 'U').toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-sm font-medium">
+                                    {comment.isAnonymous ? 'Anonymous Student' : `${comment.author?.firstName || 'User'} ${comment.author?.lastName || ''}`}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {getTimeAgo(new Date(comment.createdAt))}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-sm text-gray-700 mb-2">{comment.content}</p>
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleLikeComment(post._id, comment._id)}
+                                  className={isCommentLiked(comment) ? "text-red-500" : ""}
+                                >
+                                  <Heart className={`w-3 h-3 mr-1 ${isCommentLiked(comment) ? "fill-current" : ""}`} />
+                                  {comment.likes?.length || 0}
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Flag className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
               )}
             </div>
 
@@ -356,16 +530,20 @@ const PeerSupport = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {trendingTopics.map((topic) => (
-                      <div key={topic.tag} className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-xs">
-                          #{topic.tag}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {topic.count} posts
-                        </span>
-                      </div>
-                    ))}
+                    {trendingTopics.length > 0 ? (
+                      trendingTopics.map((topic) => (
+                        <div key={topic.tag} className="flex items-center justify-between">
+                          <Badge variant="outline" className="text-xs">
+                            #{topic.tag}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {topic.count} posts
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No trending topics yet</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
