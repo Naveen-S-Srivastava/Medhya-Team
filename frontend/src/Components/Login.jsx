@@ -101,7 +101,7 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
       const user = await login(formData.email, formData.password);
       
       // Check user role from the response and call onLogin callback
-      if (onLogin) {
+        if (onLogin) {
         onLogin(user.role, user);
       }
       
@@ -169,9 +169,9 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
             });
 
             // Call onLogin callback with user role and data
-            if (onLogin) {
+              if (onLogin) {
               onLogin(user.role, user);
-            }
+              }
             
             // The App component will handle navigation based on the authentication state
           } catch (err) {

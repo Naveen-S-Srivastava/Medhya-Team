@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/Card";
 import { Button } from "../ui/Button";
-import { Users, Calendar, MessageSquare, BarChart3, Settings, LogOut } from "lucide-react";
+import { Users, Calendar, MessageSquare, BarChart3, Settings, LogOut, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import PaymentHistory from "./PaymentHistory.jsx";
 
 const CounselorDashboard = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
 
   const handleLogout = () => {
     // Add logout logic here
@@ -31,6 +33,25 @@ const CounselorDashboard = () => {
           <Button onClick={handleLogout} variant="outline" className="gap-2">
             <LogOut className="w-4 h-4" />
             Logout
+          </Button>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-8">
+          <Button
+            variant={activeTab === 'overview' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('overview')}
+            className="flex-1"
+          >
+            Overview
+          </Button>
+          <Button
+            variant={activeTab === 'payments' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('payments')}
+            className="flex-1"
+          >
+            <DollarSign className="w-4 h-4 mr-2" />
+            Payments
           </Button>
         </div>
 
@@ -77,8 +98,9 @@ const CounselorDashboard = () => {
           </Card>
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Conditional Content */}
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Upcoming Sessions */}
           <div className="lg:col-span-2">
             <Card>
@@ -180,6 +202,11 @@ const CounselorDashboard = () => {
             </Card>
           </div>
         </div>
+        )}
+
+        {activeTab === 'payments' && (
+          <PaymentHistory />
+        )}
       </div>
     </div>
   );
