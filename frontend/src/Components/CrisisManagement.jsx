@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -207,7 +207,7 @@ const CrisisManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -333,35 +333,35 @@ const CrisisManagement = () => {
                   Crisis Alerts ({filteredAlerts.length})
                   {loading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
                 </h3>
-                                 <div className="flex gap-2">
-                   <Button size="sm" variant="outline" onClick={testAPI} disabled={loading}>
-                     <Bell className="w-4 h-4 mr-2" />
-                     Test API
-                   </Button>
-                   <Button size="sm" variant="outline" onClick={testCreateCrisisAlert} disabled={loading}>
-                     <AlertTriangle className="w-4 h-4 mr-2" />
-                     Create Test Alert
-                   </Button>
-                   <Button size="sm" variant="outline" onClick={() => {
-                     console.log('🔍 Current state:', { crisisAlerts, loading, error });
-                     console.log('📊 Stats data:', statsData);
-                   }}>
-                     <Eye className="w-4 h-4 mr-2" />
-                     Debug State
-                   </Button>
-                   <Button size="sm" variant="outline" onClick={refetch} disabled={loading}>
-                     {loading ? (
-                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                     ) : (
-                       <RefreshCw className="w-4 h-4 mr-2" />
-                     )}
-                     Refresh
-                   </Button>
-                   <Button size="sm">
-                     <Phone className="w-4 h-4 mr-2" />
-                     Emergency Contacts
-                   </Button>
-                 </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={testAPI} disabled={loading}>
+                      <Bell className="w-4 h-4 mr-2" />
+                      Test API
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={testCreateCrisisAlert} disabled={loading}>
+                      <AlertTriangle className="w-4 h-4 mr-2" />
+                      Create Test Alert
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      console.log('🔍 Current state:', { crisisAlerts, loading, error });
+                      console.log('📊 Stats data:', statsData);
+                    }}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Debug State
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={refetch} disabled={loading}>
+                      {loading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      )}
+                      Refresh
+                    </Button>
+                    <Button size="sm">
+                      <Phone className="w-4 h-4 mr-2" />
+                      Emergency Contacts
+                    </Button>
+                  </div>
               </div>
 
               {loading ? (
@@ -407,7 +407,7 @@ const CrisisManagement = () => {
                             </div>
                             <Badge 
                               variant={alert.status === 'active' ? 'destructive' : 
-                                      alert.status === 'in_progress' ? 'default' : 'secondary'}
+                                       alert.status === 'in_progress' ? 'default' : 'secondary'}
                             >
                               {alert.status?.replace('_', ' ')}
                             </Badge>
@@ -449,43 +449,43 @@ const CrisisManagement = () => {
                               </div>
                             )}
 
-                                                         {alert.status === 'active' && (
-                               <div className="flex gap-2 mt-3">
-                                 <Button 
-                                   size="sm" 
-                                   className="bg-red-600 hover:bg-red-700"
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     handleAlertAction(alert._id || alert.id, 'emergency_response');
-                                   }}
-                                 >
-                                   <Phone className="w-4 h-4 mr-2" />
-                                   Emergency Response
-                                 </Button>
-                                 <Button 
-                                   size="sm" 
-                                   variant="outline"
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     handleStatusUpdate(alert._id || alert.id, 'in_progress');
-                                   }}
-                                 >
-                                   <MessageCircle className="w-4 h-4 mr-2" />
-                                   Start Response
-                                 </Button>
-                                 <Button 
-                                   size="sm" 
-                                   variant="outline"
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     handleAlertAction(alert._id || alert.id, 'assign_counselor');
-                                   }}
-                                 >
-                                   <UserCheck className="w-4 h-4 mr-2" />
-                                   Assign Counselor
-                                 </Button>
-                               </div>
-                             )}
+                              {alert.status === 'active' && (
+                                <div className="flex gap-2 mt-3">
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-red-600 hover:bg-red-700"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAlertAction(alert._id || alert.id, 'emergency_response');
+                                    }}
+                                  >
+                                    <Phone className="w-4 h-4 mr-2" />
+                                    Emergency Response
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStatusUpdate(alert._id || alert.id, 'in_progress');
+                                    }}
+                                  >
+                                    <MessageCircle className="w-4 h-4 mr-2" />
+                                    Start Response
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAlertAction(alert._id || alert.id, 'assign_counselor');
+                                    }}
+                                  >
+                                    <UserCheck className="w-4 h-4 mr-2" />
+                                    Assign Counselor
+                                  </Button>
+                                </div>
+                              )}
                           </div>
                         </CardContent>
                       </Card>
