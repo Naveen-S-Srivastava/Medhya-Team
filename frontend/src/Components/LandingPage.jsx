@@ -216,11 +216,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
         {/* Enhanced Hero Section */}
         <section className={`text-center space-y-8 py-16 px-4 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="space-y-6">
-            <div className="flex justify-center mb-6">
-              <div className="p-4 bg-gradient-to-br from-blue-100 to-green-100 rounded-full">
-                <Heart className="w-12 h-12 text-blue-600" />
-              </div>
-            </div>
+            
             
             <h1 className="text-4xl md:text-7xl font-bold leading-tight">
               <span className="block text-gray-900">Mental Health Support</span>
@@ -258,15 +254,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
               Start Your Wellness Journey
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-2 border-gray-300 hover:border-blue-400 px-8 py-4 text-lg hover:shadow-lg transition-all duration-200"
-              onClick={handleNavigation}
-            >
-              <BarChart3 className="w-5 h-5 mr-2" />
-              Institution Portal
-            </Button>
+            
           </div>
 
           {/* Trust Indicators */}
@@ -300,7 +288,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
             </Card>
             <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-green-900 mb-1">{systemStats.sessionsToday}</div>
+                <div className="text-3xl font-bold text-green-900 mb-1">2000+</div>
                 <div className="text-sm text-green-700 font-medium">Support Sessions Today</div>
                 <div className="text-xs text-green-600 mt-1">Real-time help provided</div>
               </CardContent>
@@ -314,7 +302,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
             </Card>
             <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-orange-900 mb-1">{systemStats.satisfactionRate}%</div>
+                <div className="text-3xl font-bold text-orange-900 mb-1">97%</div>
                 <div className="text-sm text-orange-700 font-medium">Student Satisfaction</div>
                 <div className="text-xs text-orange-600 mt-1">Positive experiences</div>
               </CardContent>
