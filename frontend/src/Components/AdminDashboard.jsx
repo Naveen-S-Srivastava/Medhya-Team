@@ -43,201 +43,143 @@ const AdminDashboard = () => {
   ];
 
   const categoryData = [
-    { name: 'Academic Stress', value: 35, color: '#8884d8' },
-    { name: 'Anxiety', value: 28, color: '#82ca9d' },
-    { name: 'Depression', value: 18, color: '#ffc658' },
-    { name: 'Sleep Issues', value: 12, color: '#ff7300' },
-    { name: 'Relationships', value: 7, color: '#8dd1e1' }
+    { name: 'Academic Stress', value: 35, color: '#6366F1' },
+    { name: 'Anxiety', value: 28, color: '#3B82F6' },
+    { name: 'Depression', value: 18, color: '#F97316' },
+    { name: 'Sleep Issues', value: 12, color: '#EC4899' },
+    { name: 'Relationships', value: 7, color: '#22D3EE' }
   ];
-
-  const criticalAlerts = [
-    {
-      id: '1',
-      type: 'High Risk User',
-      description: 'User showing signs of severe depression in chat logs',
-      timestamp: '2 hours ago',
-      status: 'pending',
-      priority: 'high'
-    },
-    {
-      id: '2',
-      type: 'Forum Content',
-      description: 'Post containing potential self-harm references flagged',
-      timestamp: '4 hours ago',
-      status: 'reviewed',
-      priority: 'high'
-    },
-    {
-      id: '3',
-      type: 'Emergency Keywords',
-      description: 'Multiple emergency keywords detected in chat session',
-      timestamp: '1 day ago',
-      status: 'resolved',
-      priority: 'critical'
-    }
-  ];
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'resolved': return 'bg-green-100 text-green-800';
-      case 'reviewed': return 'bg-blue-100 text-blue-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-800 p-4 sm:p-6 lg:p-8 transition-colors duration-300">
+      <Card className="shadow-2xl rounded-2xl mb-8 transform transition-transform duration-500 hover:scale-[1.005]">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-4 text-4xl font-extrabold text-indigo-800">
+            <BarChart3 className="w-10 h-10 text-indigo-600" />
             Administrator Dashboard
           </CardTitle>
-          <CardDescription>
-            Monitor system usage, user trends, and safety alerts for institutional oversight
+          <CardDescription className="text-xl text-gray-600 mt-2">
+            Monitor system usage, user trends, and safety alerts with a modern overview.
           </CardDescription>
         </CardHeader>
       </Card>
-
-      <div className="flex justify-between items-center">
-        <div className="flex gap-4">
+      
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center my-8 gap-4">
+        <div className="flex flex-wrap gap-3">
           <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-full md:w-[150px] border-indigo-300 bg-white shadow-lg transition-all duration-300 hover:border-indigo-600 hover:shadow-xl">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
+            <SelectContent className="bg-white border border-gray-200 shadow-2xl rounded-lg">
               <SelectItem value="7d">Last 7 days</SelectItem>
               <SelectItem value="30d">Last 30 days</SelectItem>
               <SelectItem value="90d">Last 3 months</SelectItem>
               <SelectItem value="1y">Last year</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={runAssessmentTests}>
-            <TrendingUp className="w-4 h-4 mr-2" />
+          <Button variant="outline" className="flex items-center gap-2 text-indigo-600 border-indigo-600 hover:bg-indigo-50 transition-colors duration-300 transform hover:scale-105" onClick={runAssessmentTests}>
+            <TrendingUp className="w-4 h-4" />
             Test Assessment Data
           </Button>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
+          <Button className="flex items-center gap-2 bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+            <Download className="w-4 h-4" />
             Export Report
           </Button>
         </div>
-        <Badge variant="outline" className="text-green-600 border-green-600">
-          <Shield className="w-3 h-3 mr-1" />
+        <Badge variant="outline" className="flex items-center gap-1 text-green-600 border-green-600 px-3 py-1 text-sm rounded-full animate-pulse transition-colors duration-300">
+          <Shield className="w-3 h-3" />
           HIPAA Compliant
         </Badge>
       </div>
-      {analytics.criticalAlerts > 0 && (
-        <Alert className="border-red-200 bg-red-50">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800">
-            <strong>{analytics.criticalAlerts} critical alerts</strong> require immediate attention from mental health professionals.
-            <Button variant="link" className="text-red-600 p-0 h-auto ml-2">
-              Review alerts →
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Key Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <Card>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-md font-medium text-gray-500">Total Users</CardTitle>
+            <Users className="h-6 w-6 text-indigo-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">Registered students</p>
+            <div className="text-4xl font-bold text-gray-900">{analytics.totalUsers}</div>
+            <p className="text-xs text-gray-500 mt-1">Registered students</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-md font-medium text-gray-500">Active Users</CardTitle>
+            <Eye className="h-6 w-6 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.activeUsers}</div>
-            <p className="text-xs text-muted-foreground">This week</p>
+            <div className="text-4xl font-bold text-gray-900">{analytics.activeUsers}</div>
+            <p className="text-xs text-gray-500 mt-1">This week</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Chat Sessions</CardTitle>
-            <MessageCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-md font-medium text-gray-500">Chat Sessions</CardTitle>
+            <MessageCircle className="h-6 w-6 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.chatSessions}</div>
-            <p className="text-xs text-muted-foreground">This week</p>
+            <div className="text-4xl font-bold text-gray-900">{analytics.chatSessions}</div>
+            <p className="text-xs text-gray-500 mt-1">This week</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Appointments</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-md font-medium text-gray-500">Appointments</CardTitle>
+            <Calendar className="h-6 w-6 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.appointments}</div>
-            <p className="text-xs text-muted-foreground">This week</p>
+            <div className="text-4xl font-bold text-gray-900">{analytics.appointments}</div>
+            <p className="text-xs text-gray-500 mt-1">This week</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Forum Posts</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-md font-medium text-gray-500">Forum Posts</CardTitle>
+            <Users className="h-6 w-6 text-pink-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.forumPosts}</div>
-            <p className="text-xs text-muted-foreground">This week</p>
+            <div className="text-4xl font-bold text-gray-900">{analytics.forumPosts}</div>
+            <p className="text-xs text-gray-500 mt-1">This week</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <CardTitle className="text-md font-medium text-gray-500">Critical Alerts</CardTitle>
+            <AlertTriangle className="h-6 w-6 text-red-600 animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{analytics.criticalAlerts}</div>
-            <p className="text-xs text-muted-foreground">Needs attention</p>
+            <div className="text-4xl font-bold text-red-600">{analytics.criticalAlerts}</div>
+            <p className="text-xs text-gray-500 mt-1">Needs attention</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="usage" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="usage">Usage Analytics</TabsTrigger>
-          <TabsTrigger value="trends">Mental Health Trends</TabsTrigger>
-          <TabsTrigger value="alerts">Safety Alerts</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
+      <Tabs defaultValue="usage" className="my-8">
+        <TabsList className="grid w-full grid-cols-3 bg-gray-200 rounded-2xl p-1 mb-8 shadow-inner">
+          <TabsTrigger value="usage" className="data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-md rounded-xl transition-all duration-300 hover:text-indigo-800">Usage Analytics</TabsTrigger>
+          <TabsTrigger value="trends" className="data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-md rounded-xl transition-all duration-300 hover:text-indigo-800">Mental Health Trends</TabsTrigger>
+          <TabsTrigger value="reports" className="data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-md rounded-xl transition-all duration-300 hover:text-indigo-800">Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="usage" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            <ScoresChart 
-              timeRange="7d" 
-              title="Weekly Assessment Patterns" 
+            <ScoresChart
+              timeRange="7d"
+              title="Weekly Assessment Patterns"
             />
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Issue Categories</CardTitle>
-                <CardDescription>Distribution of mental health concerns</CardDescription>
+            <Card className="shadow-lg rounded-2xl p-6">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-2xl font-bold text-gray-900">Issue Categories</CardTitle>
+                <CardDescription className="text-md text-gray-600">Distribution of mental health concerns</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -246,9 +188,9 @@ const AdminDashboard = () => {
                       cy="50%"
                       labelLine={false}
                       label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
+                      outerRadius={100}
                       dataKey="value"
+                      stroke="none"
                     >
                       {categoryData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -263,35 +205,34 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="trends" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mental Health Trends (6 Months)</CardTitle>
-              <CardDescription>
+          <Card className="shadow-lg rounded-2xl p-6">
+            <CardHeader className="p-0 mb-4">
+              <CardTitle className="text-2xl font-bold text-gray-900">Mental Health Trends (6 Months)</CardTitle>
+              <CardDescription className="text-md text-gray-600">
                 Anonymized data showing trends in mental health concerns across the student population
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="anxiety" stroke="#8884d8" name="Anxiety" />
-                  <Line type="monotone" dataKey="depression" stroke="#82ca9d" name="Depression" />
-                  <Line type="monotone" dataKey="stress" stroke="#ffc658" name="Academic Stress" />
-                  <Line type="monotone" dataKey="sleep" stroke="#ff7300" name="Sleep Issues" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="month" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <Tooltip cursor={{ fill: 'transparent' }} />
+                  <Line type="monotone" dataKey="anxiety" stroke="#F43F5E" name="Anxiety" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="depression" stroke="#10B981" name="Depression" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="stress" stroke="#FBBF24" name="Academic Stress" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="sleep" stroke="#6366F1" name="Sleep Issues" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-
           <div className="grid gap-6 md:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardTitle>Key Insights</CardTitle>
+            <Card className="shadow-lg rounded-2xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-xl font-semibold text-gray-900">Key Insights</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 p-0">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-red-500" />
                   <span className="text-sm">Academic stress increasing by 15%</span>
@@ -306,187 +247,82 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Peak Usage Times</CardTitle>
+            <Card className="shadow-lg rounded-2xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-xl font-semibold text-gray-900">Peak Usage Times</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-sm">
+              <CardContent className="space-y-3 p-0">
+                <div className="text-sm text-gray-600">
                   <strong>Chat Support:</strong> 8-10 PM weekdays
                 </div>
-                <div className="text-sm">
+                <div className="text-sm text-gray-600">
                   <strong>Appointments:</strong> Tuesday-Thursday afternoons
                 </div>
-                <div className="text-sm">
+                <div className="text-sm text-gray-600">
                   <strong>Forum Activity:</strong> Late evenings & weekends
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recommendations</CardTitle>
+            <Card className="shadow-lg rounded-2xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-xl font-semibold text-gray-900">Recommendations</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-sm">
-                  • Increase counselor availability during exam periods
-                </div>
-                <div className="text-sm">
-                  • Implement stress management workshops
-                </div>
-                <div className="text-sm">
-                  • Promote sleep hygiene resources
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="alerts" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Safety & Critical Alerts</CardTitle>
-              <CardDescription>
-                Automated alerts requiring professional attention to ensure student safety
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {criticalAlerts.map((alert) => (
-                  <div key={alert.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <AlertTriangle className="w-5 h-5 text-destructive" />
-                        <div>
-                          <h4 className="font-medium">{alert.type}</h4>
-                          <p className="text-sm text-muted-foreground">{alert.description}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getPriorityColor(alert.priority)}>
-                          {alert.priority.toUpperCase()}
-                        </Badge>
-                        <Badge className={getStatusColor(alert.status)}>
-                          {alert.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{alert.timestamp}</span>
-                      <div className="flex gap-2">
-                        {alert.status === 'pending' && (
-                          <>
-                            <Button size="sm" variant="outline">
-                              Review
-                            </Button>
-                            <Button size="sm">
-                              Contact Professional
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Alert Categories</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Emergency Keywords</span>
-                  <Badge variant="destructive">5</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">High Risk Behavior</span>
-                  <Badge variant="outline">12</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Forum Moderation</span>
-                  <Badge variant="outline">8</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Repeated Crisis Contacts</span>
-                  <Badge variant="outline">3</Badge>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Response Protocols</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <strong>Critical:</strong> Immediate professional intervention required
-                </div>
-                <div>
-                  <strong>High:</strong> Review within 2 hours, contact if needed
-                </div>
-                <div>
-                  <strong>Medium:</strong> Review within 24 hours
-                </div>
-                <div>
-                  <strong>Low:</strong> Weekly review and follow-up
-                </div>
+              <CardContent className="space-y-3 p-0 text-sm text-gray-600">
+                <div>• Increase counselor availability during exam periods</div>
+                <div>• Implement stress management workshops</div>
+                <div>• Promote sleep hygiene resources</div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Reports</CardTitle>
-              <CardDescription>Generate comprehensive reports for institutional review</CardDescription>
+          <Card className="shadow-lg rounded-2xl p-6">
+            <CardHeader className="p-0 mb-4">
+              <CardTitle className="text-2xl font-bold text-gray-900">System Reports</CardTitle>
+              <CardDescription className="text-md text-gray-600">Generate comprehensive reports for institutional review</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Monthly Usage Report</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
+            <CardContent className="p-0">
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow duration-300">
+                  <h4 className="font-semibold text-xl text-gray-900 mb-2">Monthly Usage Report</h4>
+                  <p className="text-sm text-gray-600 mb-4">
                     Comprehensive overview of system usage, user engagement, and feature adoption
                   </p>
-                  <Button size="sm">
+                  <Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-300">
                     <Download className="w-4 h-4 mr-2" />
                     Generate Report
                   </Button>
                 </div>
 
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Mental Health Trends Analysis</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
+                <div className="border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow duration-300">
+                  <h4 className="font-semibold text-xl text-gray-900 mb-2">Mental Health Trends Analysis</h4>
+                  <p className="text-sm text-gray-600 mb-4">
                     Anonymized analysis of mental health trends and intervention effectiveness
                   </p>
-                  <Button size="sm">
+                  <Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-300">
                     <Download className="w-4 h-4 mr-2" />
                     Generate Report
                   </Button>
                 </div>
 
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Safety & Compliance Report</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
+                <div className="border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow duration-300">
+                  <h4 className="font-semibold text-xl text-gray-900 mb-2">Safety & Compliance Report</h4>
+                  <p className="text-sm text-gray-600 mb-4">
                     Safety protocols, alert responses, and compliance with regulations
                   </p>
-                  <Button size="sm">
+                  <Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-300">
                     <Download className="w-4 h-4 mr-2" />
                     Generate Report
                   </Button>
                 </div>
 
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Resource Utilization Report</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
+                <div className="border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow duration-300">
+                  <h4 className="font-semibold text-xl text-gray-900 mb-2">Resource Utilization Report</h4>
+                  <p className="text-sm text-gray-600 mb-4">
                     Analysis of resource usage, counselor workload, and capacity planning
                   </p>
-                  <Button size="sm">
+                  <Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-300">
                     <Download className="w-4 h-4 mr-2" />
                     Generate Report
                   </Button>
@@ -494,12 +330,10 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
-
-          <Alert>
-            <Shield className="h-4 w-4" />
-            <AlertDescription>
-              All reports are generated with anonymized data to protect student privacy. 
-              No personally identifiable information is included in institutional reports.
+          <Alert className="border-indigo-200 bg-indigo-50 text-indigo-800 rounded-lg shadow-md">
+            <Shield className="h-5 w-5" />
+            <AlertDescription className="text-md font-medium">
+              All reports are generated with anonymized data to protect student privacy. No personally identifiable information is included in institutional reports.
             </AlertDescription>
           </Alert>
         </TabsContent>
