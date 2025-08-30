@@ -13,11 +13,14 @@ const handleResponse = async (response) => {
 // Generic API request function
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  // Get token from localStorage
   const token = localStorage.getItem('token');
+  
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
     },
   };

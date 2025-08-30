@@ -321,16 +321,19 @@ export const getAssessmentAnalytics = catchAsync(async (req, res) => {
     date: { $gte: startDate }
   }).populate('user', 'firstName lastName email role');
 
+  // Filter out assessments with null users (orphaned assessments)
+  const validAssessments = assessments.filter(a => a.user !== null);
+
   // Calculate analytics
-  const totalAssessments = assessments.length;
-  const uniqueUsers = new Set(assessments.map(a => a.user._id.toString())).size;
+  const totalAssessments = validAssessments.length;
+  const uniqueUsers = new Set(validAssessments.map(a => a.user._id.toString())).size;
 
   // Group by type
   const typeStats = {};
   const scoreTrends = {};
   const dailyStats = {};
 
-  assessments.forEach(assessment => {
+  validAssessments.forEach(assessment => {
     // Type statistics
     if (!typeStats[assessment.type]) {
       typeStats[assessment.type] = {
@@ -370,7 +373,7 @@ export const getAssessmentAnalytics = catchAsync(async (req, res) => {
   })).sort((a, b) => a.date.localeCompare(b.date));
 
   // Overall statistics
-  const totalScore = assessments.reduce((sum, a) => sum + a.score, 0);
+  const totalScore = validAssessments.reduce((sum, a) => sum + a.score, 0);
   const averageScore = totalAssessments > 0 ? Math.round((totalScore / totalAssessments) * 100) / 100 : 0;
 
   // Score distribution
@@ -382,7 +385,7 @@ export const getAssessmentAnalytics = catchAsync(async (req, res) => {
     '21-27': 0
   };
 
-  assessments.forEach(assessment => {
+  validAssessments.forEach(assessment => {
     if (assessment.score <= 5) scoreRanges['0-5']++;
     else if (assessment.score <= 10) scoreRanges['6-10']++;
     else if (assessment.score <= 15) scoreRanges['11-15']++;
@@ -407,10 +410,10 @@ export const getAssessmentAnalytics = catchAsync(async (req, res) => {
       dailyTrends: dailyData,
       scoreDistribution: scoreRanges,
       insights: {
-        mostActiveDay: dailyData.length > 0 ? dailyData.reduce((max, day) => 
+        mostActiveDay: dailyData.length > 0 ? dailyData.reduce((max, day) =>
           day.count > max.count ? day : max, dailyData[0]) : null,
-        assessmentType: Object.keys(typeStats).length > 0 ? 
-          Object.keys(typeStats).reduce((a, b) => 
+        assessmentType: Object.keys(typeStats).length > 0 ?
+          Object.keys(typeStats).reduce((a, b) =>
             typeStats[a].count > typeStats[b].count ? a : b) : null
       }
     }
