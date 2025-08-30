@@ -1,20 +1,35 @@
 import express from "express";
-import { registerUser, loginUser, getProfile } from "../controllers/userController.js";
-import { signup, verifyAccount, resentOTP, login, logout, forgetPassword, resetPassword } from '../controllers/auth.js';
-import { isAuthenticated, restrictTo } from '../middlewares/auth.js';
-import catchAsync from '../utils/catchAsync.js';
+import { 
+  registerUser, 
+  loginUser, 
+  getProfile, 
+  updateProfile, 
+  changePassword,
+  googleAuth,
+  refreshToken,
+  logout,
+  completeGoogleProfile
+} from "../controllers/userController.js";
+import { protect, restrictTo } from '../middlewares/auth.js';
 
 const router = express.Router();
-// auths routes
 
-router.post("/signup",signup);
-router.post("/verify", isAuthenticated, verifyAccount);
-router.post('/resend-otp', isAuthenticated, resentOTP);
-router.post('/login',login);
-router.post('/logout', logout);
-router.post('/forget-password', forgetPassword);
-router.post('/reset-password', resetPassword);
+// Public routes
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+router.post("/google-auth", googleAuth);
+router.post("/refresh-token", refreshToken);
+router.put("/complete-profile", completeGoogleProfile);
 
-router.get("/:id", getProfile);
+// Protected routes
+router.use(protect); // All routes after this middleware are protected
+
+router.get("/profile", getProfile);
+router.patch("/profile", updateProfile);
+router.patch("/change-password", changePassword);
+router.post("/logout", logout);
+
+// Admin routes
+router.use(restrictTo('admin'));
 
 export default router;

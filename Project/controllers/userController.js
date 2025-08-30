@@ -1,61 +1,331 @@
 import User from "../models/usermodel.js";
 import ActivityLog from "../models/activityLogModel.js";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import AppError from "../utils/appError.js";
+import catchAsync from "../utils/catchAsync.js";
 
-export const registerUser = async (req, res) => {
+// Generate JWT Token
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+  });
+};
+
+// Generate Refresh Token
+const generateRefreshToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, {
+    expiresIn: '30d'
+  });
+};
+
+// Send token response
+const sendTokenResponse = (user, statusCode, res) => {
+  const token = generateToken(user._id);
+  const refreshToken = generateRefreshToken(user._id);
+
+  // Save refresh token to user
+  user.refreshToken = refreshToken;
+  user.lastLogin = new Date();
+  user.save({ validateBeforeSave: false });
+
+  // Remove password from output
+  user.password = undefined;
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    refreshToken,
+    data: {
+      user
+    }
+  });
+};
+
+export const registerUser = catchAsync(async (req, res, next) => {
+  const {
+    firstName,
+    lastName,
+    username,
+    email,
+    phone,
+    dateOfBirth,
+    gender,
+    institutionId,
+    studentId,
+    course,
+    year,
+    department,
+    password,
+    passwordConfirm,
+    securityQuestion,
+    securityAnswer,
+    privacyConsent,
+    dataProcessingConsent,
+    emergencyContact,
+    emergencyPhone,
+    mentalHealthConsent
+  } = req.body;
+
+  // Check if user already exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    // If user exists and has Google ID, return success (for Google OAuth flow)
+    if (existingUser.googleId) {
+      return sendTokenResponse(existingUser, 200, res);
+    }
+    // If user exists but no Google ID, return error
+    return next(new AppError('User with this email already exists', 400));
+  }
+
+  // Create new user
+  const user = await User.create({
+    firstName,
+    lastName,
+    username,
+    email,
+    phone,
+    dateOfBirth,
+    gender,
+    institutionId,
+    studentId,
+    course,
+    year,
+    department,
+    password,
+    passwordConfirm,
+    securityQuestion,
+    securityAnswer,
+    privacyConsent,
+    dataProcessingConsent,
+    emergencyContact,
+    emergencyPhone,
+    mentalHealthConsent
+  });
+
+  // Log activity
   try {
-    const user = new User(req.body);
-    await user.save();
-    try {
-      await ActivityLog.create({
-        user: user._id,
-        action: "user_register",
-        metadata: {
-          email: user.email,
-          userAgent: req.get("user-agent"),
-          ip: req.ip
-        }
+    await ActivityLog.create({
+      user: user._id,
+      action: "user_register",
+      metadata: {
+        email: user.email,
+        userAgent: req.get("user-agent"),
+        ip: req.ip
+      }
+    });
+  } catch (error) {
+    console.log('Activity log creation failed:', error.message);
+  }
+
+  sendTokenResponse(user, 201, res);
+});
+
+export const loginUser = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  // Check if email and password exist
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password', 400));
+  }
+
+  // Check if user exists && password is correct
+  const user = await User.findOne({ email }).select('+password');
+  if (!user || !(await user.matchPassword(password))) {
+    return next(new AppError('Incorrect email or password', 401));
+  }
+
+  // Log activity
+  try {
+    await ActivityLog.create({
+      user: user._id,
+      action: "user_login",
+      metadata: {
+        email: user.email,
+        userAgent: req.get("user-agent"),
+        ip: req.ip
+      }
+    });
+  } catch (error) {
+    console.log('Activity log creation failed:', error.message);
+  }
+
+  sendTokenResponse(user, 200, res);
+});
+
+export const googleAuth = catchAsync(async (req, res, next) => {
+  const { googleId, email, firstName, lastName, profilePicture } = req.body;
+
+  if (!googleId || !email) {
+    return next(new AppError('Google ID and email are required', 400));
+  }
+
+  // Check if user exists with this Google ID
+  let user = await User.findOne({ googleId });
+
+  if (!user) {
+    // Check if user exists with this email
+    user = await User.findOne({ email });
+
+    if (user) {
+      // User exists but doesn't have Google ID, update it
+      user.googleId = googleId;
+      await user.save({ validateBeforeSave: false });
+    } else {
+      // Create new user with Google data (minimal required fields)
+      user = await User.create({
+        googleId,
+        email,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        username: `${(firstName || '').toLowerCase()}${(lastName || '').toLowerCase()}${Date.now()}`,
+        isEmailVerified: true
       });
-    } catch {}
-    res.status(201).json({ message: "User registered successfully", user });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+    }
   }
-};
 
-export const loginUser = async (req, res) => {
+  // Log activity
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: "User not found" });
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
-    try {
-      await ActivityLog.create({
-        user: user._id,
-        action: "user_login",
-        metadata: {
-          email: user.email,
-          userAgent: req.get("user-agent"),
-          ip: req.ip
-        }
-      });
-    } catch {}
-    res.json({ message: "Login successful", user });
+    await ActivityLog.create({
+      user: user._id,
+      action: "google_login",
+      metadata: {
+        email: user.email,
+        userAgent: req.get("user-agent"),
+        ip: req.ip
+      }
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.log('Activity log creation failed:', error.message);
   }
-};
 
-export const getProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id)
-      .populate("assessments")
-      .populate("appointments");
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  sendTokenResponse(user, 200, res);
+});
+
+export const refreshToken = catchAsync(async (req, res, next) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return next(new AppError('Refresh token is required', 400));
   }
-};
+
+  try {
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
+    
+    // Find user with this refresh token
+    const user = await User.findById(decoded.id);
+    
+    if (!user || user.refreshToken !== refreshToken) {
+      return next(new AppError('Invalid refresh token', 401));
+    }
+
+    // Generate new tokens
+    sendTokenResponse(user, 200, res);
+  } catch (error) {
+    return next(new AppError('Invalid refresh token', 401));
+  }
+});
+
+export const logout = catchAsync(async (req, res, next) => {
+  // Clear refresh token
+  if (req.user) {
+    req.user.refreshToken = null;
+    await req.user.save({ validateBeforeSave: false });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Logged out successfully'
+  });
+});
+
+export const getProfile = catchAsync(async (req, res, next) => {
+  const user = await User.findById(req.user.id)
+    .populate("assessments")
+    .populate("appointments");
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user
+    }
+  });
+});
+
+export const updateProfile = catchAsync(async (req, res, next) => {
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user.id,
+    req.body,
+    {
+      new: true,
+      runValidators: true
+    }
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: updatedUser
+    }
+  });
+});
+
+// Complete Google OAuth profile (no authentication required)
+export const completeGoogleProfile = catchAsync(async (req, res, next) => {
+  const { email, googleId, ...profileData } = req.body;
+
+  if (!email) {
+    return next(new AppError('Email is required', 400));
+  }
+
+  // Find user by email or googleId
+  let user = null;
+  if (googleId) {
+    user = await User.findOne({ googleId });
+  }
+  if (!user && email) {
+    user = await User.findOne({ email });
+  }
+
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  // Update user profile
+  const updatedUser = await User.findByIdAndUpdate(
+    user._id,
+    {
+      ...profileData,
+      isEmailVerified: true
+    },
+    {
+      new: true,
+      runValidators: true
+    }
+  );
+
+  // Generate new tokens
+  sendTokenResponse(updatedUser, 200, res);
+});
+
+export const changePassword = catchAsync(async (req, res, next) => {
+  const { currentPassword, newPassword, newPasswordConfirm } = req.body;
+
+  // Get user with password
+  const user = await User.findById(req.user.id).select('+password');
+
+  // Check current password
+  if (!(await user.matchPassword(currentPassword))) {
+    return next(new AppError('Current password is incorrect', 401));
+  }
+
+  // Update password
+  user.password = newPassword;
+  user.passwordConfirm = newPasswordConfirm;
+  await user.save();
+
+  sendTokenResponse(user, 200, res);
+});
 
 

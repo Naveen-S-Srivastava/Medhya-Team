@@ -10,7 +10,7 @@ import chatRoutes from "./routes/chatRoutes.js";
 import crisisRoutes from "./routes/crisisRoutes.js";
 import resourceRoutes from "./routes/resourceRoutes.js";
 import counselorRoutes from "./routes/counselorRoutes.js";
-import clerkRoutes from "./routes/clerkRoutes.js";
+
 
 dotenv.config();
 
@@ -28,7 +28,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/crisis", crisisRoutes);
 app.use("/api/resources", resourceRoutes);
 app.use("/api/counselors", counselorRoutes);
-app.use("/api/clerk", clerkRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("API is running...");

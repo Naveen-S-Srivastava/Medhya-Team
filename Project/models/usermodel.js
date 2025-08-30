@@ -3,7 +3,7 @@
 
 // const userSchema = new mongoose.Schema({
 //   firstName: { type: String, required: true, trim: true },
-//   lastName: { type: String, required: true, trim: true },
+//   lastName: { type: String, required: false, trim: true },
 
 //   username: {
 //     type: String,
@@ -20,8 +20,9 @@
 //     lowercase: true,
 //     validate: [validator.isEmail, "Please provide a valid email"],
 //   },
-//   phone: { type: String, required: true },
-//   dateOfBirth: { type: Date, required: true },
+//   phone: { type: String, required: false },
+//   dateOfBirth: { type: Date, required: false },
+
 //   gender: { type: String, enum: ["male", "female", "other", "prefer-not-to-say"] },
 
 //   institutionId: { type: String, required: true },
@@ -117,20 +118,14 @@ import validator from "validator";
 
 
 const userSchema = new mongoose.Schema({
-  // Clerk integration
-  clerkId: {
-    type: String,
-    unique: true,
-    sparse: true,
-    index: true
-  },
 
-  firstName: { type: String, required: true, trim: true },
-  lastName: { type: String, required: true, trim: true },
+
+  firstName: { type: String, required: false, trim: true },
+  lastName: { type: String, required: false, trim: true },
 
   username: {
     type: String,
-    required: false, // Made optional for Clerk users
+    required: false,
     trim: true,
     minlength: 3,
     maxlength: 30,
@@ -143,39 +138,41 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     validate: [validator.isEmail, "Please provide a valid email"],
   },
-  phone: { type: String, required: false }, // Made optional for Clerk users
-  dateOfBirth: { type: Date, required: false }, // Made optional for Clerk users
-  gender: { type: String, enum: ["male", "female", "other", "prefer-not-to-say"], required: false }, // Made optional for Clerk users
+  phone: { type: String, required: false },
+  dateOfBirth: { type: Date, required: false },
+  gender: { type: String, enum: ["male", "female", "other", "prefer-not-to-say"], required: false },
 
-  institutionId: { type: String, required: false }, // Made optional for Clerk users
-  studentId: { type: String, required: false }, // Made optional for Clerk users
-  course: { type: String, required: false }, // Made optional for Clerk users
-  year: { type: String, required: false }, // Made optional for Clerk users
+  institutionId: { type: String, required: false },
+  studentId: { type: String, required: false },
+  course: { type: String, required: false },
+  year: { type: String, required: false },
   department: { type: String },
   password: {
     type: String,
-    required: false, // Made optional for Clerk users
+    required: false,
     minlength: 8,
     select: false,
   },
 
   passwordConfirm: {
     type: String,
-    required: false, // Made optional for Clerk users
+    required: false,
     validate: {
       validator: function (el) {
+        // Skip validation if password is not set (for Google OAuth users)
+        if (!this.password) return true;
         return el === this.password;
       },
       message: "Passwords are not same",
     },
   },
-  securityQuestion: { type: String, required: false }, // Made optional for Clerk users
-  securityAnswer: { type: String, required: false }, // Made optional for Clerk users
-  privacyConsent: { type: Boolean, required: false }, // Made optional for Clerk users
-  dataProcessingConsent: { type: Boolean, required: false }, // Made optional for Clerk users
-  emergencyContact: { type: String, required: false }, // Made optional for Clerk users
-  emergencyPhone: { type: String, required: false }, // Made optional for Clerk users
-  mentalHealthConsent: { type: Boolean, required: false }, // Made optional for Clerk users
+  securityQuestion: { type: String, required: false },
+  securityAnswer: { type: String, required: false },
+  privacyConsent: { type: Boolean, required: false },
+  dataProcessingConsent: { type: Boolean, required: false },
+  emergencyContact: { type: String, required: false },
+  emergencyPhone: { type: String, required: false },
+  mentalHealthConsent: { type: Boolean, required: false },
   communicationConsent: { type: Boolean, default: false },
   role: { type: String, enum: ["student", "admin"], default: "student" },
   assessments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Assessment" }],
@@ -212,6 +209,23 @@ const userSchema = new mongoose.Schema({
     default: null,
   },
 
+  // JWT and OAuth fields
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  
+  refreshToken: {
+    type: String,
+    default: null
+  },
+
+  lastLogin: {
+    type: Date,
+    default: null
+  },
+
   createdAt: {
     type: Date,
     default: Date.now,
@@ -219,7 +233,7 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.isModified("password") || !this.password) return next();
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -229,6 +243,10 @@ userSchema.pre("save", async function (next) {
   }
 });
 userSchema.methods.correctPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

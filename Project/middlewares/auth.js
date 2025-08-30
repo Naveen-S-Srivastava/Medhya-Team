@@ -1,47 +1,69 @@
 import jwt from "jsonwebtoken";
-import catchAsync from "../utils/catchAsync.js";
-import AppError from "../utils/appError.js";
 import User from "../models/usermodel.js";
+import AppError from "../utils/appError.js";
+import catchAsync from "../utils/catchAsync.js";
 
 export const protect = catchAsync(async (req, res, next) => {
+  let token;
+
+  // Check if token exists in headers
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return next(new AppError('You are not logged in. Please log in to get access.', 401));
+  }
+
   try {
-    // Check for Clerk user ID in headers (sent from frontend)
-    const clerkId = req.headers['x-clerk-user-id'];
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!clerkId) {
-      return next(
-        new AppError("You are not logged in. Please login to access", 401)
-      );
-    }
-
-    // Find user by Clerk ID
-    const currentUser = await User.findOne({ clerkId });
-
+    // Check if user still exists
+    const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
-      return next(
-        new AppError("User not found. Please complete your profile setup.", 401)
-      );
+      return next(new AppError('The user belonging to this token no longer exists.', 401));
     }
 
+    // Grant access to protected route
     req.user = currentUser;
     next();
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid authentication", error: err.message });
+  } catch (error) {
+    return next(new AppError('Invalid token. Please log in again.', 401));
   }
 });
-
-// Alias for backward compatibility
-export const isAuthenticated = protect;
-
 
 export const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return next(
-        new AppError("You do not have permission to perform this action", 403)
-      );
+      return next(new AppError('You do not have permission to perform this action', 403));
     }
-
     next();
   };
 };
+
+// Optional auth middleware for routes that can work with or without authentication
+export const optionalAuth = catchAsync(async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const currentUser = await User.findById(decoded.id);
+      if (currentUser) {
+        req.user = currentUser;
+      }
+    } catch (error) {
+      // Token is invalid, but we don't throw an error for optional auth
+    }
+  }
+
+  next();
+});
+
+// Alias for backward compatibility
+export const isAuthenticated = protect;

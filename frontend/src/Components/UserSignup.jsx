@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -11,9 +11,11 @@ import {
   Phone, Mail, MapPin, Calendar, ArrowRight, ArrowLeft
 } from 'lucide-react';
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const UserSignup = ({ onNext, onShowLogin, onBack }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -24,6 +26,23 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
     dateOfBirth: '',
     gender: '',
   });
+
+  // Handle Google OAuth flow
+  useEffect(() => {
+    if (location.state?.user && location.state?.isProfileCompletion) {
+      const user = location.state.user;
+      console.log('🔍 Pre-filling form with user data:', user);
+      
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: user.gender || '',
+      });
+    }
+  }, [location.state]);
 
   const [errors, setErrors] = useState({});
 
@@ -60,14 +79,31 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
     
     setIsLoading(true);
     
-    // Simulate processing
-    setTimeout(() => {
-      setIsLoading(false);
-      // Pass the form data to the parent component to navigate to SignUp
-      if (onNext) {
-        onNext(formData);
+    try {
+      // If this is a Google OAuth profile completion flow
+      if (location.state?.fromGoogle) {
+        console.log('🔄 Google OAuth profile completion flow');
+        
+        // Navigate to SignUp with the form data and user info
+        navigate('/signup', { 
+          state: { 
+            userData: formData,
+            fromGoogle: true,
+            originalUser: location.state.user
+          } 
+        });
+      } else {
+        // Regular signup flow
+        console.log('🔄 Regular signup flow');
+        if (onNext) {
+          onNext(formData);
+        }
       }
-    }, 1000);
+    } catch (error) {
+      console.error('❌ Error in handleSubmit:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
