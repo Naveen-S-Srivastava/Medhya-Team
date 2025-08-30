@@ -30,8 +30,34 @@ export const useAuth = () => {
       if (response.ok) {
         const data = await response.json();
         setUser(data.data.user);
+      } else if (response.status === 401) {
+        // Token expired, try to refresh
+        try {
+          await refreshToken();
+          // Retry the profile request with new token
+          const newToken = localStorage.getItem('token');
+          const retryResponse = await fetch(`${API_BASE_URL}/users/profile`, {
+            headers: {
+              'Authorization': `Bearer ${newToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (retryResponse.ok) {
+            const retryData = await retryResponse.json();
+            setUser(retryData.data.user);
+          } else {
+            // Refresh failed, clear tokens
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+          }
+        } catch (refreshErr) {
+          console.error('Token refresh failed:', refreshErr);
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+        }
       } else {
-        // Token is invalid, clear it
+        // Other error, clear tokens
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
       }

@@ -154,10 +154,17 @@ export const loginUser = catchAsync(async (req, res, next) => {
 });
 
 export const googleAuth = catchAsync(async (req, res, next) => {
-  const { googleId, email, firstName, lastName, profilePicture } = req.body;
+  const { googleId, email, firstName, lastName, profilePicture, loginType } = req.body;
 
   if (!googleId || !email) {
     return next(new AppError('Google ID and email are required', 400));
+  }
+
+  console.log('🔍 Google OAuth login attempt:', { email, loginType });
+
+  // Validate loginType
+  if (loginType && !['admin', 'student', 'counselor'].includes(loginType)) {
+    return next(new AppError('Invalid login type. Must be "admin", "student", or "counselor"', 400));
   }
 
   // Check if user exists with this Google ID
@@ -170,16 +177,30 @@ export const googleAuth = catchAsync(async (req, res, next) => {
     if (user) {
       // User exists but doesn't have Google ID, update it
       user.googleId = googleId;
+      
+      // Update role if loginType is provided and different from current role
+      if (loginType && loginType !== user.role) {
+        const newRole = loginType === 'admin' ? 'admin' : loginType === 'counselor' ? 'counselor' : 'student';
+        console.log('🔍 Updating existing user role from', user.role, 'to', newRole);
+        user.role = newRole;
+      } else if (!loginType) {
+        console.log('🔍 No loginType provided, keeping existing role:', user.role);
+      }
+      
       await user.save({ validateBeforeSave: false });
     } else {
       // Create new user with Google data (minimal required fields)
+      const userRole = loginType === 'admin' ? 'admin' : loginType === 'counselor' ? 'counselor' : 'student'; // Default to student if no loginType
+      console.log('🔍 Creating new user with role:', userRole);
+      
       user = await User.create({
         googleId,
         email,
         firstName: firstName || '',
         lastName: lastName || '',
         username: `${(firstName || '').toLowerCase()}${(lastName || '').toLowerCase()}${Date.now()}`,
-        isEmailVerified: true
+        isEmailVerified: true,
+        role: userRole // Set role based on login type
       });
     }
   }
@@ -199,6 +220,7 @@ export const googleAuth = catchAsync(async (req, res, next) => {
     console.log('Activity log creation failed:', error.message);
   }
 
+  console.log('✅ Google OAuth login successful for user:', { email: user.email, role: user.role });
   sendTokenResponse(user, 200, res);
 });
 

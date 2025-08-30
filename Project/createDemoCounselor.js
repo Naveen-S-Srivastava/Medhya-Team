@@ -12,31 +12,33 @@ async function createDemoCounselor() {
     console.log("MongoDB connected ✅");
 
     // Check if counselor user already exists
-    const existingCounselor = await User.findOne({ email: 'counselor@university.edu' });
+    const existingCounselor = await User.findOne({ email: 'counselor@institution.edu' });
     if (existingCounselor) {
-      console.log("Demo counselor user already exists ✅");
+      console.log("Counselor user already exists ✅");
+      console.log("Email: counselor@institution.edu");
+      console.log("Role: counselor");
       process.exit(0);
     }
 
-    // Create demo counselor user
+    // Create counselor user
     const counselorUser = new User({
-      firstName: 'Dr. Sarah',
-      lastName: 'Johnson',
-      email: 'counselor@university.edu',
-      password: 'demo123456',
-      passwordConfirm: 'demo123456',
-      phone: '+91 98765 43210',
-      institutionId: 'UNI001',
+      firstName: 'Demo',
+      lastName: 'Counselor',
+      email: 'counselor@institution.edu',
+      password: 'counselor123456',
+      passwordConfirm: 'counselor123456',
+      phone: '9876543210',
+      institutionId: 'COUNSELOR001',
       studentId: 'COUNSELOR001',
-      course: 'Clinical Psychology',
-      year: '2020',
-      department: 'Psychology',
+      course: 'Professional Counseling',
+      year: '1',
+      department: 'Mental Health',
       securityQuestion: 'What is your favorite color?',
       securityAnswer: 'Green',
       privacyConsent: true,
       dataProcessingConsent: true,
       emergencyContact: 'Emergency Contact',
-      emergencyPhone: '+91 98765 43211',
+      emergencyPhone: '9876543210',
       mentalHealthConsent: true,
       communicationConsent: true,
       role: 'counselor',
@@ -45,14 +47,14 @@ async function createDemoCounselor() {
     });
 
     await counselorUser.save();
-    console.log("Demo counselor user created successfully ✅");
-    console.log("Email: counselor@university.edu");
-    console.log("Password: demo123456");
+    console.log("Counselor user created successfully ✅");
+    console.log("Email: counselor@institution.edu");
+    console.log("Password: counselor123456");
     console.log("Role: counselor");
 
     process.exit(0);
   } catch (err) {
-    console.error("Error creating demo counselor user ❌", err);
+    console.error("Error creating counselor user ❌", err);
     process.exit(1);
   }
 }
