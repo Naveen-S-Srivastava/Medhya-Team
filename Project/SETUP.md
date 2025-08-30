@@ -69,12 +69,13 @@ PORT=5000
 NODE_ENV=development
 ```
 
-### 2. Create Demo User
-Run this command to create a demo user for testing:
+### 2. Create Demo Users
+Run these commands to create demo users for testing:
 
 ```bash
 cd Project
 node createDemoUser.js
+node createDemoCounselor.js
 ```
 
 ### 3. Start Backend
@@ -103,6 +104,7 @@ npm run dev
 
 - **Student**: `student@university.edu` / `demo123456`
 - **Admin**: `admin@institution.edu` / `admin123456`
+- **Counselor**: `counselor@university.edu` / `demo123456`
 
 ## API Endpoints
 

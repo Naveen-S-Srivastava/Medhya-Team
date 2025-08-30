@@ -44,7 +44,7 @@ export const useAuth = () => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, role = "student") => {
     setLoading(true);
     setError(null);
 
@@ -54,7 +54,7 @@ export const useAuth = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, role })
       });
 
       const data = await response.json();

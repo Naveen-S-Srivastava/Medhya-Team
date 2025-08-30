@@ -13,6 +13,7 @@ import { Label } from "../ui/Label";
 import { Badge } from "../ui/Badge";
 import { Alert, AlertDescription } from "../ui/Alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs";
+import CounselorLogin from "./CounselorLogin.jsx";
 import {
   Select,
   SelectContent,
@@ -35,7 +36,8 @@ import {
   AlertTriangle,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  Users
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.js";
@@ -47,6 +49,7 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
   const [loginType, setLoginType] = useState("student");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCounselorLogin, setShowCounselorLogin] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -100,16 +103,31 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
     try {
       const user = await login(formData.email, formData.password);
       
-      // Check if user profile is complete
-      if (!user.phone || !user.institutionId || !user.studentId) {
-        // Profile incomplete - redirect to UserSignup.jsx
-        navigate('/user-signup', { state: { user, isProfileCompletion: true } });
-      } else {
-        // Profile complete - redirect to dashboard
-        if (onLogin) {
-          onLogin(loginType);
+      // Check if user profile is complete based on role
+      if (loginType === "counselor") {
+        // For counselors, check different profile fields
+        if (!user.phone || !user.specialization || !user.license) {
+          // Profile incomplete - redirect to counselor profile completion
+          navigate('/counselor-signup', { state: { user, isProfileCompletion: true } });
+        } else {
+          // Profile complete - redirect to counselor dashboard
+          if (onLogin) {
+            onLogin(loginType);
+          }
+          navigate("/counselor-dashboard");
         }
-        navigate("/contact-choice");
+      } else {
+        // For students and admins, check existing profile fields
+        if (!user.phone || !user.institutionId || !user.studentId) {
+          // Profile incomplete - redirect to UserSignup.jsx
+          navigate('/user-signup', { state: { user, isProfileCompletion: true } });
+        } else {
+          // Profile complete - redirect to dashboard
+          if (onLogin) {
+            onLogin(loginType);
+          }
+          navigate("/contact-choice");
+        }
       }
     } catch (err) {
       console.error('Login failed:', err);
@@ -162,32 +180,59 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
               profilePicture: userInfo.picture
             });
 
-            // Check if user profile is complete
-            console.log('🔍 User profile check:', {
-              phone: user.phone,
-              institutionId: user.institutionId,
-              studentId: user.studentId,
-              course: user.course,
-              year: user.year
-            });
-            
-            if (!user.phone || !user.institutionId || !user.studentId || !user.course || !user.year) {
-              // Profile incomplete - redirect to UserSignup.jsx
-              console.log('⚠️ Profile incomplete, redirecting to UserSignup');
-              navigate('/user-signup', { 
-                state: { 
-                  user, 
-                  isProfileCompletion: true,
-                  fromGoogle: true 
-                } 
+            // Check if user profile is complete based on role
+            if (loginType === "counselor") {
+              console.log('🔍 Counselor profile check:', {
+                phone: user.phone,
+                specialization: user.specialization,
+                license: user.license
               });
-            } else {
-              // Profile complete - redirect to dashboard
-              console.log('✅ Profile complete, redirecting to dashboard');
-              if (onLogin) {
-                onLogin('student');
+              
+              if (!user.phone || !user.specialization || !user.license) {
+                // Profile incomplete - redirect to counselor profile completion
+                console.log('⚠️ Counselor profile incomplete, redirecting to counselor signup');
+                navigate('/counselor-signup', { 
+                  state: { 
+                    user, 
+                    isProfileCompletion: true,
+                    fromGoogle: true 
+                  } 
+                });
+              } else {
+                // Profile complete - redirect to counselor dashboard
+                console.log('✅ Counselor profile complete, redirecting to dashboard');
+                if (onLogin) {
+                  onLogin('counselor');
+                }
+                navigate("/counselor-dashboard");
               }
-              navigate("/contact-choice");
+            } else {
+              console.log('🔍 Student profile check:', {
+                phone: user.phone,
+                institutionId: user.institutionId,
+                studentId: user.studentId,
+                course: user.course,
+                year: user.year
+              });
+              
+              if (!user.phone || !user.institutionId || !user.studentId || !user.course || !user.year) {
+                // Profile incomplete - redirect to UserSignup.jsx
+                console.log('⚠️ Profile incomplete, redirecting to UserSignup');
+                navigate('/user-signup', { 
+                  state: { 
+                    user, 
+                    isProfileCompletion: true,
+                    fromGoogle: true 
+                  } 
+                });
+              } else {
+                // Profile complete - redirect to dashboard
+                console.log('✅ Profile complete, redirecting to dashboard');
+                if (onLogin) {
+                  onLogin('student');
+                }
+                navigate("/contact-choice");
+              }
             }
                      } catch (err) {
              console.error('Google auth failed:', err);
@@ -224,6 +269,7 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
   const demoCredentials = {
     student: { email: "student@university.edu", password: "demo123456" },
     admin: { email: "admin@institution.edu", password: "admin123456" },
+    counselor: { email: "counselor@university.edu", password: "demo123456" },
   };
 
   const fillDemoCredentials = () => {
@@ -259,27 +305,37 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
           </div>
         </div>
 
-        <Card className="shadow-xl border-0">
-          <CardHeader className="space-y-4">
-            <Tabs
-              value={loginType}
-              onValueChange={setLoginType}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger
-                  value="student"
-                  className="flex items-center gap-2"
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  Student
-                </TabsTrigger>
-                <TabsTrigger value="admin" className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
-                  Administrator
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+        {showCounselorLogin ? (
+          <CounselorLogin 
+            onLogin={onLogin}
+            onBack={() => setShowCounselorLogin(false)}
+          />
+        ) : (
+          <Card className="shadow-xl border-0">
+            <CardHeader className="space-y-4">
+              <Tabs
+                value={loginType}
+                onValueChange={setLoginType}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger
+                    value="student"
+                    className="flex items-center gap-2"
+                  >
+                    <GraduationCap className="w-4 h-4" />
+                    Student
+                  </TabsTrigger>
+                  <TabsTrigger value="admin" className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Administrator
+                  </TabsTrigger>
+                  <TabsTrigger value="counselor" className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Counselor
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
 
             <div className="text-center">
               <CardTitle className="flex items-center justify-center gap-2">
@@ -288,17 +344,24 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
                     <GraduationCap className="w-5 h-5 text-blue-600" />
                     Student Login
                   </>
-                ) : (
+                ) : loginType === "admin" ? (
                   <>
                     <UserCheck className="w-5 h-5 text-purple-600" />
                     Administrator Login
+                  </>
+                ) : (
+                  <>
+                    <Users className="w-5 h-5 text-green-600" />
+                    Counselor Login
                   </>
                 )}
               </CardTitle>
               <CardDescription className="mt-2">
                 {loginType === "student"
                   ? "Access your personal mental health dashboard and support tools"
-                  : "Manage institutional mental health programs and analytics"}
+                  : loginType === "admin"
+                  ? "Manage institutional mental health programs and analytics"
+                  : "Access your professional counseling dashboard and client management tools"}
               </CardDescription>
             </div>
           </CardHeader>
@@ -372,6 +435,28 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
                   {errors.institutionId && (
                     <p className="text-sm text-red-600">{errors.institutionId}</p>
                   )}
+                </div>
+              )}
+
+              {/* Show Counselor Login for Counselor Tab */}
+              {loginType === 'counselor' && (
+                <div className="text-center space-y-4">
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 border border-green-200">
+                    <Users className="w-12 h-12 text-green-600 mx-auto mb-3" />
+                    <h3 className="text-lg font-semibold text-green-700 mb-2">
+                      Professional Counselor Access
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Access your counseling dashboard with secure professional credentials
+                    </p>
+                    <Button
+                      onClick={() => setShowCounselorLogin(true)}
+                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Continue to Counselor Login
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -517,17 +602,53 @@ const Login = ({ onLogin, onShowSignup, onShowUserSignup, onBack }) => {
               </div>
             )}
 
+            {/* Signup Link for Counselors */}
+            {loginType === "counselor" && (
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 shadow-sm space-y-3 border border-green-100">
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-green-600" />
+                  <h3 className="text-sm font-semibold text-green-700">
+                    New Counselor?
+                  </h3>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Join our professional counseling network. Create your counselor profile
+                  and start helping students today.
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full border-green-200 hover:bg-green-100 hover:text-green-800 transition"
+                  onClick={() => navigate('/counselor-signup')}
+                  type="button"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Create Counselor Account
+                </Button>
+              </div>
+            )}
+
             {/* Security Notice */}
-            <Alert className="border-blue-200 bg-blue-50">
-              <Shield className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                <strong>Your privacy is protected.</strong> All sessions are
-                encrypted and HIPAA compliant. Your mental health data is kept
-                strictly confidential.
+            <Alert className={`border-${loginType === "counselor" ? "green" : "blue"}-200 bg-${loginType === "counselor" ? "green" : "blue"}-50`}>
+              <Shield className={`h-4 w-4 text-${loginType === "counselor" ? "green" : "blue"}-600`} />
+              <AlertDescription className={`text-${loginType === "counselor" ? "green" : "blue"}-800`}>
+                {loginType === "counselor" ? (
+                  <>
+                    <strong>Professional access secured.</strong> All counselor sessions are
+                    encrypted and HIPAA compliant. Client confidentiality is maintained
+                    at the highest standards.
+                  </>
+                ) : (
+                  <>
+                    <strong>Your privacy is protected.</strong> All sessions are
+                    encrypted and HIPAA compliant. Your mental health data is kept
+                    strictly confidential.
+                  </>
+                )}
               </AlertDescription>
             </Alert>
-          </CardContent>
-        </Card>
+                      </CardContent>
+          </Card>
+        )}
 
         {/* Additional Info */}
         <div className="text-center space-y-4">
