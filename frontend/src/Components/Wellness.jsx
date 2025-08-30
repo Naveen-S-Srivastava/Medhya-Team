@@ -12,6 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Heart, Brain, Clock, TrendingUp, CheckCircle, Target, Calendar, BarChart3, X, Plus, BookOpen, Edit, Trash2, Loader2, Send } from 'lucide-react'
 import { useJournal } from '../hooks/useJournal.js'
 import { useAuth } from '../hooks/useAuth.js'
+import { useAssessment } from '../hooks/useAssessment.js'
+import { calculateWellnessScore, getWellnessLevel } from '../utils/wellnessCalculator.js'
+import StressAssessment from './StressAssessment.jsx'
 
 export default function Wellness() {
   const { user } = useAuth();
@@ -33,9 +36,28 @@ export default function Wellness() {
     clearError
   } = useJournal();
 
+  const {
+    todayAssessments,
+    getTodayAssessments
+  } = useAssessment();
+
   const [currentMood, setCurrentMood] = useState(null)
-  const [wellnessScore, setWellnessScore] = useState(78)
+  // Calculate wellness score from assessments
+  const calculateCurrentWellnessScore = () => {
+    const gad7Score = todayAssessments['GAD-7']?.score || 0;
+    const phq9Score = todayAssessments['PHQ-9']?.score || 0;
+    
+    if (gad7Score === 0 && phq9Score === 0) {
+      return 78; // Default score if no assessments
+    }
+    
+    return calculateWellnessScore(gad7Score, phq9Score);
+  };
+  
+  const wellnessScore = calculateCurrentWellnessScore();
+  const wellnessLevel = getWellnessLevel(wellnessScore);
   const [showJournalPopup, setShowJournalPopup] = useState(false)
+  const [showStressAssessment, setShowStressAssessment] = useState(false)
   const [activeTab, setActiveTab] = useState('write')
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -77,6 +99,7 @@ export default function Wellness() {
     getWeeklyProgress();
     getJournalStats();
     getJournalEntries({ page: currentPage, limit: 10 });
+    getTodayAssessments();
   }, [currentPage]);
 
   const handleMoodSelect = (mood) => {
@@ -152,7 +175,7 @@ export default function Wellness() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-blue-50">
       {/* Main Wellness Card */}
       <Card>
         <CardHeader>
@@ -177,7 +200,11 @@ export default function Wellness() {
                 <Heart className="w-6 h-6" />
                 <span>Daily Mood Check-in</span>
               </Button>
-              <Button className="h-16 flex-col gap-2" variant="outline">
+              <Button 
+                className="h-16 flex-col gap-2" 
+                variant="outline"
+                onClick={() => setShowStressAssessment(true)}
+              >
                 <Brain className="w-6 h-6" />
                 <span>Stress Assessment</span>
               </Button>
@@ -210,17 +237,28 @@ export default function Wellness() {
               Current Wellness Score
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-green-600 mb-2">{wellnessScore}%</div>
-              <Progress value={wellnessScore} className="mb-4" />
-              <p className="text-sm text-muted-foreground">
-                {wellnessScore >= 80 ? 'Excellent! Keep up the great work!' : 
-                 wellnessScore >= 60 ? 'Good progress! You\'re doing well.' : 
-                 'Let\'s work on improving your wellness together.'}
-              </p>
-            </div>
-          </CardContent>
+                     <CardContent>
+             <div className="text-center">
+               <div className="text-4xl font-bold text-green-600 mb-2">{wellnessScore}%</div>
+               <Progress value={wellnessScore} className="mb-4" />
+               <p className={`text-sm font-medium mb-2 ${wellnessLevel.color}`}>
+                 {wellnessLevel.level} Wellness
+               </p>
+               <p className="text-sm text-muted-foreground">
+                 {wellnessScore >= 80 ? 'Excellent! Keep up the great work!' : 
+                  wellnessScore >= 60 ? 'Good progress! You\'re doing well.' : 
+                  wellnessScore >= 40 ? 'Fair wellness. Consider taking assessments to improve.' :
+                  'Let\'s work on improving your wellness together. Try the stress assessments!'}
+               </p>
+               {(todayAssessments['GAD-7']?.score !== undefined || todayAssessments['PHQ-9']?.score !== undefined) && (
+                 <div className="mt-3 text-xs text-muted-foreground">
+                   <p>Based on today's assessments:</p>
+                   {todayAssessments['GAD-7']?.score !== undefined && <p>GAD-7: {todayAssessments['GAD-7'].score}</p>}
+                   {todayAssessments['PHQ-9']?.score !== undefined && <p>PHQ-9: {todayAssessments['PHQ-9'].score}</p>}
+                 </div>
+               )}
+             </div>
+           </CardContent>
         </Card>
 
         <Card>
@@ -325,7 +363,7 @@ export default function Wellness() {
 
       {/* Journal Popup */}
       {showJournalPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
               <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -668,6 +706,32 @@ export default function Wellness() {
                 )}
               </TabsContent>
             </Tabs>
+          </div>
+        </div>
+      )}
+
+      {/* Stress Assessment Popup */}
+      {showStressAssessment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-2xl">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Stress Assessment</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowStressAssessment(false)}
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+                             <StressAssessment 
+                 isPopup={true} 
+                 onAssessmentComplete={() => {
+                   getTodayAssessments();
+                 }}
+               />
+            </div>
           </div>
         </div>
       )}

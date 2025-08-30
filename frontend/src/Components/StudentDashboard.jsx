@@ -22,8 +22,8 @@ const StudentDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Stat Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+      <div className="flex flex-row gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-blue-800">Wellness Score</CardTitle>
             <Heart className="h-4 w-4 text-blue-600" />
@@ -37,7 +37,7 @@ const StudentDashboard = () => {
             <Progress value={studentStats.wellnessScore} className="mt-2" />
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-green-800">Daily Streak</CardTitle>
             <Zap className="h-4 w-4 text-green-600" />
@@ -47,7 +47,7 @@ const StudentDashboard = () => {
             <p className="text-xs text-green-700">Keep it up! 🔥</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-purple-800">AI Sessions</CardTitle>
             <MessageCircle className="h-4 w-4 text-purple-600" />
@@ -57,7 +57,7 @@ const StudentDashboard = () => {
             <p className="text-xs text-purple-700">Total conversations</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-orange-800">Community Impact</CardTitle>
             <Users className="h-4 w-4 text-orange-600" />
@@ -94,15 +94,97 @@ const StudentDashboard = () => {
             <CardDescription>Track your mental health progress with AI insights</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-             <Alert className="bg-green-50 border-green-200">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  Great progress! Your consistency is paying off. Keep it up! 🌟
-                </AlertDescription>
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Great progress! Your consistency is paying off. Keep it up! 🌟
+              </AlertDescription>
             </Alert>
             <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/wellness')}>
-                <Brain className="w-4 h-4 mr-2" /> Go to Wellness Center
+              <Brain className="w-4 h-4 mr-2" /> Go to Wellness Center
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid flex-row gap-6 md:grid-cols-3">
+        <Card className="border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-blue-600" />
+              Privacy & Security
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>End-to-end encryption</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>HIPAA compliant</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>Anonymous mode available</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>Local data processing</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5 text-purple-600" />
+              Cultural Adaptation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>15+ Indian languages</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>Regional counseling</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>Cultural sensitivity</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>Family-inclusive care</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="w-5 h-5 text-green-600" />
+              Mobile-First Design
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>Offline mode support</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>Low bandwidth optimized</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>Progressive Web App</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>Voice interface ready</span>
+            </div>
           </CardContent>
         </Card>
       </div>
