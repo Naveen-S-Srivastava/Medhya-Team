@@ -1,4 +1,4 @@
-# 🧠 MindCare - Mental Health Platform
+# 🧠 Medhya - Mental Health Platform
 
 A comprehensive mental health platform designed for students, featuring counseling services, assessments, crisis management, and wellness resources.
 
@@ -18,14 +18,15 @@ A comprehensive mental health platform designed for students, featuring counseli
 
 ## 🎯 Overview
 
-MindCare is a full-stack mental health platform that provides:
-- **Student Counseling Services** - Book appointments with qualified counselors
-- **Mental Health Assessments** - PHQ-9 and GAD-7 screening tools
-- **Crisis Management** - Emergency support and intervention
-- **Wellness Resources** - Educational content and self-help tools
-- **Peer Support Community** - Connect with fellow students
-- **AI Chat Support** - 24/7 mental health assistance
-- **Admin Dashboard** - Comprehensive management system
+This project is a **Digital Mental Health and Psychological Support System for Students in Higher Education**.  
+It is designed to help students access timely support through AI-driven tools, automated mental health screenings, secure counselor booking, and insightful analytics for administrators.   
+The system integrates:  
+- **AI & NLP** for sentiment analysis and intent detection  
+- **Automated PHQ-9 & GAD-7 screenings** for depression and anxiety  
+- **Decision tree-based referral** to coping strategies or counselors  
+- **Secure booking and case management** for counselors  
+- **Anonymized analytics dashboard** for administrators
+  
 
 ## ✨ Features
 
