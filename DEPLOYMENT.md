@@ -1,4 +1,22 @@
-# Deployment Guide
+# Deployment Guide - Fixed Issues
+
+## 🚨 **Issues Fixed:**
+
+### **1. Page Refresh 404 Error (Client-Side Routing)**
+- ✅ Added `_redirects` file for Netlify
+- ✅ Added `vercel.json` for Vercel
+- ✅ Updated Vite config for proper SPA handling
+
+### **2. Backend Deployment Issues**
+- ✅ Enhanced CORS configuration for production
+- ✅ Added proper error handling
+- ✅ Added health check endpoint
+- ✅ Added global error handler
+
+### **3. Environment Configuration**
+- ✅ Enhanced environment detection for multiple deployment platforms
+- ✅ Added debug logging for development
+- ✅ Better fallback handling
 
 ## Environment-Based API Configuration
 
@@ -13,6 +31,7 @@ The application automatically detects the environment based on the `window.locat
 
 1. **Local Development**: When running on `localhost` or `127.0.0.1`, it uses the local backend
 2. **Production**: When deployed, it automatically uses the production API
+3. **Multiple Platforms**: Supports Vercel, Netlify, GitHub Pages, and custom domains
 
 ## Configuration Files
 
@@ -29,11 +48,10 @@ export const getApiBaseUrl = () => {
 ### 2. API Service (`frontend/src/services/api.js`)
 Centralized API calls with automatic environment detection and error handling.
 
-### 3. Updated Components
-All components now use the centralized API configuration:
-- `useAuth.js` - Authentication hooks
-- `SignUp.jsx` - Registration component
-- Other components as needed
+### 3. Deployment Configuration Files
+- `frontend/public/_redirects` - Netlify routing
+- `frontend/public/vercel.json` - Vercel routing
+- `frontend/vite.config.js` - Build configuration
 
 ## Development Workflow
 
@@ -43,17 +61,49 @@ All components now use the centralized API configuration:
 3. The app will automatically use `http://localhost:5000/api`
 
 ### Production Deployment
-1. Deploy your frontend to any hosting service (Vercel, Netlify, etc.)
-2. The app will automatically use `https://mindcare-17y9.onrender.com/api`
-3. No environment variables or configuration changes needed
 
-## Benefits
+#### Option 1: Vercel
+```bash
+cd frontend
+npm run build
+npm run deploy:vercel
+```
 
-1. **Automatic Environment Detection**: No manual configuration needed
-2. **Seamless Development**: Works locally without changes
-3. **Production Ready**: Automatically switches to production API when deployed
-4. **Centralized Configuration**: Easy to maintain and update
-5. **Error Handling**: Consistent error handling across all API calls
+#### Option 2: Netlify
+```bash
+cd frontend
+npm run build
+npm run deploy:netlify
+```
+
+#### Option 3: Manual Deployment
+1. Build the project: `npm run build`
+2. Upload the `dist` folder to your hosting service
+3. Configure routing to serve `index.html` for all routes
+
+## Backend Deployment
+
+### Environment Variables
+Create a `.env` file in the `Project` directory:
+
+```env
+# MongoDB Connection
+MONGO_URI=your_mongodb_connection_string
+
+# JWT Configuration
+JWT_SECRET=your_jwt_secret_key_here
+JWT_EXPIRES_IN=7d
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_key_here
+
+# Server Configuration
+PORT=5000
+NODE_ENV=production
+```
+
+### Deploy to Render
+1. Connect your GitHub repository to Render
+2. Set environment variables in Render dashboard
+3. Deploy automatically on push
 
 ## Testing
 
@@ -65,19 +115,49 @@ All components now use the centralized API configuration:
 ### Production Testing
 - Deploy frontend to any hosting service
 - Verify API calls go to `mindcare-17y9.onrender.com`
+- Test page refresh functionality
 
 ## Troubleshooting
 
+### Page Refresh 404 Error
+**Problem**: Refreshing a page shows 404 error
+**Solution**: 
+- Ensure `_redirects` file is in `public` folder (Netlify)
+- Ensure `vercel.json` is in root folder (Vercel)
+- Configure hosting service to serve `index.html` for all routes
+
 ### API Calls Not Working
-1. Check browser console for errors
+**Problem**: API calls fail in production
+**Solution**:
+1. Check browser console for CORS errors
 2. Verify the correct API URL is being used
-3. Ensure the backend server is running (for local development)
-4. Check CORS configuration on the backend
+3. Ensure backend CORS allows your frontend domain
+4. Check if the backend server is running
 
 ### Environment Detection Issues
-1. Verify `window.location.hostname` is correct
-2. Check if the environment configuration is imported properly
-3. Ensure the API service is using the environment configuration
+**Problem**: Wrong API URL being used
+**Solution**:
+1. Check browser console for environment logs
+2. Verify `window.location.hostname` is correct
+3. Update environment configuration if needed
+
+## Health Check
+
+Test your deployment with these endpoints:
+
+- **Frontend**: Your deployed frontend URL
+- **Backend Health**: `https://mindcare-17y9.onrender.com/api/health`
+- **Backend Root**: `https://mindcare-17y9.onrender.com/`
+
+## Benefits
+
+1. **Automatic Environment Detection**: No manual configuration needed
+2. **Seamless Development**: Works locally without changes
+3. **Production Ready**: Automatically switches to production API when deployed
+4. **Multiple Platform Support**: Works on Vercel, Netlify, GitHub Pages, etc.
+5. **Centralized Configuration**: Easy to maintain and update
+6. **Error Handling**: Consistent error handling across all API calls
+7. **Page Refresh Support**: No more 404 errors on refresh
 
 ## Future Enhancements
 
@@ -85,3 +165,5 @@ All components now use the centralized API configuration:
 2. **Multiple Environments**: Could support staging, testing, etc.
 3. **Feature Flags**: Could add feature flags based on environment
 4. **Analytics**: Could add different analytics configurations per environment
+5. **CDN Integration**: Could add CDN for static assets
+6. **Performance Monitoring**: Could add performance monitoring tools
