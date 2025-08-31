@@ -92,6 +92,34 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
             originalUser: location.state.user
           } 
         });
+      } else if (location.state?.fromLogin) {
+        // User came from login flow (user not found) - redirect to Signup
+        console.log('🔄 User came from login flow, redirecting to Signup');
+        navigate('/signup', { 
+          state: { 
+            userData: formData,
+            fromLogin: true,
+            loginType: location.state.loginType,
+            googleData: location.state.googleData
+          } 
+        });
+      } else if (location.state?.fromSignup) {
+        // User came from signup flow (login -> signup -> usersignup)
+        console.log('🔄 User came from signup flow, completing profile');
+        
+        // Update the user profile with the form data
+        const updatedUserData = {
+          ...location.state.user,
+          ...formData
+        };
+        
+        // Navigate to contact choice
+        navigate('/contact-choice', { 
+          state: { 
+            user: updatedUserData,
+            isProfileCompletion: true
+          } 
+        });
       } else {
         // Regular signup flow
         console.log('🔄 Regular signup flow');

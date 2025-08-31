@@ -189,18 +189,20 @@ export const googleAuth = catchAsync(async (req, res, next) => {
       
       await user.save({ validateBeforeSave: false });
     } else {
-      // Create new user with Google data (minimal required fields)
-      const userRole = loginType === 'admin' ? 'admin' : loginType === 'counselor' ? 'counselor' : 'student'; // Default to student if no loginType
-      console.log('🔍 Creating new user with role:', userRole);
-      
-      user = await User.create({
-        googleId,
-        email,
-        firstName: firstName || '',
-        lastName: lastName || '',
-        username: `${(firstName || '').toLowerCase()}${(lastName || '').toLowerCase()}${Date.now()}`,
-        isEmailVerified: true,
-        role: userRole // Set role based on login type
+      // User doesn't exist - return error indicating they need to sign up
+      console.log('🔍 User not found, redirecting to signup flow');
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found. Please sign up first.',
+        code: 'USER_NOT_FOUND',
+        data: {
+          googleId,
+          email,
+          firstName,
+          lastName,
+          profilePicture,
+          loginType
+        }
       });
     }
   }

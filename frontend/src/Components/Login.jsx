@@ -37,7 +37,7 @@ import {
 import { useAuth } from "../hooks/useAuth.js";
 import { testGoogleOAuth } from "../utils/googleOAuthTest.js";
 
-const Login = ({ onLogin, onShowUserSignup }) => {
+const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
   const navigate = useNavigate();
   const { login, googleAuth, loading, error } = useAuth();
   const [loginType, setLoginType] = useState("student");
@@ -86,17 +86,25 @@ const Login = ({ onLogin, onShowUserSignup }) => {
     e.preventDefault();
     if (!validateForm()) return;
     try {
+      console.log('🔍 Attempting login with:', { email: formData.email, loginType });
       const user = await login(formData.email, formData.password);
+      console.log('🔍 Login successful, user data:', user);
       if (onLogin) {
+        console.log('🔍 Calling onLogin with:', { role: user.role, user });
         onLogin(user.role, user);
       }
     } catch (err) {
       console.error('Login failed:', err);
+      // Handle login error - redirect to signup if user not found
+      if (onLoginError) {
+        onLoginError(loginType, err.message);
+      }
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
+      console.log('🔍 Starting Google login process...');
       testGoogleOAuth();
       const google = window.google;
       if (!google) throw new Error('Google OAuth not available');
@@ -104,15 +112,18 @@ const Login = ({ onLogin, onShowUserSignup }) => {
       if (!clientId || clientId === 'your-google-client-id') {
         throw new Error('Google Client ID not configured');
       }
+      console.log('🔍 Google OAuth initialized, requesting access token...');
       google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: 'email profile',
         callback: async (response) => {
           try {
+            console.log('🔍 Google OAuth callback received, fetching user info...');
             const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
               headers: { 'Authorization': `Bearer ${response.access_token}` }
             });
             const userInfo = await userInfoResponse.json();
+            console.log('🔍 Google user info received:', userInfo);
             const user = await googleAuth({
               googleId: userInfo.id,
               email: userInfo.email,
@@ -121,15 +132,28 @@ const Login = ({ onLogin, onShowUserSignup }) => {
               profilePicture: userInfo.picture,
               loginType: loginType
             });
+            console.log('🔍 Google auth successful, user data:', user);
             if (onLogin) {
+              console.log('🔍 Calling onLogin with:', { role: user.role, user });
               onLogin(user.role, user);
             }
-          } catch (err) {
-            console.error('Google auth failed:', err);
-            if (err.message.includes('access blocked') || err.message.includes('invalid')) {
-              alert('Google OAuth configuration issue. Please check the console for details.');
-            }
-          }
+                     } catch (err) {
+             console.error('Google auth failed:', err);
+             if (err.message.includes('access blocked') || err.message.includes('invalid')) {
+               alert('Google OAuth configuration issue. Please check the console for details.');
+             } else if (err.code === 'USER_NOT_FOUND') {
+               // User not found - redirect to signup flow with Google data
+               console.log('🔍 Google user not found, redirecting to signup with Google data:', err.googleData);
+               if (onLoginError) {
+                 onLoginError(loginType, err.message, err.googleData);
+               }
+             } else {
+               // Handle other Google login errors
+               if (onLoginError) {
+                 onLoginError(loginType, err.message);
+               }
+             }
+           }
         }
       }).requestAccessToken();
     } catch (err) {

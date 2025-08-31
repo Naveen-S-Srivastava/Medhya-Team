@@ -29,7 +29,18 @@ export const useAuth = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.data.user);
+        // Add additional user metadata for routing logic
+        const userWithMetadata = {
+          ...data.data.user,
+          isProfileComplete: Boolean(
+            data.data.user.phone && 
+            data.data.user.institutionId && 
+            data.data.user.studentId
+          ),
+          isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+          isGoogleUser: Boolean(data.data.user.googleId)
+        };
+        setUser(userWithMetadata);
       } else if (response.status === 401) {
         // Token expired, try to refresh
         try {
@@ -45,7 +56,18 @@ export const useAuth = () => {
           
           if (retryResponse.ok) {
             const retryData = await retryResponse.json();
-            setUser(retryData.data.user);
+            // Add additional user metadata for routing logic
+            const userWithMetadata = {
+              ...retryData.data.user,
+              isProfileComplete: Boolean(
+                retryData.data.user.phone && 
+                retryData.data.user.institutionId && 
+                retryData.data.user.studentId
+              ),
+              isNewUser: !retryData.data.user.phone || !retryData.data.user.institutionId || !retryData.data.user.studentId,
+              isGoogleUser: Boolean(retryData.data.user.googleId)
+            };
+            setUser(userWithMetadata);
           } else {
             // Refresh failed, clear tokens
             localStorage.removeItem('token');
@@ -93,8 +115,20 @@ export const useAuth = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('refreshToken', data.refreshToken);
       
-      setUser(data.data.user);
-      return data.data.user;
+      // Add additional user metadata for routing logic
+      const userWithMetadata = {
+        ...data.data.user,
+        isProfileComplete: Boolean(
+          data.data.user.phone && 
+          data.data.user.institutionId && 
+          data.data.user.studentId
+        ),
+        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isGoogleUser: Boolean(data.data.user.googleId)
+      };
+      
+      setUser(userWithMetadata);
+      return userWithMetadata;
     } catch (err) {
       setError(err.message);
       throw err;
@@ -152,6 +186,14 @@ export const useAuth = () => {
       const data = await response.json();
 
       if (!response.ok) {
+        // Check if this is a "user not found" response (404)
+        if (response.status === 404 && data.code === 'USER_NOT_FOUND') {
+          // Create a custom error with the Google data for signup flow
+          const customError = new Error('User not found. Please sign up first.');
+          customError.code = 'USER_NOT_FOUND';
+          customError.googleData = data.data; // Include the Google data for signup
+          throw customError;
+        }
         throw new Error(data.message || 'Google authentication failed');
       }
 
@@ -159,8 +201,20 @@ export const useAuth = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('refreshToken', data.refreshToken);
       
-      setUser(data.data.user);
-      return data.data.user;
+      // Add additional user metadata for routing logic
+      const userWithMetadata = {
+        ...data.data.user,
+        isProfileComplete: Boolean(
+          data.data.user.phone && 
+          data.data.user.institutionId && 
+          data.data.user.studentId
+        ),
+        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isGoogleUser: Boolean(data.data.user.googleId)
+      };
+      
+      setUser(userWithMetadata);
+      return userWithMetadata;
     } catch (err) {
       setError(err.message);
       throw err;
@@ -248,8 +302,20 @@ export const useAuth = () => {
         throw new Error(data.message || 'Profile update failed');
       }
 
-      setUser(data.data.user);
-      return data.data.user;
+      // Add additional user metadata for routing logic
+      const userWithMetadata = {
+        ...data.data.user,
+        isProfileComplete: Boolean(
+          data.data.user.phone && 
+          data.data.user.institutionId && 
+          data.data.user.studentId
+        ),
+        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isGoogleUser: Boolean(data.data.user.googleId)
+      };
+
+      setUser(userWithMetadata);
+      return userWithMetadata;
     } catch (err) {
       setError(err.message);
       throw err;

@@ -94,6 +94,20 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         gender: location.state.userData.gender || "",
       }))
     }
+
+    // Handle Google data from login flow (user not found)
+    if (location.state?.googleData) {
+      console.log("🔍 Setting form data from Google login flow:", location.state.googleData)
+      setFormData((prev) => ({
+        ...prev,
+        firstName: location.state.googleData.firstName || "",
+        lastName: location.state.googleData.lastName || "",
+        email: location.state.googleData.email || "",
+        phone: location.state.googleData.phone || "",
+        dateOfBirth: location.state.googleData.dateOfBirth || "",
+        gender: location.state.googleData.gender || "",
+      }))
+    }
   }, [userData, location.state])
 
   const institutions = [
@@ -261,6 +275,9 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         communicationConsent: formData.communicationConsent,
       }
 
+      // Check if this is from Google login flow (user not found)
+      const isFromGoogleLogin = location.state?.googleData;
+      
       if (fromGoogle) {
         await completeGoogleProfile(compiledUserData)
 
@@ -268,6 +285,47 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         if (onLogin) onLogin("student")
         navigate("/contact-choice")
         return
+      }
+
+      if (isFromGoogleLogin) {
+        // User came from Google login (not found in database) - create user with Google data
+        console.log('🚀 Creating user from Google login flow');
+        
+        // Add Google data to the user registration
+        const googleUserData = {
+          ...compiledUserData,
+          googleId: location.state.googleData.googleId,
+          profilePicture: location.state.googleData.profilePicture,
+          isEmailVerified: true
+        };
+
+        const response = await fetch("http://localhost:5000/api/users/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(googleUserData),
+        });
+
+        let result;
+        try {
+          result = await response.json();
+        } catch {
+          throw new Error("Server error - please try again later");
+        }
+
+        if (!response.ok) {
+          if (response.status === 409 || /duplicate|exists/i.test(result?.message || "")) {
+            throw new Error("An account with this email already exists. Please sign in instead.");
+          }
+          throw new Error(result?.message || `Signup failed (${response.status})`);
+        }
+
+                 // Success - redirect to ContactChoice
+         console.log('🚀 Google user registered, redirecting to ContactChoice');
+         if (onLogin) {
+           onLogin("student", result.data?.user || googleUserData);
+         }
+         navigate('/contact-choice');
+         return;
       }
 
       // Regular signup flow (new user registration)
@@ -292,9 +350,21 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         throw new Error(result?.message || `Signup failed (${response.status})`)
       }
 
-      // Success - user created and verification email sent
-      alert("Account created successfully! Please check your email for verification.")
-      onShowLogin?.()
+             // Check if user came from login (user not found scenario)
+       const isFromLogin = location.state?.fromLogin;
+       
+       if (isFromLogin) {
+         // User came from login (not found in database) - redirect to ContactChoice
+         console.log('🚀 User registered from login flow, redirecting to ContactChoice');
+         if (onLogin) {
+           onLogin("student", result.data?.user || compiledUserData);
+         }
+         navigate('/contact-choice');
+       } else {
+        // Regular signup flow - show success message and redirect to login
+        alert("Account created successfully! Please check your email for verification.")
+        onShowLogin?.()
+      }
     } catch (error) {
       console.error("❌ Signup error:", error)
       alert(`Signup failed: ${error.message}`)

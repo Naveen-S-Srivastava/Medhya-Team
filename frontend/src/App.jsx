@@ -70,24 +70,82 @@ export default function App() {
   const handleLogin = (role, userData = null) => {
     setUserRole(role);
     
+    console.log('🔍 handleLogin called with:', { role, userData });
+    
     // Handle different user types
     if (role === 'admin') {
+      console.log('🚀 Redirecting admin to dashboard');
       navigate('/admin');
     } else if (role === 'counselor') {
+      console.log('🚀 Redirecting counselor to dashboard');
       navigate('/counsellordash');
-    } else {
-      // Student login: check profile completeness
-      if (userData && (!userData.phone || !userData.institutionId || !userData.studentId)) {
-        // Profile incomplete - redirect to UserSignup for completion
+    } else if (role === 'student') {
+      // Student login flow
+      if (userData) {
+        // Check if user exists and has complete profile
+        const isExistingUser = userData.phone && userData.institutionId && userData.studentId;
+        
+        console.log('🔍 Student login analysis:', {
+          isExistingUser,
+          hasPhone: Boolean(userData.phone),
+          hasInstitutionId: Boolean(userData.institutionId),
+          hasStudentId: Boolean(userData.studentId),
+          userData
+        });
+        
+        if (isExistingUser) {
+          // Existing user with complete profile - redirect to contact choice
+          console.log('🚀 Redirecting existing user to contact choice');
+          navigate('/contact-choice');
+        } else {
+          // New user or incomplete profile - redirect to signup flow
+          console.log('🚀 Redirecting new/incomplete user to signup');
+          navigate('/user-signup', { 
+            state: { 
+              user: userData, 
+              isProfileCompletion: true,
+              isNewUser: true
+            } 
+          });
+        }
+      } else {
+        // No userData provided - redirect to signup
+        console.log('🚀 Redirecting to signup (no userData)');
         navigate('/user-signup', { 
           state: { 
-            user: userData, 
-            isProfileCompletion: true 
+            isNewUser: true
+          } 
+        });
+      }
+    }
+  };
+
+  const handleLoginError = (role, error, googleData = null) => {
+    console.log('🔍 Login error occurred:', error, 'Google data:', googleData);
+    
+    // If user not found in database, redirect to signup flow
+    if (error && (error.includes('not found') || error.includes('User not found') || error.includes('Invalid credentials'))) {
+      console.log('🚀 User not found, redirecting to signup flow');
+      if (role === 'student') {
+        // Redirect to user-signup first, then signup, then contact-choice
+        navigate('/user-signup', { 
+          state: { 
+            isNewUser: true,
+            fromLogin: true,
+            loginType: role,
+            googleData: googleData // Pass Google data if available
           } 
         });
       } else {
-        // Profile complete - redirect to contact choice
-        navigate('/contact-choice');
+        // For admin/counselor, redirect to their respective signup
+        navigate('/signup', { 
+          state: { 
+            isNewUser: true,
+            fromLogin: true,
+            loginType: role,
+            googleData: googleData // Pass Google data if available
+          } 
+        });
       }
     }
   };
@@ -118,11 +176,23 @@ export default function App() {
         <Route path="/" element={<LandingPage onLogin={() => navigate('/login')} systemStats={systemStats} />} />
         <Route path="/login" element={
           userRole !== 'guest' ? 
-            <Navigate to={userRole === 'admin' ? '/admin' : userRole === 'counselor' ? '/counsellordash' : '/dashboard'} replace /> : 
-            <Login onLogin={handleLogin} onShowSignup={() => navigate('/signup')} onShowUserSignup={() => navigate('/user-signup')} />
+            <Navigate to={userRole === 'admin' ? '/admin' : userRole === 'counselor' ? '/counsellordash' : '/contact-choice'} replace /> : 
+            <Login 
+              onLogin={handleLogin} 
+              onLoginError={handleLoginError}
+              onShowSignup={() => navigate('/signup')} 
+              onShowUserSignup={() => navigate('/user-signup')} 
+            />
         } />
         <Route path="/user-signup" element={<UserSignup onNext={(data) => { setUserData(data); navigate('/signup'); }} onShowLogin={() => navigate('/login')} />} />
-        <Route path="/signup" element={<Signup onLogin={handleLogin} onShowLogin={() => navigate('/login')} userData={userData} onBackToUserSignup={() => navigate('/user-signup')} />} />
+        <Route path="/signup" element={
+          <Signup 
+            onLogin={handleLogin} 
+            onShowLogin={() => navigate('/login')} 
+            userData={userData} 
+            onBackToUserSignup={() => navigate('/user-signup')} 
+          />
+        } />
         
         {/* Protected Routes */}
         <Route path="/contact-choice" element={

@@ -256,6 +256,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
             </Button>
             
           </div>
+          
 
           {/* Trust Indicators */}
           <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-500 pt-8">
