@@ -113,6 +113,7 @@ The system integrates:
 - **bcryptjs** - Password hashing
 - **nodemailer** - Email functionality
 - **multer** - File upload handling
+- **Fast API** - For integration
 
 ### Authentication
 - **Google OAuth 2.0** - Social login integration
@@ -123,6 +124,11 @@ The system integrates:
 - **Vercel** - Frontend hosting
 - **Render** - Backend hosting
 - **MongoDB Atlas** - Cloud database
+
+### Machine Learning
+- **Logistic Regression** - Training Models
+- **LAMA** - For LLM
+- **Python Libraries** - For Voice Fetch
 
 ## 📁 Project Structure
 
