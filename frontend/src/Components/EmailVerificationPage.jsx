@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/userStore";
 import RoleSelectionDialog from "./RoleSelectionDialog";
+import { API_URL } from '../config/environment.js';
 
 const EmailVerificationPage = () => {
   const [otp, setOtp] = useState(["", "", "", ""]);
@@ -40,7 +41,7 @@ const EmailVerificationPage = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/users/verify`,
+        `${API_URL}/api/users/verify`,
         { otp: fullOtp },
         { withCredentials: true }
       );
@@ -64,7 +65,7 @@ const EmailVerificationPage = () => {
     try {
       toast.info("OTP sent again to your email!");
       await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/users/resend-otp`,
+        `${API_URL}/api/users/resend-otp`,
         { email: user.email },
         { withCredentials: true }
       );

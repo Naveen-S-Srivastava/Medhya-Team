@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL, authAPI } from '../services/api.js';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -20,59 +19,38 @@ export const useAuth = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users/profile`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Add additional user metadata for routing logic
-        const userWithMetadata = {
-          ...data.data.user,
-          isProfileComplete: Boolean(
-            data.data.user.phone && 
-            data.data.user.institutionId && 
-            data.data.user.studentId
-          ),
-          isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
-          isGoogleUser: Boolean(data.data.user.googleId)
-        };
-        setUser(userWithMetadata);
-      } else if (response.status === 401) {
+      const data = await authAPI.getProfile();
+      // Add additional user metadata for routing logic
+      const userWithMetadata = {
+        ...data.data.user,
+        isProfileComplete: Boolean(
+          data.data.user.phone && 
+          data.data.user.institutionId && 
+          data.data.user.studentId
+        ),
+        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isGoogleUser: Boolean(data.data.user.googleId)
+      };
+      setUser(userWithMetadata);
+    } catch (err) {
+      if (err.message.includes('401')) {
         // Token expired, try to refresh
         try {
           await refreshToken();
           // Retry the profile request with new token
-          const newToken = localStorage.getItem('token');
-          const retryResponse = await fetch(`${API_BASE_URL}/users/profile`, {
-            headers: {
-              'Authorization': `Bearer ${newToken}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (retryResponse.ok) {
-            const retryData = await retryResponse.json();
-            // Add additional user metadata for routing logic
-            const userWithMetadata = {
-              ...retryData.data.user,
-              isProfileComplete: Boolean(
-                retryData.data.user.phone && 
-                retryData.data.user.institutionId && 
-                retryData.data.user.studentId
-              ),
-              isNewUser: !retryData.data.user.phone || !retryData.data.user.institutionId || !retryData.data.user.studentId,
-              isGoogleUser: Boolean(retryData.data.user.googleId)
-            };
-            setUser(userWithMetadata);
-          } else {
-            // Refresh failed, clear tokens
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-          }
+          const retryData = await authAPI.getProfile();
+          // Add additional user metadata for routing logic
+          const userWithMetadata = {
+            ...retryData.data.user,
+            isProfileComplete: Boolean(
+              retryData.data.user.phone && 
+              retryData.data.user.institutionId && 
+              retryData.data.user.studentId
+            ),
+            isNewUser: !retryData.data.user.phone || !retryData.data.user.institutionId || !retryData.data.user.studentId,
+            isGoogleUser: Boolean(retryData.data.user.googleId)
+          };
+          setUser(userWithMetadata);
         } catch (refreshErr) {
           console.error('Token refresh failed:', refreshErr);
           localStorage.removeItem('token');
@@ -83,10 +61,6 @@ export const useAuth = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
       }
-    } catch (err) {
-      console.error('Auth check failed:', err);
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
     } finally {
       setLoading(false);
     }
@@ -97,19 +71,7 @@ export const useAuth = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password, role })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      const data = await authAPI.login({ email, password, role });
 
       // Store tokens
       localStorage.setItem('token', data.token);
@@ -142,19 +104,7 @@ export const useAuth = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
+      const data = await authAPI.register(userData);
 
       // Store tokens
       localStorage.setItem('token', data.token);
@@ -175,27 +125,7 @@ export const useAuth = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users/google-auth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(googleData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Check if this is a "user not found" response (404)
-        if (response.status === 404 && data.code === 'USER_NOT_FOUND') {
-          // Create a custom error with the Google data for signup flow
-          const customError = new Error('User not found. Please sign up first.');
-          customError.code = 'USER_NOT_FOUND';
-          customError.googleData = data.data; // Include the Google data for signup
-          throw customError;
-        }
-        throw new Error(data.message || 'Google authentication failed');
-      }
+      const data = await authAPI.googleAuth(googleData);
 
       // Store tokens
       localStorage.setItem('token', data.token);
@@ -216,6 +146,14 @@ export const useAuth = () => {
       setUser(userWithMetadata);
       return userWithMetadata;
     } catch (err) {
+      // Check if this is a "user not found" response (404)
+      if (err.message.includes('404') && err.message.includes('USER_NOT_FOUND')) {
+        // Create a custom error with the Google data for signup flow
+        const customError = new Error('User not found. Please sign up first.');
+        customError.code = 'USER_NOT_FOUND';
+        customError.googleData = googleData; // Include the Google data for signup
+        throw customError;
+      }
       setError(err.message);
       throw err;
     } finally {
@@ -227,13 +165,7 @@ export const useAuth = () => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        await fetch(`${API_BASE_URL}/users/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        await authAPI.logout();
       }
     } catch (err) {
       console.error('Logout error:', err);
@@ -252,19 +184,7 @@ export const useAuth = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users/refresh-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ refreshToken })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Token refresh failed');
-      }
+      const data = await authAPI.refreshToken(refreshToken);
 
       // Update tokens
       localStorage.setItem('token', data.token);
@@ -287,20 +207,7 @@ export const useAuth = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users/profile`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(profileData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Profile update failed');
-      }
+      const data = await authAPI.updateProfile(profileData);
 
       // Add additional user metadata for routing logic
       const userWithMetadata = {

@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
+import { API_URL } from '../config/environment.js';
 
 const VerifyOTPAndReset = () => {
   const { state } = useLocation();
@@ -32,7 +33,7 @@ const VerifyOTPAndReset = () => {
 
     setLoading(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/reset-password`, {
+      await axios.post(`${API_URL}/api/users/reset-password`, {
         email,
         otp,
         password,

@@ -25,6 +25,7 @@ import {
   Clock,
 } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
+import { API_URL } from "../config/environment.js"
 
 const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
   const location = useLocation()
@@ -213,7 +214,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
       googleId: originalUser?.googleId,
     })
 
-    const response = await fetch("http://localhost:5000/api/users/complete-profile", {
+    const response = await fetch(`${API_URL}/api/users/complete-profile`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body,
@@ -299,7 +300,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
           isEmailVerified: true
         };
 
-        const response = await fetch("http://localhost:5000/api/users/register", {
+        const response = await fetch(`${API_URL}/api/users/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(googleUserData),
@@ -328,12 +329,12 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
          return;
       }
 
-      // Regular signup flow (new user registration)
-      const response = await fetch("http://localhost:5000/api/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(compiledUserData),
-      })
+             // Regular signup flow (new user registration)
+               const response = await fetch(`${API_URL}/api/users/register`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify(compiledUserData),
+       })
 
       let result;
       try {
