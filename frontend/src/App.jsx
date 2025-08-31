@@ -77,7 +77,8 @@ export default function App() {
       console.log('🚀 Redirecting admin to dashboard');
       navigate('/admin');
     } else if (role === 'counselor') {
-      console.log('🚀 Redirecting counselor to dashboard');
+      // Counselor login flow - always redirect to counselor dashboard
+      console.log('🚀 Redirecting counselor to dashboard (no signup flow needed)');
       navigate('/counsellordash');
     } else if (role === 'student') {
       // Student login flow
@@ -137,7 +138,7 @@ export default function App() {
           } 
         });
       } else {
-        // For admin/counselor, redirect to their respective signup
+        // For admin, redirect to their respective signup
         navigate('/signup', { 
           state: { 
             isNewUser: true,

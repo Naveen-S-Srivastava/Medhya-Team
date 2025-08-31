@@ -189,21 +189,56 @@ export const googleAuth = catchAsync(async (req, res, next) => {
       
       await user.save({ validateBeforeSave: false });
     } else {
-      // User doesn't exist - return error indicating they need to sign up
-      console.log('🔍 User not found, redirecting to signup flow');
-      return res.status(404).json({
-        status: 'error',
-        message: 'User not found. Please sign up first.',
-        code: 'USER_NOT_FOUND',
-        data: {
+      // User doesn't exist - handle based on loginType
+      if (loginType === 'counselor') {
+        // For counselors, automatically create account
+        console.log('🔍 Creating new counselor account automatically');
+        
+        const counselorData = {
           googleId,
           email,
           firstName,
           lastName,
           profilePicture,
-          loginType
-        }
-      });
+          role: 'counselor',
+          isEmailVerified: true,
+          // Set default values for counselor
+          phone: '', // Will be filled later
+          specialization: ['General'],
+          license: {
+            number: '',
+            issuingAuthority: '',
+            expiryDate: ''
+          },
+          experience: '0',
+          education: {
+            degree: '',
+            institution: '',
+            year: ''
+          },
+          bio: '',
+          isProfileComplete: false
+        };
+        
+        user = await User.create(counselorData);
+        console.log('✅ New counselor account created:', { email: user.email, role: user.role });
+      } else {
+        // For students and admins, return error indicating they need to sign up
+        console.log('🔍 User not found, redirecting to signup flow');
+        return res.status(404).json({
+          status: 'error',
+          message: 'User not found. Please sign up first.',
+          code: 'USER_NOT_FOUND',
+          data: {
+            googleId,
+            email,
+            firstName,
+            lastName,
+            profilePicture,
+            loginType
+          }
+        });
+      }
     }
   }
 

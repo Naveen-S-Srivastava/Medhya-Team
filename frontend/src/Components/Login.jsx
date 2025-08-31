@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth.js";
 import { testGoogleOAuth } from "../utils/googleOAuthTest.js";
+import { validateGoogleOAuthConfig, getOAuthErrorMessage } from "../utils/googleOAuthConfig.js";
 
 const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
   const navigate = useNavigate();
@@ -105,13 +106,22 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
   const handleGoogleLogin = async () => {
     try {
       console.log('🔍 Starting Google login process...');
-      testGoogleOAuth();
+      
+      // Validate OAuth configuration first
+      if (!validateGoogleOAuthConfig()) {
+        const errorMessage = 'Google OAuth is not properly configured for this domain. Please contact support.';
+        alert(errorMessage);
+        return;
+      }
+
       const google = window.google;
       if (!google) throw new Error('Google OAuth not available');
+      
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
       if (!clientId || clientId === 'your-google-client-id') {
         throw new Error('Google Client ID not configured');
       }
+      
       console.log('🔍 Google OAuth initialized, requesting access token...');
       google.accounts.oauth2.initTokenClient({
         client_id: clientId,
@@ -137,27 +147,32 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
               console.log('🔍 Calling onLogin with:', { role: user.role, user });
               onLogin(user.role, user);
             }
-                     } catch (err) {
-             console.error('Google auth failed:', err);
-             if (err.message.includes('access blocked') || err.message.includes('invalid')) {
-               alert('Google OAuth configuration issue. Please check the console for details.');
-             } else if (err.code === 'USER_NOT_FOUND') {
-               // User not found - redirect to signup flow with Google data
-               console.log('🔍 Google user not found, redirecting to signup with Google data:', err.googleData);
-               if (onLoginError) {
-                 onLoginError(loginType, err.message, err.googleData);
-               }
-             } else {
-               // Handle other Google login errors
-               if (onLoginError) {
-                 onLoginError(loginType, err.message);
-               }
-             }
-           }
+          } catch (err) {
+            console.error('Google auth failed:', err);
+            
+            // Handle specific OAuth errors
+            if (err.message.includes('access blocked') || err.message.includes('invalid')) {
+              const errorMessage = getOAuthErrorMessage(err);
+              alert(errorMessage);
+            } else if (err.code === 'USER_NOT_FOUND' && loginType !== 'counselor') {
+              // User not found - redirect to signup flow with Google data (only for non-counselors)
+              console.log('🔍 Google user not found, redirecting to signup with Google data:', err.googleData);
+              if (onLoginError) {
+                onLoginError(loginType, err.message, err.googleData);
+              }
+            } else {
+              // Handle other Google login errors
+              if (onLoginError) {
+                onLoginError(loginType, err.message);
+              }
+            }
+          }
         }
       }).requestAccessToken();
     } catch (err) {
       console.error('Google OAuth failed:', err);
+      const errorMessage = getOAuthErrorMessage(err);
+      alert(errorMessage);
     }
   };
 
