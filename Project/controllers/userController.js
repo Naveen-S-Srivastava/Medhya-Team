@@ -189,56 +189,20 @@ export const googleAuth = catchAsync(async (req, res, next) => {
       
       await user.save({ validateBeforeSave: false });
     } else {
-      // User doesn't exist - handle based on loginType
-      if (loginType === 'counselor') {
-        // For counselors, automatically create account
-        console.log('🔍 Creating new counselor account automatically');
-        
-        const counselorData = {
-          googleId,
-          email,
-          firstName,
-          lastName,
-          profilePicture,
-          role: 'counselor',
-          isEmailVerified: true,
-          // Set default values for counselor
-          phone: '', // Will be filled later
-          specialization: ['General'],
-          license: {
-            number: '',
-            issuingAuthority: '',
-            expiryDate: ''
-          },
-          experience: '0',
-          education: {
-            degree: '',
-            institution: '',
-            year: ''
-          },
-          bio: '',
-          isProfileComplete: false
-        };
-        
-        user = await User.create(counselorData);
-        console.log('✅ New counselor account created:', { email: user.email, role: user.role });
-      } else {
-        // For students and admins, return error indicating they need to sign up
-        console.log('🔍 User not found, redirecting to signup flow');
-        return res.status(404).json({
-          status: 'error',
-          message: 'User not found. Please sign up first.',
-          code: 'USER_NOT_FOUND',
-          data: {
-            googleId,
-            email,
-            firstName,
-            lastName,
-            profilePicture,
-            loginType
-          }
-        });
-      }
+      // User doesn't exist - create minimal user record
+      console.log('🔍 Creating new user account with Google OAuth');
+      
+      const userData = {
+        googleId,
+        email,
+        role: loginType || 'student',
+        isEmailVerified: true, // Google OAuth users are pre-verified
+        isProfileComplete: false, // Profile is not complete yet
+        lastLogin: new Date()
+      };
+      
+      user = await User.create(userData);
+      console.log('✅ New user account created:', { email: user.email, role: user.role });
     }
   }
 
@@ -300,9 +264,7 @@ export const logout = catchAsync(async (req, res, next) => {
 });
 
 export const getProfile = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.user.id)
-    .populate("assessments")
-    .populate("appointments");
+  const user = await User.findById(req.user.id);
 
   res.status(200).json({
     status: 'success',

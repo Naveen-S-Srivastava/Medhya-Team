@@ -70,7 +70,7 @@ export const authAPI = {
     body: JSON.stringify(credentials),
   }),
   
-  register: (userData) => apiCall('/users/register', {
+  register: (userData) => apiCall('/users/signup', {
     method: 'POST',
     body: JSON.stringify(userData),
   }),
@@ -99,6 +99,26 @@ export const authAPI = {
   completeGoogleProfile: (profileData) => apiCall('/users/complete-profile', {
     method: 'PUT',
     body: JSON.stringify(profileData),
+  }),
+};
+
+// User Details API
+export const userDetailsAPI = {
+  getUserDetails: (userId) => apiCall(`/user-details/${userId}`),
+  
+  createOrUpdateUserDetails: (userId, userDetailsData) => apiCall(`/user-details/${userId}`, {
+    method: 'POST',
+    body: JSON.stringify(userDetailsData),
+  }),
+  
+  markProfileComplete: (userId) => apiCall(`/user-details/${userId}/complete`, {
+    method: 'PATCH',
+  }),
+  
+  getProfileCompletionStatus: (userId) => apiCall(`/user-details/${userId}/status`),
+  
+  deleteUserDetails: (userId) => apiCall(`/user-details/${userId}`, {
+    method: 'DELETE',
   }),
 };
 

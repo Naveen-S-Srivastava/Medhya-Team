@@ -26,10 +26,12 @@ import {
 } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { API_URL } from "../config/environment.js"
+import { useAuth } from "../hooks/useAuth.js"
 
 const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -279,6 +281,9 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
       // Check if this is from Google login flow (user not found)
       const isFromGoogleLogin = location.state?.googleData;
       
+      // Check if this is from UserSignup flow
+      const isFromUserSignup = location.state?.fromUserSignup;
+      
       if (fromGoogle) {
         await completeGoogleProfile(compiledUserData)
 
@@ -286,6 +291,92 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         if (onLogin) onLogin("student")
         navigate("/contact-choice")
         return
+      }
+
+      if (isFromUserSignup) {
+        console.log('🚀 UserSignup flow - saving to user details schema');
+        console.log('🔍 Current user from useAuth:', user);
+        console.log('🔍 Token from localStorage:', localStorage.getItem('token'));
+        
+        // Get the current user's token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found. Please log in again.');
+        }
+
+        // Prepare the user details data
+        const userDetailsData = {
+          // Basic information (from UserSignup)
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          username: `${(formData.firstName || "").toLowerCase()}${(formData.lastName || "").toLowerCase()}${Date.now()}`,
+          phone: formData.phone,
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender,
+
+          // Academic information
+          institutionId: formData.institutionId,
+          studentId: formData.studentId,
+          course: formData.course,
+          year: formData.year,
+          department: formData.department,
+
+          // Security information
+          securityQuestion: formData.securityQuestion,
+          securityAnswer: formData.securityAnswer,
+
+          // Consent information
+          privacyConsent: formData.privacyConsent,
+          dataProcessingConsent: formData.dataProcessingConsent,
+          emergencyContact: formData.emergencyContact,
+          emergencyPhone: formData.emergencyPhone,
+          mentalHealthConsent: formData.mentalHealthConsent,
+          communicationConsent: formData.communicationConsent,
+        };
+
+        console.log('🔍 Saving user details:', userDetailsData);
+
+        // Get user ID from the current user context
+        if (!user || !user._id) {
+          throw new Error('User not found. Please log in again.');
+        }
+        const userId = user._id;
+
+        // Save user details
+        const detailsResponse = await fetch(`${API_URL}/api/user-details/${userId}`, {
+          method: "POST",
+          headers: { 
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json" 
+          },
+          body: JSON.stringify(userDetailsData),
+        });
+
+        if (!detailsResponse.ok) {
+          const detailsResult = await detailsResponse.json();
+          throw new Error(detailsResult.message || 'Failed to save user details');
+        }
+
+        // Mark profile as complete
+        const completeResponse = await fetch(`${API_URL}/api/user-details/${userId}/complete`, {
+          method: "PATCH",
+          headers: { 
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json" 
+          }
+        });
+
+        if (!completeResponse.ok) {
+          const completeResult = await completeResponse.json();
+          throw new Error(completeResult.message || 'Failed to mark profile complete');
+        }
+
+        console.log('✅ Profile completed successfully!');
+
+        // Success - redirect to student dashboard
+        alert("Profile completed successfully! Welcome to MindCare.");
+        navigate('/dashboard');
+        return;
       }
 
       if (isFromGoogleLogin) {

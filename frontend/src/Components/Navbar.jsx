@@ -89,6 +89,12 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
             <Link to="/profile" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-slate-700 rounded-md hover:bg-slate-100">
               <User className="h-4 w-4 text-slate-500" /> Profile
             </Link>
+            <Link
+              to="/user-signup"
+              className="inline-flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 font-medium"
+            >
+              Complete Now →
+            </Link>
             <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-slate-700 rounded-md hover:bg-slate-100">
               <Settings className="h-4 w-4 text-slate-500" /> Settings
             </button>
@@ -192,6 +198,11 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
             <Link to="/profile" className="flex items-center gap-3 w-full px-3 py-2 text-base text-slate-700 rounded-md hover:bg-slate-100">
               <User className="h-5 w-5 text-slate-500" /> Profile
             </Link>
+            {!user?.isProfileComplete && (
+              <Link to="/user-signup" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-orange-600 rounded-md hover:bg-orange-50 bg-orange-50">
+                <User className="h-4 w-4 text-orange-500" /> Complete Profile
+              </Link>
+            )}
             <Link to="/settings" className="flex items-center gap-3 w-full px-3 py-2 text-base text-slate-700 rounded-md hover:bg-slate-100">
               <Settings className="h-5 w-5 text-slate-500" /> Settings
             </Link>

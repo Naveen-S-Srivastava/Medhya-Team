@@ -20,15 +20,11 @@ export const useAuth = () => {
 
     try {
       const data = await authAPI.getProfile();
-      // Add additional user metadata for routing logic
+      // Use the profile completion status from backend
       const userWithMetadata = {
         ...data.data.user,
-        isProfileComplete: Boolean(
-          data.data.user.phone && 
-          data.data.user.institutionId && 
-          data.data.user.studentId
-        ),
-        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isProfileComplete: Boolean(data.data.user.isProfileComplete),
+        isNewUser: !data.data.user.isProfileComplete,
         isGoogleUser: Boolean(data.data.user.googleId)
       };
       setUser(userWithMetadata);
@@ -39,15 +35,11 @@ export const useAuth = () => {
           await refreshToken();
           // Retry the profile request with new token
           const retryData = await authAPI.getProfile();
-          // Add additional user metadata for routing logic
+          // Use the profile completion status from backend
           const userWithMetadata = {
             ...retryData.data.user,
-            isProfileComplete: Boolean(
-              retryData.data.user.phone && 
-              retryData.data.user.institutionId && 
-              retryData.data.user.studentId
-            ),
-            isNewUser: !retryData.data.user.phone || !retryData.data.user.institutionId || !retryData.data.user.studentId,
+            isProfileComplete: Boolean(retryData.data.user.isProfileComplete),
+            isNewUser: !retryData.data.user.isProfileComplete,
             isGoogleUser: Boolean(retryData.data.user.googleId)
           };
           setUser(userWithMetadata);
@@ -77,15 +69,11 @@ export const useAuth = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('refreshToken', data.refreshToken);
       
-      // Add additional user metadata for routing logic
+      // Use the profile completion status from backend
       const userWithMetadata = {
         ...data.data.user,
-        isProfileComplete: Boolean(
-          data.data.user.phone && 
-          data.data.user.institutionId && 
-          data.data.user.studentId
-        ),
-        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isProfileComplete: Boolean(data.data.user.isProfileComplete),
+        isNewUser: !data.data.user.isProfileComplete,
         isGoogleUser: Boolean(data.data.user.googleId)
       };
       
@@ -131,15 +119,11 @@ export const useAuth = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('refreshToken', data.refreshToken);
       
-      // Add additional user metadata for routing logic
+      // Use the profile completion status from backend
       const userWithMetadata = {
         ...data.data.user,
-        isProfileComplete: Boolean(
-          data.data.user.phone && 
-          data.data.user.institutionId && 
-          data.data.user.studentId
-        ),
-        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isProfileComplete: Boolean(data.data.user.isProfileComplete),
+        isNewUser: !data.data.user.isProfileComplete,
         isGoogleUser: Boolean(data.data.user.googleId)
       };
       
@@ -188,7 +172,7 @@ export const useAuth = () => {
 
       // Update tokens
       localStorage.setItem('token', data.token);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.removeItem('refreshToken');
       
       return data.token;
     } catch (err) {
@@ -209,15 +193,11 @@ export const useAuth = () => {
     try {
       const data = await authAPI.updateProfile(profileData);
 
-      // Add additional user metadata for routing logic
+      // Use the profile completion status from backend
       const userWithMetadata = {
         ...data.data.user,
-        isProfileComplete: Boolean(
-          data.data.user.phone && 
-          data.data.user.institutionId && 
-          data.data.user.studentId
-        ),
-        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isProfileComplete: Boolean(data.data.user.isProfileComplete),
+        isNewUser: !data.data.user.isProfileComplete,
         isGoogleUser: Boolean(data.data.user.googleId)
       };
 

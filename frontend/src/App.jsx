@@ -81,43 +81,9 @@ export default function App() {
       console.log('🚀 Redirecting counselor to dashboard (no signup flow needed)');
       navigate('/counsellordash');
     } else if (role === 'student') {
-      // Student login flow
-      if (userData) {
-        // Check if user exists and has complete profile
-        const isExistingUser = userData.phone && userData.institutionId && userData.studentId;
-        
-        console.log('🔍 Student login analysis:', {
-          isExistingUser,
-          hasPhone: Boolean(userData.phone),
-          hasInstitutionId: Boolean(userData.institutionId),
-          hasStudentId: Boolean(userData.studentId),
-          userData
-        });
-        
-        if (isExistingUser) {
-          // Existing user with complete profile - redirect to contact choice
-          console.log('🚀 Redirecting existing user to contact choice');
-          navigate('/contact-choice');
-        } else {
-          // New user or incomplete profile - redirect to signup flow
-          console.log('🚀 Redirecting new/incomplete user to signup');
-          navigate('/user-signup', { 
-            state: { 
-              user: userData, 
-              isProfileCompletion: true,
-              isNewUser: true
-            } 
-          });
-        }
-      } else {
-        // No userData provided - redirect to signup
-        console.log('🚀 Redirecting to signup (no userData)');
-        navigate('/user-signup', { 
-          state: { 
-            isNewUser: true
-          } 
-        });
-      }
+      // Student login flow - ALWAYS redirect to contact-choice first
+      console.log('🚀 Redirecting student to contact-choice (first option choice)');
+      navigate('/contact-choice');
     }
   };
 

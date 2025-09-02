@@ -5,6 +5,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import userRoutes from "./routes/userRoutes.js";
+import userDetailsRoutes from "./routes/userDetailsRoutes.js";
 import assessmentRoutes from "./routes/assessmentRoutes.js";
 import appointmentRoutes from "./routes/appointmentRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
@@ -58,6 +59,7 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB error:", err));
 app.use("/api/users", userRoutes);
+app.use("/api/user-details", userDetailsRoutes);
 app.use("/api/assessments", assessmentRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/activity", activityRoutes);
