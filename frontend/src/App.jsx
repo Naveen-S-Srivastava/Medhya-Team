@@ -19,6 +19,7 @@ import CrisisManagement from './Components/CrisisManagement.jsx';
 import InnovationShowcase from './Components/InnovationShowcase.jsx';
 import ContactChoice from './Components/ContactChoice.jsx';
 import ErrorBoundary from './Components/ErrorBoundary.jsx';
+import UserProfile from './Components/UserProfile.jsx';
 
 // Import Wellness component
 import Wellness from './Components/Wellness.jsx';
@@ -41,6 +42,26 @@ const ProtectedRoute = ({ children, userRole, requiredRole = null, isLoading = f
   if (requiredRole && userRole !== requiredRole) {
     return <Navigate to="/dashboard" replace />; // or a dedicated "unauthorized" page
   }
+  return children;
+};
+
+// Profile Protected Route Component for restricted features
+const ProfileProtectedRoute = ({ children, userRole, user, isLoading = false }) => {
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+    </div>;
+  }
+  
+  if (userRole === 'guest') {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // For students, check if profile is complete for restricted routes
+  if (userRole === 'student' && !user?.isProfileComplete) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
   return children;
 };
 
@@ -184,12 +205,13 @@ export default function App() {
         >
           {/* Student Routes */}
           <Route path="/dashboard" element={<ProtectedRoute userRole={userRole} requiredRole="student" isLoading={loading}><StudentDashboard /></ProtectedRoute>} />
-          <Route path="/chat" element={<ProtectedRoute userRole={userRole} requiredRole="student" isLoading={loading}><AIChat /></ProtectedRoute>} />
-          <Route path="/ai" element={<ProtectedRoute userRole={userRole} requiredRole="student" isLoading={loading}><AIChat /></ProtectedRoute>} />
-          <Route path="/appointments" element={<ProtectedRoute userRole={userRole} requiredRole="student" isLoading={loading}><AppointmentBooking /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute userRole={userRole} requiredRole="student" isLoading={loading}><UserProfile /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProfileProtectedRoute userRole={userRole} user={user} isLoading={loading}><AIChat /></ProfileProtectedRoute>} />
+          <Route path="/ai" element={<ProfileProtectedRoute userRole={userRole} user={user} isLoading={loading}><AIChat /></ProfileProtectedRoute>} />
+          <Route path="/appointments" element={<ProfileProtectedRoute userRole={userRole} user={user} isLoading={loading}><AppointmentBooking /></ProfileProtectedRoute>} />
           <Route path="/resources" element={<ProtectedRoute userRole={userRole} requiredRole="student" isLoading={loading}><ResourceHub /></ProtectedRoute>} />
-          <Route path="/community" element={<ProtectedRoute userRole={userRole} requiredRole="student" isLoading={loading}><PeerSupport /></ProtectedRoute>} />
-          <Route path="/wellness" element={<ProtectedRoute userRole={userRole} requiredRole="student" isLoading={loading}><Wellness /></ProtectedRoute>} />
+          <Route path="/community" element={<ProfileProtectedRoute userRole={userRole} user={user} isLoading={loading}><PeerSupport /></ProfileProtectedRoute>} />
+          <Route path="/wellness" element={<ProfileProtectedRoute userRole={userRole} user={user} isLoading={loading}><Wellness /></ProfileProtectedRoute>} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<ProtectedRoute userRole={userRole} requiredRole="admin" isLoading={loading}><AdminDashboard /></ProtectedRoute>} />

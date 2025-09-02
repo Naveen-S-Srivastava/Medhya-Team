@@ -65,7 +65,10 @@ class ApiClient {
       
       return responseData;
     } catch (error) {
-      console.error('API request failed:', error);
+      // Only log non-404 errors to avoid console spam for expected cases
+      if (error.response?.status !== 404) {
+        console.error('API request failed:', error);
+      }
       throw error;
     }
   }

@@ -132,6 +132,9 @@ export const getFiveDayAverages = catchAsync(async (req, res) => {
 
 // Get today's assessment if exists
 export const getTodayAssessment = catchAsync(async (req, res) => {
+  console.log('🔍 getTodayAssessment called with params:', req.params);
+  console.log('🔍 User from auth middleware:', req.user);
+
   const userId = req.user.id;
   const { type } = req.params;
 
@@ -144,6 +147,8 @@ export const getTodayAssessment = catchAsync(async (req, res) => {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
+  console.log('🔍 Searching for assessment:', { userId, type, today, tomorrow });
+
   const assessment = await Assessment.findOne({
     user: userId,
     type,
@@ -153,7 +158,10 @@ export const getTodayAssessment = catchAsync(async (req, res) => {
     }
   });
 
+  console.log('🔍 Assessment found:', assessment);
+
   if (!assessment) {
+    console.log('🔍 No assessment found, returning 404');
     return res.status(404).json({
       status: 'error',
       message: 'No assessment found for today'

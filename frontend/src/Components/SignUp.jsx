@@ -293,7 +293,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         return
       }
 
-      if (isFromUserSignup) {
+      if (isFromUserSignup && user && localStorage.getItem('token')) {
         console.log('🚀 UserSignup flow - saving to user details schema');
         console.log('🔍 Current user from useAuth:', user);
         console.log('🔍 Token from localStorage:', localStorage.getItem('token'));

@@ -8,7 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
   MessageCircle, Calendar, Users, Shield, Heart, Brain, Phone,
-  TrendingUp, Globe, Zap, CheckCircle, Target, Smartphone, AlertTriangle, Lock
+  TrendingUp, Globe, Zap, CheckCircle, Target, Smartphone, AlertTriangle, Lock,
+  BookOpen, X
 } from 'lucide-react';
 
 const StudentDashboard = () => {
@@ -76,98 +77,152 @@ const StudentDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Locked Features Preview */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* AI Chat Preview */}
-        <Card className="border-gray-200 bg-gray-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-600">
-              <Brain className="h-5 w-5" />
-              AI Chat Support
-            </CardTitle>
-            <CardDescription className="text-gray-500">
-              Get instant mental health support
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-4">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Lock className="h-8 w-8 text-gray-400" />
-              </div>
-              <p className="text-sm text-gray-500 mb-3">
-                Complete your profile to access AI chat support
-              </p>
-              <Button 
-                variant="outline" 
-                disabled 
-                className="w-full"
-              >
-                Locked
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Available Features - Only Resources */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-green-600" />
+            Available Features
+          </CardTitle>
+          <CardDescription className="text-green-700">
+            You can access these features while completing your profile
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {/* Resources - Available */}
+            <Card className="border-green-200 bg-green-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-green-800 text-base">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Resources
+                </CardTitle>
+                <CardDescription className="text-green-700">
+                  Access mental health resources and materials
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={() => navigate('/resources')}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  Access Resources
+                </Button>
+              </CardContent>
+            </Card>
 
-        {/* Counselor Appointments Preview */}
-        <Card className="border-gray-200 bg-gray-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-600">
-              <Users className="h-5 w-5" />
-              Counselor Appointments
-            </CardTitle>
-            <CardDescription className="text-gray-500">
-              Book sessions with professional counselors
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-4">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Lock className="h-8 w-8 text-gray-400" />
-              </div>
-              <p className="text-sm text-gray-500 mb-3">
-                Complete your profile to book appointments
-              </p>
-              <Button 
-                variant="outline" 
-                disabled 
-                className="w-full"
-              >
-                Locked
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            {/* AI Chat - Locked */}
+            <Card className="border-gray-200 bg-gray-50 opacity-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-gray-600 text-base">
+                  <X className="h-5 w-5 text-gray-500" />
+                  AI Chat Support
+                </CardTitle>
+                <CardDescription className="text-gray-500">
+                  Get instant mental health support
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  variant="outline" 
+                  disabled 
+                  className="w-full"
+                >
+                  Complete Profile to Unlock
+                </Button>
+              </CardContent>
+            </Card>
 
-        {/* Assessments Preview */}
-        <Card className="border-gray-200 bg-gray-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-600">
-              <Heart className="h-5 w-5" />
-              Mental Health Assessments
-            </CardTitle>
-            <CardDescription className="text-gray-500">
-              Track your mental wellness progress
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-4">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Lock className="h-8 w-8 text-gray-400" />
-              </div>
-              <p className="text-sm text-gray-500 mb-3">
-                Complete your profile to take assessments
-              </p>
-              <Button 
-                variant="outline" 
-                disabled 
-                className="w-full"
-              >
-                Locked
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            {/* Appointments - Locked */}
+            <Card className="border-gray-200 bg-gray-50 opacity-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-gray-600 text-base">
+                  <X className="h-5 w-5 text-gray-500" />
+                  Counselor Appointments
+                </CardTitle>
+                <CardDescription className="text-gray-500">
+                  Book sessions with professional counselors
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  variant="outline" 
+                  disabled 
+                  className="w-full"
+                >
+                  Complete Profile to Unlock
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Community - Locked */}
+            <Card className="border-gray-200 bg-gray-50 opacity-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-gray-600 text-base">
+                  <X className="h-5 w-5 text-gray-500" />
+                  Community
+                </CardTitle>
+                <CardDescription className="text-gray-500">
+                  Connect with peers and share experiences
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  variant="outline" 
+                  disabled 
+                  className="w-full"
+                >
+                  Complete Profile to Unlock
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Wellness - Locked */}
+            <Card className="border-gray-200 bg-gray-50 opacity-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-gray-600 text-base">
+                  <X className="h-5 w-5 text-gray-500" />
+                  Wellness
+                </CardTitle>
+                <CardDescription className="text-gray-500">
+                  Track your mental wellness progress
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  variant="outline" 
+                  disabled 
+                  className="w-full"
+                >
+                  Complete Profile to Unlock
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Dashboard - Locked */}
+            <Card className="border-gray-200 bg-gray-50 opacity-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-gray-600 text-base">
+                  <X className="h-5 w-5 text-gray-500" />
+                  Full Dashboard
+                </CardTitle>
+                <CardDescription className="text-gray-500">
+                  Access comprehensive dashboard features
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  variant="outline" 
+                  disabled 
+                  className="w-full"
+                >
+                  Complete Profile to Unlock
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 
@@ -346,8 +401,56 @@ const StudentDashboard = () => {
     </div>
   );
 
+  // Profile Status Section
+  const ProfileStatusSection = () => (
+    <Card className="border-blue-200 bg-blue-50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-blue-800">
+          <CheckCircle className="h-5 w-5" />
+          Profile Status
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <p className="text-sm text-blue-700">
+              {isProfileComplete 
+                ? "Your profile is complete! You have access to all MindCare features." 
+                : "Complete your profile to unlock all MindCare features. Currently, you only have access to Resources."
+              }
+            </p>
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${isProfileComplete ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+              <span className="text-sm font-medium text-blue-800">
+                {isProfileComplete ? 'Profile Complete' : 'Profile Incomplete - Limited Access'}
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/profile')}
+              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              View Profile
+            </Button>
+            {!isProfileComplete && (
+              <Button 
+                onClick={handleCompleteProfile}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                Complete Profile
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
+      <ProfileStatusSection />
       {isProfileComplete ? <FullDashboardContent /> : <LimitedDashboardContent />}
     </div>
   );

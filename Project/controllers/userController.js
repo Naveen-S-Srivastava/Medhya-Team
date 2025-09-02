@@ -1,4 +1,5 @@
 import User from "../models/usermodel.js";
+import UserDetails from "../models/userDetailsModel.js";
 import ActivityLog from "../models/activityLogModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -64,7 +65,11 @@ export const registerUser = catchAsync(async (req, res, next) => {
     dataProcessingConsent,
     emergencyContact,
     emergencyPhone,
-    mentalHealthConsent
+    mentalHealthConsent,
+    communicationConsent,
+    googleId,
+    profilePicture,
+    isEmailVerified = false
   } = req.body;
 
   // Check if user already exists
@@ -78,12 +83,24 @@ export const registerUser = catchAsync(async (req, res, next) => {
     return next(new AppError('User with this email already exists', 400));
   }
 
-  // Create new user
+  // Create basic user first
   const user = await User.create({
+    email,
+    password,
+    passwordConfirm,
+    googleId,
+    profilePicture,
+    isEmailVerified,
+    isProfileComplete: true, // Profile will be complete after creating details
+    role: "student"
+  });
+
+  // Create user details
+  const userDetails = await UserDetails.create({
+    user: user._id,
     firstName,
     lastName,
     username,
-    email,
     phone,
     dateOfBirth,
     gender,
@@ -92,15 +109,16 @@ export const registerUser = catchAsync(async (req, res, next) => {
     course,
     year,
     department,
-    password,
-    passwordConfirm,
     securityQuestion,
     securityAnswer,
     privacyConsent,
     dataProcessingConsent,
     emergencyContact,
     emergencyPhone,
-    mentalHealthConsent
+    mentalHealthConsent,
+    communicationConsent,
+    isProfileComplete: true,
+    profileCompletedAt: new Date()
   });
 
   // Log activity
