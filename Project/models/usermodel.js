@@ -22,14 +22,6 @@ const userSchema = new mongoose.Schema({
   passwordConfirm: {
     type: String,
     required: false,
-    validate: {
-      validator: function (el) {
-        // Skip validation if password is not set (for Google OAuth users)
-        if (!this.password) return true;
-        return el === this.password;
-      },
-      message: "Passwords are not same",
-    },
   },
 
   // OAuth fields
@@ -100,12 +92,28 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password") || !this.password) return next();
+  console.log('🔐 Pre-save hook triggered');
+  console.log('🔐 Password modified:', this.isModified("password"));
+  console.log('🔐 Has password:', !!this.password);
+  console.log('🔐 Password value:', this.password);
+  
+  if (!this.isModified("password") || !this.password) {
+    console.log('🔐 Skipping password hashing');
+    return next();
+  }
+  
   try {
+    console.log('🔐 Hashing password...');
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    console.log('🔐 Password hashed successfully');
+    
+    // Remove passwordConfirm from the document (it's not needed in the database)
+    this.passwordConfirm = null;
+    
     next();
   } catch (err) {
+    console.error('🔐 Error hashing password:', err);
     next(err);
   }
 });

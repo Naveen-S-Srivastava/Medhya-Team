@@ -4,6 +4,8 @@ import {
   loginUser, 
   getProfile, 
   updateProfile, 
+  checkPasswordStatus,
+  setPassword,
   changePassword,
   googleAuth,
   refreshToken,
@@ -26,6 +28,8 @@ router.use(protect); // All routes after this middleware are protected
 
 router.get("/profile", getProfile);
 router.patch("/profile", updateProfile);
+router.get("/password-status", checkPasswordStatus);
+router.patch("/set-password", setPassword);
 router.patch("/change-password", changePassword);
 router.post("/logout", logout);
 

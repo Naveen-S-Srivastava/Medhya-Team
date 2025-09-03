@@ -119,8 +119,12 @@ app.use((err, req, res, next) => {
     });
   }
   
-  res.status(err.status || 500).json({
-    status: 'error',
+  // Use statusCode instead of status for HTTP status code
+  const statusCode = err.statusCode || 500;
+  const status = err.status || 'error';
+  
+  res.status(statusCode).json({
+    status,
     message: err.message || 'Internal server error'
   });
 });

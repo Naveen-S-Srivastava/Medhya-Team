@@ -49,7 +49,16 @@ export const apiCall = async (endpoint, options = {}) => {
     });
 
     if (!response.ok) {
-      throw new Error(data.message || `API call failed: ${response.status}`);
+      // Handle different error response formats
+      let errorMessage = `API call failed: ${response.status}`;
+      
+      if (data && typeof data === 'object') {
+        errorMessage = data.message || data.error || errorMessage;
+      } else if (typeof data === 'string') {
+        errorMessage = data;
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return data;

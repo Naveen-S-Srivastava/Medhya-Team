@@ -146,8 +146,6 @@ const userDetailsSchema = new mongoose.Schema({
 });
 
 // Index for efficient queries
-userDetailsSchema.index({ user: 1 });
-userDetailsSchema.index({ studentId: 1 });
 userDetailsSchema.index({ isProfileComplete: 1 });
 
 // Pre-save middleware to update updatedAt

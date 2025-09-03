@@ -143,7 +143,6 @@ const counselorStatsSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-counselorStatsSchema.index({ counselor: 1 });
 counselorStatsSchema.index({ 'monthlyStats.month': 1, 'monthlyStats.year': 1 });
 counselorStatsSchema.index({ averageRating: -1 });
 

@@ -87,7 +87,6 @@ const paymentSchema = new mongoose.Schema({
 });
 
 // Indexes for efficient querying
-paymentSchema.index({ counselor: 1, paymentDate: -1 });
 paymentSchema.index({ paymentStatus: 1, paymentDate: -1 });
 paymentSchema.index({ appointment: 1 }, { unique: true });
 

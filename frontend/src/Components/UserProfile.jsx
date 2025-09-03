@@ -26,7 +26,10 @@ import {
   MapPin,
   BookOpen,
   Users,
-  Heart
+  Heart,
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 const UserProfile = () => {
@@ -39,11 +42,28 @@ const UserProfile = () => {
   const [success, setSuccess] = useState('');
   const [userDetails, setUserDetails] = useState(null);
   const [editedDetails, setEditedDetails] = useState({});
+  
+  // Password management state
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [hasPassword, setHasPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    newPasswordConfirm: '',
+    currentPassword: ''
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    newPassword: false,
+    newPasswordConfirm: false,
+    currentPassword: false
+  });
 
   // Fetch user details on component mount
   useEffect(() => {
     if (user?._id) {
       fetchUserDetails();
+      checkPasswordStatus();
     }
   }, [user]);
 
@@ -123,6 +143,127 @@ const UserProfile = () => {
       setError(err.message || 'Failed to update profile');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Password management functions
+  const handleSetPassword = async () => {
+    console.log('🔐 Frontend: handleSetPassword called');
+    console.log('🔐 Frontend: Password data:', {
+      newPassword: !!passwordData.newPassword,
+      newPasswordLength: passwordData.newPassword ? passwordData.newPassword.length : 0,
+      newPasswordConfirm: !!passwordData.newPasswordConfirm,
+      newPasswordConfirmLength: passwordData.newPasswordConfirm ? passwordData.newPasswordConfirm.length : 0
+    });
+
+    if (passwordData.newPassword !== passwordData.newPasswordConfirm) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    setIsSettingPassword(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      console.log('🔐 Frontend: Making API call to /users/set-password');
+      const response = await apiCall('/users/set-password', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          newPassword: passwordData.newPassword,
+          newPasswordConfirm: passwordData.newPasswordConfirm
+        })
+      });
+      
+      console.log('🔐 Frontend: API response:', response);
+
+      setSuccess('Password set successfully! You can now login with email and password.');
+      setPasswordData({ newPassword: '', newPasswordConfirm: '', currentPassword: '' });
+      setShowPasswordSection(false);
+      
+      // Update password status from response
+      if (response.data && response.data.hasPassword !== undefined) {
+        setHasPassword(response.data.hasPassword);
+        console.log('🔐 Frontend: Updated hasPassword to:', response.data.hasPassword);
+      } else {
+        setHasPassword(true);
+        console.log('🔐 Frontend: Set hasPassword to true (fallback)');
+      }
+      
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      console.error('🔐 Frontend: API error:', err);
+      setError(err.message || 'Failed to set password');
+    } finally {
+      setIsSettingPassword(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordData.newPassword !== passwordData.newPasswordConfirm) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await apiCall('/users/change-password', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+          newPasswordConfirm: passwordData.newPasswordConfirm
+        })
+      });
+
+      setSuccess('Password changed successfully!');
+      setPasswordData({ newPassword: '', newPasswordConfirm: '', currentPassword: '' });
+      setShowPasswordSection(false);
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      setError(err.message || 'Failed to change password');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  const resetPasswordForm = () => {
+    setPasswordData({ newPassword: '', newPasswordConfirm: '', currentPassword: '' });
+    setShowPasswords({ newPassword: false, newPasswordConfirm: false, currentPassword: false });
+    setError('');
+    setSuccess('');
+  };
+
+  const checkPasswordStatus = async () => {
+    try {
+      const response = await apiCall('/users/password-status', {
+        method: 'GET'
+      });
+      setHasPassword(response.data.hasPassword);
+    } catch (err) {
+      console.error('Failed to check password status:', err);
+      // Default to false if we can't check
+      setHasPassword(false);
     }
   };
 
@@ -582,6 +723,149 @@ const UserProfile = () => {
                 )}
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Password Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-purple-600" />
+              Password Management
+            </CardTitle>
+            <CardDescription>
+              {hasPassword ? 'Change your password' : 'Set a password to enable email/password login'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!showPasswordSection ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${hasPassword ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                  <span className="text-sm text-muted-foreground">
+                    {hasPassword ? 'Password is set' : 'No password set'}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPasswordSection(true)}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  {hasPassword ? 'Change Password' : 'Set Password'}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {hasPassword && (
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="currentPassword"
+                        type={showPasswords.currentPassword ? 'text' : 'password'}
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                        placeholder="Enter current password"
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => togglePasswordVisibility('currentPassword')}
+                      >
+                        {showPasswords.currentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      type={showPasswords.newPassword ? 'text' : 'password'}
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                      placeholder="Enter new password (min 8 characters)"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => togglePasswordVisibility('newPassword')}
+                    >
+                      {showPasswords.newPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="newPasswordConfirm">Confirm New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="newPasswordConfirm"
+                      type={showPasswords.newPasswordConfirm ? 'text' : 'password'}
+                      value={passwordData.newPasswordConfirm}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, newPasswordConfirm: e.target.value }))}
+                      placeholder="Confirm new password"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => togglePasswordVisibility('newPasswordConfirm')}
+                    >
+                      {showPasswords.newPasswordConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowPasswordSection(false);
+                      resetPasswordForm();
+                    }}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={hasPassword ? handleChangePassword : handleSetPassword}
+                    disabled={isSettingPassword || isChangingPassword}
+                    className="bg-purple-300 hover:bg-purple-400 text-white"
+                  >
+                    <Lock className="h-4 w-4 mr-2" />
+                    {isSettingPassword || isChangingPassword 
+                      ? (hasPassword ? 'Changing...' : 'Setting...') 
+                      : (hasPassword ? 'Change Password' : 'Set Password')
+                    }
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Password Benefits Info */}
+            {!hasPassword && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="text-sm font-medium text-blue-800 mb-2">💡 Why set a password?</h4>
+                <ul className="text-xs text-blue-700 space-y-1">
+                  <li>• Login without Google OAuth when needed</li>
+                  <li>• Access your account even if Google services are down</li>
+                  <li>• Enhanced security for your MindCare account</li>
+                  <li>• Password must be at least 8 characters long</li>
+                </ul>
+              </div>
+            )}
           </CardContent>
         </Card>
 
