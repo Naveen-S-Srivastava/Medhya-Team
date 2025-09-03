@@ -25,13 +25,13 @@ import {
   Clock,
 } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { API_URL } from "../config/environment.js"
+import { API_BASE_URL } from "../config/environment.js"
 import { useAuth } from "../hooks/useAuth.js"
 
 const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, forceRefreshProfileStatus } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -216,7 +216,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
       googleId: originalUser?.googleId,
     })
 
-    const response = await fetch(`${API_URL}/api/users/complete-profile`, {
+            const response = await fetch(`${API_BASE_URL}/users/complete-profile`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body,
@@ -343,7 +343,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         const userId = user._id;
 
         // Save user details
-        const detailsResponse = await fetch(`${API_URL}/api/user-details/${userId}`, {
+        const detailsResponse = await fetch(`${API_BASE_URL}/user-details/${userId}`, {
           method: "POST",
           headers: { 
             "Authorization": `Bearer ${token}`,
@@ -358,7 +358,8 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         }
 
         // Mark profile as complete
-        const completeResponse = await fetch(`${API_URL}/api/user-details/${userId}/complete`, {
+        console.log('🔍 Marking profile as complete for user:', userId);
+        const completeResponse = await fetch(`${API_BASE_URL}/user-details/${userId}/complete`, {
           method: "PATCH",
           headers: { 
             "Authorization": `Bearer ${token}`,
@@ -368,10 +369,24 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
 
         if (!completeResponse.ok) {
           const completeResult = await completeResponse.json();
+          console.error('❌ Failed to mark profile complete:', completeResult);
           throw new Error(completeResult.message || 'Failed to mark profile complete');
         }
+        
+        const completeResult = await completeResponse.json();
+        console.log('✅ Profile marked complete successfully:', completeResult);
 
         console.log('✅ Profile completed successfully!');
+
+        // Force refresh the user's profile completion status using the useAuth hook
+        // This ensures the dashboard shows the full content immediately
+        try {
+          console.log('🔍 Force refreshing profile status using useAuth hook');
+          await forceRefreshProfileStatus();
+          console.log('✅ Profile status refreshed successfully');
+        } catch (error) {
+          console.warn('Could not refresh profile status:', error);
+        }
 
         // Success - redirect to student dashboard
         alert("Profile completed successfully! Welcome to MindCare.");
@@ -391,7 +406,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
           isEmailVerified: true
         };
 
-        const response = await fetch(`${API_URL}/api/users/register`, {
+        const response = await fetch(`${API_BASE_URL}/users/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(googleUserData),
@@ -421,7 +436,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
       }
 
              // Regular signup flow (new user registration)
-               const response = await fetch(`${API_URL}/api/users/register`, {
+               const response = await fetch(`${API_BASE_URL}/users/register`, {
          method: "POST",
          headers: { "Content-Type": "application/json" },
          body: JSON.stringify(compiledUserData),

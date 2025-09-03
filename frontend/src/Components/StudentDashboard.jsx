@@ -1,5 +1,5 @@
 // src/Components/StudentDashboard.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card.jsx';
 import { Button } from '../ui/Button.jsx';
 import { Alert, AlertDescription } from '../ui/Alert.jsx';
@@ -14,7 +14,8 @@ import {
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, forceRefreshProfileStatus } = useAuth();
+  const [showProfileStatus, setShowProfileStatus] = useState(true);
   
   const studentStats = {
     totalSessions: 47,
@@ -24,6 +25,32 @@ const StudentDashboard = () => {
   };
 
   const isProfileComplete = user?.isProfileComplete;
+  
+  // Debug logging
+  console.log('🔍 StudentDashboard - User profile status:', {
+    userId: user?._id,
+    isProfileComplete: user?.isProfileComplete,
+    user: user
+  });
+
+  // Force refresh profile status when component mounts
+  useEffect(() => {
+    if (user?._id && !isProfileComplete) {
+      console.log('🔍 Force refreshing profile status on dashboard load');
+      forceRefreshProfileStatus();
+    }
+  }, [user?._id, isProfileComplete, forceRefreshProfileStatus]);
+
+  // Reset profile status visibility on page refresh/component mount
+  useEffect(() => {
+    // Check if user previously closed the profile status
+    const hideProfileStatus = localStorage.getItem('hideProfileStatus');
+    if (hideProfileStatus !== 'true') {
+      setShowProfileStatus(true);
+    } else {
+      setShowProfileStatus(false);
+    }
+  }, []);
 
   const handleCompleteProfile = () => {
     navigate('/user-signup', {
@@ -32,6 +59,22 @@ const StudentDashboard = () => {
         userData: user
       }
     });
+  };
+
+  const handleRefreshProfileStatus = async () => {
+    try {
+      console.log('🔍 Manually refreshing profile status');
+      await forceRefreshProfileStatus();
+      console.log('✅ Profile status refreshed manually');
+    } catch (error) {
+      console.error('❌ Failed to refresh profile status:', error);
+    }
+  };
+
+  const handleCloseProfileStatus = () => {
+    setShowProfileStatus(false);
+    // Store the preference in localStorage
+    localStorage.setItem('hideProfileStatus', 'true');
   };
 
   // Limited Dashboard Content for Incomplete Profiles
@@ -403,26 +446,37 @@ const StudentDashboard = () => {
 
   // Profile Status Section
   const ProfileStatusSection = () => (
-    <Card className="border-blue-200 bg-blue-50">
+    <Card className={`${isProfileComplete ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'} relative`}>
+      {/* Close Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleCloseProfileStatus}
+        className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-white/20 hover:scale-110 transition-all duration-200 rounded-full"
+        title="Close Profile Status"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+      
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-blue-800">
-          <CheckCircle className="h-5 w-5" />
+        <CardTitle className={`flex items-center gap-2 ${isProfileComplete ? 'text-green-800' : 'text-orange-800'}`}>
+          {isProfileComplete ? <CheckCircle className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
           Profile Status
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex items-center justify-between">
           <div className="space-y-2">
-            <p className="text-sm text-blue-700">
+            <p className={`text-sm ${isProfileComplete ? 'text-green-700' : 'text-orange-700'}`}>
               {isProfileComplete 
-                ? "Your profile is complete! You have access to all MindCare features." 
-                : "Complete your profile to unlock all MindCare features. Currently, you only have access to Resources."
+                ? "Your profile is complete! You have access to all MindCare features including AI Chat, Appointments, Community, and Wellness." 
+                : "Complete your profile to unlock all MindCare features. Currently, you only have access to Resources. After completing your profile, click 'Refresh Status' to update your access."
               }
             </p>
             <div className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${isProfileComplete ? 'bg-green-500' : 'bg-orange-500'}`}></div>
-              <span className="text-sm font-medium text-blue-800">
-                {isProfileComplete ? 'Profile Complete' : 'Profile Incomplete - Limited Access'}
+              <span className={`text-sm font-medium ${isProfileComplete ? 'text-green-800' : 'text-orange-800'}`}>
+                {isProfileComplete ? 'Profile Complete - Full Access' : 'Profile Incomplete - Limited Access'}
               </span>
             </div>
           </div>
@@ -430,9 +484,16 @@ const StudentDashboard = () => {
             <Button 
               variant="outline" 
               onClick={() => navigate('/profile')}
-              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+              className={`${isProfileComplete ? 'border-green-300 text-green-700 hover:bg-green-100' : 'border-orange-300 text-orange-700 hover:bg-orange-100'}`}
             >
               View Profile
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleRefreshProfileStatus}
+              className="border-blue-300 text-blue-700 hover:bg-blue-100 font-medium"
+            >
+              🔄 Refresh Status
             </Button>
             {!isProfileComplete && (
               <Button 
@@ -450,7 +511,29 @@ const StudentDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <ProfileStatusSection />
+      {showProfileStatus && (
+        <div className="animate-in slide-in-from-top-2 duration-300">
+          <ProfileStatusSection />
+        </div>
+      )}
+      
+      {/* Show Profile Status Button (when hidden) */}
+      {!showProfileStatus && (
+        <div className="text-center animate-in slide-in-from-top-2 duration-300">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowProfileStatus(true);
+              localStorage.removeItem('hideProfileStatus');
+            }}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            <Shield className="h-4 w-4 mr-2" />
+            Show Profile Status
+          </Button>
+        </div>
+      )}
+      
       {isProfileComplete ? <FullDashboardContent /> : <LimitedDashboardContent />}
     </div>
   );

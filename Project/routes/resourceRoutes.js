@@ -15,6 +15,7 @@ import {
   getResourceStats
 } from "../controllers/resourceController.js";
 import { protect, restrictTo } from "../middlewares/auth.js";
+import { allowLimitedAccess } from "../middlewares/profileCompletion.js";
 
 const router = express.Router();
 
@@ -26,6 +27,9 @@ router.get("/:id", getResource);
 
 // Protected routes (require authentication)
 router.use(protect);
+
+// Add profile completion check for user-specific features
+router.use(allowLimitedAccess);
 
 // User library routes
 router.get("/library/user", getUserLibrary);

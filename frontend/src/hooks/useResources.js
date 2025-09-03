@@ -17,6 +17,11 @@ export const useResources = () => {
     setError(null);
     
     try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('Authentication required. Please log in to access resources.');
+      }
+
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
@@ -25,12 +30,22 @@ export const useResources = () => {
 
       const response = await fetch(`${API_BASE_URL}/resources?${params}`, {
         headers: {
-          'Authorization': `Bearer ${getToken()}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
       if (!response.ok) {
+        if (response.status === 403) {
+          const errorData = await response.json();
+          if (errorData.code === 'PROFILE_INCOMPLETE') {
+            throw new Error('Please complete your profile to access resources.');
+          }
+          throw new Error('Access denied. Please complete your profile.');
+        }
+        if (response.status === 401) {
+          throw new Error('Authentication expired. Please log in again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -51,14 +66,29 @@ export const useResources = () => {
     setError(null);
     
     try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('Authentication required. Please log in to access featured resources.');
+      }
+
       const response = await fetch(`${API_BASE_URL}/resources/featured?limit=${limit}`, {
         headers: {
-          'Authorization': `Bearer ${getToken()}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
       if (!response.ok) {
+        if (response.status === 403) {
+          const errorData = await response.json();
+          if (errorData.code === 'PROFILE_INCOMPLETE') {
+            throw new Error('Please complete your profile to access resources.');
+          }
+          throw new Error('Access denied. Please complete your profile.');
+        }
+        if (response.status === 401) {
+          throw new Error('Authentication expired. Please log in again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 

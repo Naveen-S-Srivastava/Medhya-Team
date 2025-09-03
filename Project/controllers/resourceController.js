@@ -188,24 +188,55 @@ export const deleteResource = catchAsync(async (req, res, next) => {
 
 // Rate a resource
 export const rateResource = catchAsync(async (req, res, next) => {
-  const { rating, review } = req.body;
-  const resourceId = req.params.id;
+  const { id } = req.params;
+  const { rating, comment } = req.body;
+  const userId = req.user._id;
 
+  // Check profile completion status
+  const profileStatus = req.profileStatus;
+  if (!profileStatus?.isComplete) {
+    return next(new AppError('Please complete your profile to rate resources', 403, 'PROFILE_INCOMPLETE'));
+  }
+
+  // Validate rating
   if (!rating || rating < 1 || rating > 5) {
-    return next(new AppError("Please provide a valid rating between 1 and 5", 400));
+    return next(new AppError('Rating must be between 1 and 5', 400));
   }
 
-  const resource = await Resource.findById(resourceId);
+  // Check if resource exists
+  const resource = await Resource.findById(id);
   if (!resource) {
-    return next(new AppError("Resource not found", 404));
+    return next(new AppError('Resource not found', 404));
   }
 
-  // Add or update rating
-  await resource.addRating(req.user._id, rating, review);
+  // Check if user has already rated this resource
+  const existingRating = resource.ratings.find(r => r.userId.toString() === userId.toString());
+  
+  if (existingRating) {
+    // Update existing rating
+    existingRating.rating = rating;
+    existingRating.comment = comment || existingRating.comment;
+    existingRating.updatedAt = new Date();
+  } else {
+    // Add new rating
+    resource.ratings.push({
+      userId,
+      rating,
+      comment,
+      createdAt: new Date()
+    });
+  }
+
+  // Recalculate average rating
+  const totalRating = resource.ratings.reduce((sum, r) => sum + r.rating, 0);
+  resource.averageRating = totalRating / resource.ratings.length;
+  resource.totalRatings = resource.ratings.length;
+
+  await resource.save();
 
   // Log activity
   await ActivityLog.create({
-    user: req.user._id,
+    user: userId,
     action: "RATE_RESOURCE",
     details: `Rated resource: ${resource.title} with ${rating} stars`,
     resourceId: resource._id
@@ -214,59 +245,73 @@ export const rateResource = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: "Resource rated successfully",
-    data: resource
+    data: {
+      resource
+    }
   });
 });
 
 // Save resource to user library
 export const saveResource = catchAsync(async (req, res, next) => {
   const { resourceId } = req.body;
+  const userId = req.user._id;
+
+  // Check profile completion status
+  const profileStatus = req.profileStatus;
+  if (!profileStatus?.isComplete) {
+    return next(new AppError('Please complete your profile to save resources to your library', 403, 'PROFILE_INCOMPLETE'));
+  }
 
   // Check if resource exists
   const resource = await Resource.findById(resourceId);
   if (!resource) {
-    return next(new AppError("Resource not found", 404));
+    return next(new AppError('Resource not found', 404));
   }
 
   // Check if already saved
-  const existingUserResource = await UserResource.findOne({
-    user: req.user._id,
-    resource: resourceId
-  });
-
-  if (existingUserResource) {
-    return next(new AppError("Resource already saved to your library", 400));
+  const existingSave = await UserResource.findOne({ user: userId, resource: resourceId });
+  if (existingSave) {
+    return next(new AppError('Resource already saved to your library', 400));
   }
 
-  // Save to user library
+  // Save to library
   const userResource = await UserResource.create({
-    user: req.user._id,
+    user: userId,
     resource: resourceId,
-    status: "saved"
+    savedAt: new Date()
   });
 
   // Log activity
   await ActivityLog.create({
-    user: req.user._id,
+    user: userId,
     action: "SAVE_RESOURCE",
-    details: `Saved resource: ${resource.title} to library`,
+    details: `Saved resource: ${resource.title}`,
     resourceId: resource._id
   });
 
   res.status(201).json({
     status: "success",
     message: "Resource saved to library successfully",
-    data: userResource
+    data: {
+      userResource
+    }
   });
 });
 
 // Get user's library
 export const getUserLibrary = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 12;
   const skip = (page - 1) * limit;
 
-  const userResources = await UserResource.find({ user: req.user._id })
+  // Check profile completion status
+  const profileStatus = req.profileStatus;
+  if (!profileStatus?.isComplete) {
+    return next(new AppError('Please complete your profile to access your resource library', 403, 'PROFILE_INCOMPLETE'));
+  }
+
+  const userResources = await UserResource.find({ user: userId })
     .populate({
       path: 'resource',
       populate: {
@@ -278,7 +323,7 @@ export const getUserLibrary = catchAsync(async (req, res, next) => {
     .skip(skip)
     .limit(limit);
 
-  const total = await UserResource.countDocuments({ user: req.user._id });
+  const total = await UserResource.countDocuments({ user: userId });
   const totalPages = Math.ceil(total / limit);
 
   res.status(200).json({
@@ -298,8 +343,16 @@ export const getUserLibrary = catchAsync(async (req, res, next) => {
 
 // Remove resource from library
 export const removeFromLibrary = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+
+  // Check profile completion status
+  const profileStatus = req.profileStatus;
+  if (!profileStatus?.isComplete) {
+    return next(new AppError('Please complete your profile to manage your resource library', 403, 'PROFILE_INCOMPLETE'));
+  }
+
   const userResource = await UserResource.findOneAndDelete({
-    user: req.user._id,
+    user: userId,
     resource: req.params.resourceId
   });
 
@@ -309,7 +362,7 @@ export const removeFromLibrary = catchAsync(async (req, res, next) => {
 
   // Log activity
   await ActivityLog.create({
-    user: req.user._id,
+    user: userId,
     action: "REMOVE_RESOURCE",
     details: `Removed resource from library`,
     resourceId: req.params.resourceId
@@ -323,9 +376,17 @@ export const removeFromLibrary = catchAsync(async (req, res, next) => {
 
 // Update user resource (progress, notes, etc.)
 export const updateUserResource = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+
+  // Check profile completion status
+  const profileStatus = req.profileStatus;
+  if (!profileStatus?.isComplete) {
+    return next(new AppError('Please complete your profile to manage your resource library', 403, 'PROFILE_INCOMPLETE'));
+  }
+
   const userResource = await UserResource.findOneAndUpdate(
     {
-      user: req.user._id,
+      user: userId,
       resource: req.params.resourceId
     },
     req.body,
@@ -347,8 +408,16 @@ export const updateUserResource = catchAsync(async (req, res, next) => {
 
 // Mark resource as downloaded
 export const markAsDownloaded = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+
+  // Check profile completion status
+  const profileStatus = req.profileStatus;
+  if (!profileStatus?.isComplete) {
+    return next(new AppError('Please complete your profile to download resources', 403, 'PROFILE_INCOMPLETE'));
+  }
+
   const userResource = await UserResource.findOne({
-    user: req.user._id,
+    user: userId,
     resource: req.params.resourceId
   });
 
@@ -366,7 +435,7 @@ export const markAsDownloaded = catchAsync(async (req, res, next) => {
 
   // Log activity
   await ActivityLog.create({
-    user: req.user._id,
+    user: userId,
     action: "DOWNLOAD_RESOURCE",
     details: `Downloaded resource: ${resource.title}`,
     resourceId: resource._id

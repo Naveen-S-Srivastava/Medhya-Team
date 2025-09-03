@@ -47,6 +47,14 @@ const ProtectedRoute = ({ children, userRole, requiredRole = null, isLoading = f
 
 // Profile Protected Route Component for restricted features
 const ProfileProtectedRoute = ({ children, userRole, user, isLoading = false }) => {
+  console.log('🔍 ProfileProtectedRoute check:', {
+    userRole,
+    userId: user?._id,
+    isProfileComplete: user?.isProfileComplete,
+    isLoading,
+    pathname: window.location.pathname
+  });
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">
       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -54,14 +62,17 @@ const ProfileProtectedRoute = ({ children, userRole, user, isLoading = false }) 
   }
   
   if (userRole === 'guest') {
+    console.log('❌ ProfileProtectedRoute: Guest user, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
   // For students, check if profile is complete for restricted routes
   if (userRole === 'student' && !user?.isProfileComplete) {
+    console.log('❌ ProfileProtectedRoute: Student with incomplete profile, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
   
+  console.log('✅ ProfileProtectedRoute: Access granted');
   return children;
 };
 
