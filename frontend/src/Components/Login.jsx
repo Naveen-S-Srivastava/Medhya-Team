@@ -50,6 +50,7 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
     rememberMe: false,
   });
   const [errors, setErrors] = useState({});
+  const [googleOAuthError, setGoogleOAuthError] = useState(null);
 
   const institutions = [
     { id: "iit-delhi", name: "Indian Institute of Technology, Delhi" },
@@ -86,6 +87,10 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+    
+    // Clear any previous errors
+    setGoogleOAuthError(null);
+    
     try {
       console.log('🔍 Attempting login with:', { email: formData.email, loginType });
       const user = await login(formData.email, formData.password);
@@ -96,7 +101,15 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
       }
     } catch (err) {
       console.error('Login failed:', err);
-      // Handle login error - redirect to signup if user not found
+      
+      // Handle specific error cases
+      if (err.message.includes('Google login')) {
+        // Show a user-friendly message for Google OAuth users
+        setGoogleOAuthError('This account was created using Google login. Please use the "Continue with Google" button to sign in.');
+        return;
+      }
+      
+      // Handle other login errors
       if (onLoginError) {
         onLoginError(loginType, err.message);
       }
@@ -181,6 +194,10 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
     }
+    // Clear Google OAuth error when user starts typing
+    if (googleOAuthError) {
+      setGoogleOAuthError(null);
+    }
   };
 
   const demoCredentials = {
@@ -225,7 +242,10 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
           <CardHeader className="space-y-4">
             <Tabs
               value={loginType}
-              onValueChange={setLoginType}
+              onValueChange={(value) => {
+                setLoginType(value);
+                setGoogleOAuthError(null); // Clear Google OAuth error when changing login type
+              }}
               className="w-full"
             >
               <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1.5 rounded-xl">
@@ -327,30 +347,16 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
               </Alert>
             )}
 
+            {googleOAuthError && (
+              <Alert className="border-blue-200 bg-blue-50">
+                <Globe className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  {googleOAuthError}
+                </AlertDescription>
+              </Alert>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              {loginType === 'student' && (
-                <div className="space-y-2">
-                  <Label htmlFor="institution">Educational Institution</Label>
-                  <Select
-                    value={formData.institutionId}
-                    onValueChange={(value) => handleInputChange('institutionId', value)}
-                  >
-                    <SelectTrigger className={`rounded-lg ${errors.institutionId ? 'border-red-500' : ''}`}>
-                      <SelectValue placeholder="Select your institution" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
-                      {institutions.map((institution) => (
-                        <SelectItem key={institution.id} value={institution.id}>
-                          {institution.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.institutionId && (
-                    <p className="text-sm text-red-600">{errors.institutionId}</p>
-                  )}
-                </div>
-              )}
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>

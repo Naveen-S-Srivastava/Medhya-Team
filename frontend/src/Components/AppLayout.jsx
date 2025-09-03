@@ -28,6 +28,9 @@ const AppLayout = ({ userRole, user, onLogout, systemStats }) => {
   const location = useLocation();
   const navItems = userRole === 'student' ? studentNavItems : adminNavItems;
   const defaultPath = userRole === 'student' ? '/dashboard' : '/admin';
+  
+  // Check if student profile is complete
+  const isProfileComplete = user?.isProfileComplete;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -38,16 +41,44 @@ const AppLayout = ({ userRole, user, onLogout, systemStats }) => {
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {navItems.map((item) => {
               const Icon = item.icon;
+              
+              // For students, disable restricted routes when profile is incomplete
+              const isRestrictedRoute = userRole === 'student' && !isProfileComplete && 
+                ['/chat', '/appointments', '/community', '/wellness'].includes(item.path);
+              
               return (
-                <TabsTrigger key={item.path} value={item.path} asChild>
-                  <Link to={item.path} className="flex items-center gap-2">
+                <TabsTrigger 
+                  key={item.path} 
+                  value={item.path} 
+                  asChild
+                  disabled={isRestrictedRoute}
+                  className={isRestrictedRoute ? 'opacity-50 cursor-not-allowed' : ''}
+                >
+                  <Link 
+                    to={isRestrictedRoute ? '#' : item.path} 
+                    className={`flex items-center gap-2 ${isRestrictedRoute ? 'pointer-events-none' : ''}`}
+                    onClick={isRestrictedRoute ? (e) => e.preventDefault() : undefined}
+                  >
                     <Icon className="w-4 h-4" />
                     <span className="hidden sm:inline">{item.label}</span>
+                    {isRestrictedRoute && (
+                      <span className="text-xs text-red-500 ml-1">🔒</span>
+                    )}
                   </Link>
                 </TabsTrigger>
               );
             })}
           </TabsList>
+          
+          {/* Show access restriction message for incomplete profiles */}
+          {userRole === 'student' && !isProfileComplete && (
+            <div className="text-center py-2 px-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-sm text-orange-700">
+                🔒 <strong>Limited Access:</strong> Complete your profile to unlock AI Support, Appointments, Community, and Wellness features. 
+                <span className="text-green-600 font-medium"> Resources are currently available.</span>
+              </p>
+            </div>
+          )}
           
           {/* The Outlet will render the matched route component (e.g., StudentDashboard, AIChat, etc.) */}
           <Outlet />

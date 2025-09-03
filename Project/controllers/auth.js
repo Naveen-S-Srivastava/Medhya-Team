@@ -42,53 +42,25 @@ const createSendToken = (user, statusCode, res, message) => {
 };
 
 export const signup = catchAsync(async (req, res, next) => {
-  // Extract all the data from the request body
+  // Extract only basic auth data from the request body
   const {
-    // Basic user information (from UserSignup.jsx)
-    firstName,
-    lastName,
     email,
-    phone,
-    dateOfBirth,
-    gender,
-    
-    // Academic information (from SignUp.jsx step 1)
-    institutionId,
-    studentId,
-    course,
-    year,
-    department,
-    
-    // Account security (from SignUp.jsx step 2)
     password,
     passwordConfirm,
-    securityQuestion,
-    securityAnswer,
-    
-    // Consent & privacy (from SignUp.jsx step 3)
-    privacyConsent,
-    dataProcessingConsent,
-    emergencyContact,
-    emergencyPhone,
-    mentalHealthConsent,
-    communicationConsent
+    role = "student" // Default to student role
   } = req.body;
 
-  // Validate required fields
-  if (!firstName || !lastName || !email || !phone || !dateOfBirth || !gender) {
-    return next(new AppError("Please provide all basic information", 400));
+  // Validate required fields for basic auth
+  if (!email) {
+    return next(new AppError("Please provide an email", 400));
   }
 
-  if (!institutionId || !studentId || !course || !year) {
-    return next(new AppError("Please provide all academic information", 400));
+  if (!password || !passwordConfirm) {
+    return next(new AppError("Please provide password and password confirmation", 400));
   }
 
-  if (!password || !passwordConfirm || !securityQuestion || !securityAnswer) {
-    return next(new AppError("Please provide all security information", 400));
-  }
-
-  if (!privacyConsent || !dataProcessingConsent || !emergencyContact || !emergencyPhone || !mentalHealthConsent) {
-    return next(new AppError("Please provide all consent information", 400));
+  if (password !== passwordConfirm) {
+    return next(new AppError("Passwords do not match", 400));
   }
 
   // Check if user already exists
@@ -97,54 +69,18 @@ export const signup = catchAsync(async (req, res, next) => {
     return next(new AppError("Email already registered", 400));
   }
 
-  // Check if student ID already exists
-  const existingStudent = await User.findOne({ studentId });
-  if (existingStudent) {
-    return next(new AppError("Student ID already registered", 400));
-  }
-
   // Generate OTP for email verification
   const otp = generateOtp();
   const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-  // Create username from email
-  const username = email.split('@')[0];
-
-  // Create new user with all the data
+  // Create new user with only basic auth information
   const newUser = await User.create({
-    // Basic information
-    firstName,
-    lastName,
-    username,
     email,
-    phone,
-    dateOfBirth: new Date(dateOfBirth),
-    gender,
-    
-    // Academic information
-    institutionId,
-    studentId,
-    course,
-    year,
-    department,
-    
-    // Security information
     password,
     passwordConfirm,
-    securityQuestion,
-    securityAnswer,
-    
-    // Consent information
-    privacyConsent,
-    dataProcessingConsent,
-    emergencyContact,
-    emergencyPhone,
-    mentalHealthConsent,
-    communicationConsent: communicationConsent || false,
-    
-    // System fields
-    role: "student",
+    role,
     isVerified: false,
+    isProfileComplete: false, // Profile is not complete yet
     otp,
     otpExpires
   });
@@ -157,11 +93,12 @@ export const signup = catchAsync(async (req, res, next) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 8px; background-color: #f9f9f9; color: #333; border: 1px solid #ddd;">
           <h2 style="color: #569c9fff;">🎉 Welcome to MindCare!</h2>
-          <p>Hello ${firstName} 👋,</p>
+          <p>Hello 👋,</p>
           <p>Thank you for signing up on <strong>MindCare</strong>, your comprehensive mental health support platform.</p>
           <p>To complete your registration, please use the OTP below to verify your email address:</p>
           <h1 style="color: #528b83ff; font-size: 2.5em; letter-spacing: 4px; margin: 20px 0;">${otp}</h1>
           <p>This OTP is valid for <strong>10 minutes</strong>.</p>
+          <p><strong>Next step:</strong> After email verification, you'll be asked to complete your profile with additional details.</p>
           <hr style="margin: 30px 0;" />
           <p style="font-size: 0.9em; color: #666;">
             If you did not initiate this request, please ignore this email. Your data is safe with us.
@@ -172,7 +109,7 @@ export const signup = catchAsync(async (req, res, next) => {
     });
 
     // Return success response with token
-    createSendToken(newUser, 201, res, "Registration successful! Please check your email for verification.");
+    createSendToken(newUser, 201, res, "Registration successful! Please check your email for verification. After verification, complete your profile to access all features.");
   } catch (error) {
     console.error("❌ Error sending email:", error);
     // Delete the user if email sending fails

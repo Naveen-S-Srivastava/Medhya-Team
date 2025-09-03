@@ -34,8 +34,6 @@ const crisisAssignmentSchema = new mongoose.Schema({
   resolvedAt: { type: Date },
 }, { timestamps: true });
 
-crisisAssignmentSchema.index({ alert: 1, counselor: 1 }, { unique: true });
-
 export default mongoose.model("CrisisAssignment", crisisAssignmentSchema);
 
 

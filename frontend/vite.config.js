@@ -14,7 +14,9 @@ export default defineConfig({
           router: ['react-router-dom']
         }
       }
-    }
+    },
+    // Optimize assets
+    assetsInlineLimit: 0
   },
   server: {
     port: 5173,
@@ -23,5 +25,9 @@ export default defineConfig({
   preview: {
     port: 5173,
     host: true
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'lucide-react']
   }
 })

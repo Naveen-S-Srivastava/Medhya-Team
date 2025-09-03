@@ -20,17 +20,20 @@ export const useAuth = () => {
 
     try {
       const data = await authAPI.getProfile();
-      // Add additional user metadata for routing logic
+      // Use the profile completion status from backend
       const userWithMetadata = {
         ...data.data.user,
-        isProfileComplete: Boolean(
-          data.data.user.phone && 
-          data.data.user.institutionId && 
-          data.data.user.studentId
-        ),
-        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isProfileComplete: Boolean(data.data.user.isProfileComplete),
+        isNewUser: !data.data.user.isProfileComplete,
         isGoogleUser: Boolean(data.data.user.googleId)
       };
+      
+      console.log('🔍 useAuth - Profile loaded:', {
+        userId: userWithMetadata._id,
+        isProfileComplete: userWithMetadata.isProfileComplete,
+        backendValue: data.data.user.isProfileComplete
+      });
+      
       setUser(userWithMetadata);
     } catch (err) {
       if (err.message.includes('401')) {
@@ -39,15 +42,11 @@ export const useAuth = () => {
           await refreshToken();
           // Retry the profile request with new token
           const retryData = await authAPI.getProfile();
-          // Add additional user metadata for routing logic
+          // Use the profile completion status from backend
           const userWithMetadata = {
             ...retryData.data.user,
-            isProfileComplete: Boolean(
-              retryData.data.user.phone && 
-              retryData.data.user.institutionId && 
-              retryData.data.user.studentId
-            ),
-            isNewUser: !retryData.data.user.phone || !retryData.data.user.institutionId || !retryData.data.user.studentId,
+            isProfileComplete: Boolean(retryData.data.user.isProfileComplete),
+            isNewUser: !retryData.data.user.isProfileComplete,
             isGoogleUser: Boolean(retryData.data.user.googleId)
           };
           setUser(userWithMetadata);
@@ -77,15 +76,11 @@ export const useAuth = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('refreshToken', data.refreshToken);
       
-      // Add additional user metadata for routing logic
+      // Use the profile completion status from backend
       const userWithMetadata = {
         ...data.data.user,
-        isProfileComplete: Boolean(
-          data.data.user.phone && 
-          data.data.user.institutionId && 
-          data.data.user.studentId
-        ),
-        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isProfileComplete: Boolean(data.data.user.isProfileComplete),
+        isNewUser: !data.data.user.isProfileComplete,
         isGoogleUser: Boolean(data.data.user.googleId)
       };
       
@@ -131,15 +126,11 @@ export const useAuth = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('refreshToken', data.refreshToken);
       
-      // Add additional user metadata for routing logic
+      // Use the profile completion status from backend
       const userWithMetadata = {
         ...data.data.user,
-        isProfileComplete: Boolean(
-          data.data.user.phone && 
-          data.data.user.institutionId && 
-          data.data.user.studentId
-        ),
-        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isProfileComplete: Boolean(data.data.user.isProfileComplete),
+        isNewUser: !data.data.user.isProfileComplete,
         isGoogleUser: Boolean(data.data.user.googleId)
       };
       
@@ -188,7 +179,7 @@ export const useAuth = () => {
 
       // Update tokens
       localStorage.setItem('token', data.token);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.removeItem('refreshToken');
       
       return data.token;
     } catch (err) {
@@ -209,15 +200,11 @@ export const useAuth = () => {
     try {
       const data = await authAPI.updateProfile(profileData);
 
-      // Add additional user metadata for routing logic
+      // Use the profile completion status from backend
       const userWithMetadata = {
         ...data.data.user,
-        isProfileComplete: Boolean(
-          data.data.user.phone && 
-          data.data.user.institutionId && 
-          data.data.user.studentId
-        ),
-        isNewUser: !data.data.user.phone || !data.data.user.institutionId || !data.data.user.studentId,
+        isProfileComplete: Boolean(data.data.user.isProfileComplete),
+        isNewUser: !data.data.user.isProfileComplete,
         isGoogleUser: Boolean(data.data.user.googleId)
       };
 
@@ -227,6 +214,111 @@ export const useAuth = () => {
       setError(err.message);
       throw err;
     }
+  };
+
+  const checkProfileCompletion = async () => {
+    if (!user?._id) return null;
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+
+      const response = await fetch(`${API_BASE_URL}/user-details/${user._id}/status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const updatedUser = {
+          ...user,
+          isProfileComplete: data.data.isProfileComplete,
+          profileCompletionPercentage: data.data.completionPercentage
+        };
+        setUser(updatedUser);
+        return data.data;
+      }
+    } catch (error) {
+      console.error('Error checking profile completion:', error);
+    }
+    return null;
+  };
+
+  const refreshProfileStatus = async () => {
+    return await checkProfileCompletion();
+  };
+
+  const forceRefreshProfileStatus = async () => {
+    if (!user?._id) {
+      console.log('❌ forceRefreshProfileStatus: No user ID found');
+      return null;
+    }
+    
+    try {
+      console.log('🔍 forceRefreshProfileStatus: Starting refresh for user:', user._id);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('❌ forceRefreshProfileStatus: No token found');
+        return null;
+      }
+
+      // First, refresh the complete user profile
+      try {
+        console.log('🔍 forceRefreshProfileStatus: Refreshing complete user profile');
+        const profileData = await authAPI.getProfile();
+        const userWithMetadata = {
+          ...profileData.data.user,
+          isProfileComplete: Boolean(profileData.data.user.isProfileComplete),
+          isNewUser: !profileData.data.user.isProfileComplete,
+          isGoogleUser: Boolean(profileData.data.user.googleId)
+        };
+        
+        console.log('✅ forceRefreshProfileStatus: User profile refreshed:', {
+          userId: userWithMetadata._id,
+          isProfileComplete: userWithMetadata.isProfileComplete
+        });
+        
+        setUser(userWithMetadata);
+        return { isProfileComplete: userWithMetadata.isProfileComplete };
+      } catch (profileError) {
+        console.log('⚠️ forceRefreshProfileStatus: Profile refresh failed, trying profile status API');
+      }
+
+      // Fallback: use the profile status API
+      const response = await fetch(`${API_BASE_URL}/user-details/${user._id}/status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ forceRefreshProfileStatus: Profile status data received:', data);
+        
+        const updatedUser = {
+          ...user,
+          isProfileComplete: data.data.isProfileComplete,
+          profileCompletionPercentage: data.data.completionPercentage
+        };
+        
+        console.log('✅ forceRefreshProfileStatus: Updating user state:', {
+          oldIsProfileComplete: user.isProfileComplete,
+          newIsProfileComplete: updatedUser.isProfileComplete
+        });
+        
+        setUser(updatedUser);
+        return data.data;
+      } else {
+        const errorData = await response.json();
+        console.error('❌ forceRefreshProfileStatus: Failed to get profile status:', errorData);
+      }
+    } catch (error) {
+      console.error('❌ forceRefreshProfileStatus: Error refreshing profile status:', error);
+    }
+    return null;
   };
 
   return {
@@ -239,6 +331,9 @@ export const useAuth = () => {
     logout,
     refreshToken,
     updateProfile,
-    checkAuth
+    checkAuth,
+    checkProfileCompletion,
+    refreshProfileStatus,
+    forceRefreshProfileStatus
   };
 };

@@ -35,14 +35,10 @@ export default function ContactChoice() {
   const { userRole } = useContext(UserContext) || { userRole: 'guest' };
 
   const handleSelect = (id) => {
-    const targetByChoice = {
-      consultant: '/appointments',
-      peer: '/community',
-      mitra: '/ai',
-    };
-    if (targetByChoice[id]) {
-      navigate(targetByChoice[id]);
-    }
+    // After user makes their choice, redirect to student dashboard where they can see navbar
+    // and complete their profile if needed
+    console.log('🔍 User selected:', id, '- redirecting to student dashboard');
+    navigate('/dashboard');
   };
 
   const ImageOrLetter = ({ choice }) => {

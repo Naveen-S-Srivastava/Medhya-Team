@@ -101,15 +101,19 @@ export const useAssessment = () => {
       }));
       return response.data.assessment;
     } catch (err) {
-      // Don't set error for 404 (no assessment for today is normal)
-      if (err.response?.status !== 404) {
-        const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch today\'s assessment';
-        console.error('Error fetching today\'s assessment:', errorMessage);
+      // Handle 404 (no assessment for today) gracefully - this is expected
+      if (err.response?.status === 404) {
+        setTodayAssessments(prev => ({
+          ...prev,
+          [type]: null
+        }));
+        return null;
       }
-      setTodayAssessments(prev => ({
-        ...prev,
-        [type]: null
-      }));
+
+      // For other errors, log and set error state
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch today\'s assessment';
+      console.error('Error fetching today\'s assessment:', errorMessage);
+      setError(errorMessage);
       return null;
     }
   };

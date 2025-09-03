@@ -80,53 +80,17 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
     setIsLoading(true);
     
     try {
-      // If this is a Google OAuth profile completion flow
-      if (location.state?.fromGoogle) {
-        console.log('🔄 Google OAuth profile completion flow');
-        
-        // Navigate to SignUp with the form data and user info
-        navigate('/signup', { 
-          state: { 
-            userData: formData,
-            fromGoogle: true,
-            originalUser: location.state.user
-          } 
-        });
-      } else if (location.state?.fromLogin) {
-        // User came from login flow (user not found) - redirect to Signup
-        console.log('🔄 User came from login flow, redirecting to Signup');
-        navigate('/signup', { 
-          state: { 
-            userData: formData,
-            fromLogin: true,
-            loginType: location.state.loginType,
-            googleData: location.state.googleData
-          } 
-        });
-      } else if (location.state?.fromSignup) {
-        // User came from signup flow (login -> signup -> usersignup)
-        console.log('🔄 User came from signup flow, completing profile');
-        
-        // Update the user profile with the form data
-        const updatedUserData = {
-          ...location.state.user,
-          ...formData
-        };
-        
-        // Navigate to contact choice
-        navigate('/contact-choice', { 
-          state: { 
-            user: updatedUserData,
-            isProfileCompletion: true
-          } 
-        });
-      } else {
-        // Regular signup flow
-        console.log('🔄 Regular signup flow');
-        if (onNext) {
-          onNext(formData);
-        }
-      }
+      // Always redirect to Signup.jsx for academic details
+      // This ensures users complete their full profile before accessing dashboard
+      console.log('🔄 Redirecting to Signup for academic details');
+      navigate('/signup', { 
+        state: { 
+          userData: formData,
+          fromUserSignup: true,
+          // Preserve any existing state
+          ...location.state
+        } 
+      });
     } catch (error) {
       console.error('❌ Error in handleSubmit:', error);
     } finally {

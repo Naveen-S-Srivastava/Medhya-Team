@@ -32,7 +32,7 @@ const journalEntrySchema = new mongoose.Schema({
   },
   institutionId: { 
     type: String, 
-    required: true 
+    required: false
   },
   wellnessScore: { 
     type: Number, 

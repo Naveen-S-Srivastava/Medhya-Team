@@ -9,6 +9,7 @@ import AIChat from './Components/AIChat'
 import ContactChoice from './Components/ContactChoice'
 import CounselorDashboard from './Components/CounselorDashboard'
 import CounselorSignup from './Components/CounselorSignup'
+import ProfileCompletionFlow from './Components/ProfileCompletionFlow'
 
 export default function Router() {
   return (
@@ -23,6 +24,7 @@ export default function Router() {
         <Route path="/contact-choice" element={<ContactChoice />} />
         <Route path="/counselor-dashboard" element={<CounselorDashboard />} />
         <Route path="/counselor-signup" element={<CounselorSignup />} />
+        <Route path="/complete-profile" element={<ProfileCompletionFlow />} />
         {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       </Routes>
     </div>

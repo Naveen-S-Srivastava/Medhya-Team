@@ -49,7 +49,16 @@ export const apiCall = async (endpoint, options = {}) => {
     });
 
     if (!response.ok) {
-      throw new Error(data.message || `API call failed: ${response.status}`);
+      // Handle different error response formats
+      let errorMessage = `API call failed: ${response.status}`;
+      
+      if (data && typeof data === 'object') {
+        errorMessage = data.message || data.error || errorMessage;
+      } else if (typeof data === 'string') {
+        errorMessage = data;
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return data;
@@ -70,7 +79,7 @@ export const authAPI = {
     body: JSON.stringify(credentials),
   }),
   
-  register: (userData) => apiCall('/users/register', {
+  register: (userData) => apiCall('/users/signup', {
     method: 'POST',
     body: JSON.stringify(userData),
   }),
@@ -99,6 +108,26 @@ export const authAPI = {
   completeGoogleProfile: (profileData) => apiCall('/users/complete-profile', {
     method: 'PUT',
     body: JSON.stringify(profileData),
+  }),
+};
+
+// User Details API
+export const userDetailsAPI = {
+  getUserDetails: (userId) => apiCall(`/user-details/${userId}`),
+  
+  createOrUpdateUserDetails: (userId, userDetailsData) => apiCall(`/user-details/${userId}`, {
+    method: 'POST',
+    body: JSON.stringify(userDetailsData),
+  }),
+  
+  markProfileComplete: (userId) => apiCall(`/user-details/${userId}/complete`, {
+    method: 'PATCH',
+  }),
+  
+  getProfileCompletionStatus: (userId) => apiCall(`/user-details/${userId}/status`),
+  
+  deleteUserDetails: (userId) => apiCall(`/user-details/${userId}`, {
+    method: 'DELETE',
   }),
 };
 
