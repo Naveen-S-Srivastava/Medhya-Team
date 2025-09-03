@@ -30,29 +30,128 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
+    // In development, allow all origins
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+
+    // Get allowed origins from environment variables
+    const allowedOriginsFromEnv = process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : [];
+
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    // Combine hardcoded origins with environment-based origins
     const allowedOrigins = [
+      // Local development
       'http://localhost:5173',
       'http://localhost:3000',
       'http://localhost:5174',
       'http://localhost:5175',
+
+      // Vercel deployments
       'https://mindcare-frontend.vercel.app',
-      'https://mindcare-frontend.netlify.app',
       'https://mindcare.vercel.app',
-      'https://mindcare.netlify.app'
-    ];
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+      'https://mindcare-frontend-git-main-sarafkushagra.vercel.app',
+      'https://mindcare-git-auth-sarafkushagra.vercel.app',
+
+      // Netlify deployments
+      'https://mindcare-frontend.netlify.app',
+      'https://mindcare.netlify.app',
+      'https://mindcare.netlify.com',
+
+      // Render deployments (common patterns)
+      'https://mindcare.onrender.com',
+      'https://mindcare-backend.onrender.com',
+      'https://mindcare-api.onrender.com',
+
+      // Railway deployments
+      'https://mindcare.up.railway.app',
+      'https://mindcare-production.up.railway.app',
+
+      // Heroku deployments
+      'https://mindcare.herokuapp.com',
+      'https://mindcare-backend.herokuapp.com',
+
+      // Custom domains
+      'https://mindcare.app',
+      'https://www.mindcare.app',
+      'https://api.mindcare.app',
+
+      // Environment-based origins
+      ...allowedOriginsFromEnv,
+      frontendUrl
+    ].filter(Boolean); // Remove any undefined/null values
+
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
+
+    // Allow if origin matches common deployment patterns
+    const deploymentPatterns = [
+      /^https:\/\/mindcare.*\.vercel\.app$/,
+      /^https:\/\/mindcare.*\.netlify\.app$/,
+      /^https:\/\/mindcare.*\.onrender\.com$/,
+      /^https:\/\/mindcare.*\.up\.railway\.app$/,
+      /^https:\/\/mindcare.*\.herokuapp\.com$/,
+      /^https:\/\/.*\.mindcare\.app$/
+    ];
+
+    const isAllowedPattern = deploymentPatterns.some(pattern => pattern.test(origin));
+    if (isAllowedPattern) {
+      return callback(null, true);
+    }
+
+    // If origin is not allowed, reject with error
+    console.log('❌ CORS blocked origin:', origin);
+    console.log('📋 Allowed origins:', allowedOrigins);
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ]
 };
 
+// Log CORS information for debugging
+console.log('🌐 CORS Configuration:');
+console.log('📍 NODE_ENV:', process.env.NODE_ENV);
+console.log('🌍 FRONTEND_URL:', process.env.FRONTEND_URL);
+console.log('📋 ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS);
+console.log('🔧 CORS credentials enabled, preflight handling active');
+
 app.use(cors(corsOptions));
+
+// Additional CORS headers for deployment platforms
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+
+  next();
+});
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 mongoose.connect(process.env.MONGO_URI)
