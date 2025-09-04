@@ -8,9 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Input } from '../ui/Input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
 import { 
-  AlertTriangle, Shield, Phone, Clock, Users, Brain, Heart, 
+  AlertTriangle, Shield, Phone, Brain,  
   CheckCircle, X, ArrowRight, TrendingUp, MapPin, Bell, Eye,
-  Activity, Zap, Target, MessageCircle, Calendar, UserCheck,
+  Target, MessageCircle, Calendar, UserCheck,
   Search, Filter, RefreshCw, Loader2
 } from 'lucide-react';
 import { crisisAPI } from '../services/api';
