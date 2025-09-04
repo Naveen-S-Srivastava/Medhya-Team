@@ -28,7 +28,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { API_BASE_URL } from "../config/environment.js"
 import { useAuth } from "../hooks/useAuth.js"
 
-import LP from "../assets/Logo1.jpg";
+import LP from "../assets/logo1.jpg";
 import Footer from "./Footer.jsx"
 
 const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
