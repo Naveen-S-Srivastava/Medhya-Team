@@ -1,19 +1,24 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
-import { 
-  Heart, Brain, Shield, Users, TrendingUp, Globe, Smartphone, Award, 
+
+import LP from "../assets/LandingPageImg.png";
+import {
+  Heart, Brain, Shield, Users, TrendingUp, Globe, Smartphone, Award,
   CheckCircle, ArrowRight, BarChart3, MessageCircle, Calendar, BookOpen,
   Zap, Lock, Database, Map, Star, Target, AlertTriangle, Phone, Building2,
   Play, Headphones, Clock, UserCheck, Activity, Sparkles, Home, Sun,
-  Moon, Coffee, Smile, HandHeart, Lightbulb
+  Moon, Coffee, Smile, HandHeart, Lightbulb, X
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import Footer from './Footer';
 
 const LandingPage = ({ onLogin, systemStats }) => {
   const [selectedDemo, setSelectedDemo] = useState('student');
+  const [showBanner, setShowBanner] = useState(true);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const navigate = useNavigate();
@@ -31,34 +36,51 @@ const LandingPage = ({ onLogin, systemStats }) => {
     navigate("/login");
   };
 
-  const crisisResources = [
-    { name: "National Crisis Helpline", number: "1-800-273-8255", available: "24/7" },
-    { name: "Student Support Chat", number: "Text STUDENT to 741741", available: "24/7" },
-    { name: "Campus Emergency", number: "Emergency Services", available: "Immediate" }
+  const studentChallenges = [
+    {
+      challenge: "Academic Pressure & Exam Anxiety",
+      solution: "AI-powered stress management and study planning tools",
+      icon: <BookOpen className="w-5 h-5 text-blue-600" />
+    },
+    {
+      challenge: "Social Isolation & Loneliness",
+      solution: "Peer support communities and social connection programs",
+      icon: <Users className="w-5 h-5 text-green-600" />
+    },
+    {
+      challenge: "Family Expectations & Career Pressure",
+      solution: "Culturally-aware counseling and family therapy resources",
+      icon: <Home className="w-5 h-5 text-purple-600" />
+    },
+    {
+      challenge: "Financial Stress & Future Uncertainty",
+      solution: "Career guidance and financial wellness support",
+      icon: <Target className="w-5 h-5 text-orange-600" />
+    }
   ];
 
   const problemStats = [
-    { 
-      label: "Indian students experiencing mental health challenges", 
-      value: "74%", 
+    {
+      label: "Indian students experiencing mental health challenges",
+      value: "74%",
       color: "text-red-600",
       description: "Academic pressure, career uncertainty, and social challenges"
     },
-    { 
-      label: "Students who avoid seeking help due to stigma", 
-      value: "82%", 
+    {
+      label: "Students who avoid seeking help due to stigma",
+      value: "82%",
       color: "text-orange-600",
       description: "Fear of judgment and lack of confidential resources"
     },
-    { 
-      label: "Colleges lacking comprehensive mental health support", 
-      value: "88%", 
+    {
+      label: "Colleges lacking  mental health support",
+      value: "88%",
       color: "text-yellow-600",
       description: "Limited counselors and outdated intervention methods"
     },
-    { 
-      label: "Improvement with early, accessible intervention", 
-      value: "96%", 
+    {
+      label: "Improvement with early, accessible intervention",
+      value: "96%",
       color: "text-green-600",
       description: "Students show significant improvement with proper support"
     }
@@ -132,34 +154,11 @@ const LandingPage = ({ onLogin, systemStats }) => {
     }
   ];
 
-  const studentChallenges = [
-    {
-      challenge: "Academic Pressure & Exam Anxiety",
-      solution: "AI-powered stress management and study planning tools",
-      icon: <BookOpen className="w-5 h-5 text-blue-600" />
-    },
-    {
-      challenge: "Social Isolation & Loneliness",
-      solution: "Peer support communities and social connection programs",
-      icon: <Users className="w-5 h-5 text-green-600" />
-    },
-    {
-      challenge: "Family Expectations & Career Pressure",
-      solution: "Culturally-aware counseling and family therapy resources",
-      icon: <Home className="w-5 h-5 text-purple-600" />
-    },
-    {
-      challenge: "Financial Stress & Future Uncertainty",
-      solution: "Career guidance and financial wellness support",
-      icon: <Target className="w-5 h-5 text-orange-600" />
-    }
-  ];
-
   const testimonials = [
     {
       name: "Priya M.",
       role: "Engineering Student, Mumbai",
-      text: "During my toughest semester, the AI companion helped me through panic attacks at 3 AM when no one else was available. It understood my cultural context and family pressure better than I expected.",
+      text: "During my toughest semester, the AI companion helped me through panic attacks at 3 AM when no one  was available. It understood my  context and family pressure better than I expected.",
       rating: 5,
       image: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2"
     },
@@ -187,76 +186,87 @@ const LandingPage = ({ onLogin, systemStats }) => {
       institution: "IIT Mumbai"
     },
     {
-      name: "Prof. Suresh Nair", 
+      name: "Prof. Suresh Nair",
       role: "Vice Chancellor",
       text: "The cultural sensitivity and multilingual support make this platform uniquely suited for Indian institutions. Our student satisfaction scores have improved dramatically.",
       institution: "University of Kerala"
     }
   ];
 
+  const crisisResources = [
+    { name: "National Crisis Helpline", number: "1-800-273-8255", available: "24/7" },
+    { name: "Student Support Chat", number: "Text STUDENT to 741741", available: "24/7" },
+    { name: "Campus Emergency", number: "Emergency Services", available: "Immediate" }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-purple-50">
       {/* Crisis Support Banner */}
-      <div className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2">
-            <Phone className="w-4 h-4" />
-            <span className="font-medium">Need immediate help? Crisis support available 24/7</span>
+      {showBanner && (
+        <div className="absolute top-0 left-0 w-full bg-gradient-to-r from-red-600/70 to-pink-600/70 text-white py-3 px-4 z-50">
+          <div className="max-w-6xl mx-auto flex items-center justify-between text-sm relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowBanner(false)}
+              className="absolute -right-8 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/20 transition-colors"
+              aria-label="Close banner"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4" />
+              <span className="font-medium">Need immediate help? Crisis support available 24/7</span>
+            </div>
+            <Button
+              size="sm"
+              className="bg-white text-red-600 hover:bg-red-50 text-xs px-3 py-1"
+            >
+              Get Help Now
+            </Button>
           </div>
-          <Button 
-            size="sm" 
-            className="bg-white text-red-600 hover:bg-red-50 text-xs px-3 py-1"
-          >
-            Get Help Now
-          </Button>
         </div>
-      </div>
-
-      <div className="space-y-20 pb-16">
+      )}
+      <div className="space-y-20 pb-8">
         {/* Enhanced Hero Section */}
-        <section className={`text-center space-y-8 py-16 px-4 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="space-y-6">
-            
-            
-            <h1 className="text-4xl md:text-7xl font-bold leading-tight">
-              <span className="block text-gray-900">Mental Health Support</span>
-              <span className="block bg-gradient-to-r from-blue-600 via-green-600 to-purple-600 bg-clip-text text-transparent">
-                Made for Students
-              </span>
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              Breaking the stigma around mental health in Indian education. Get 24/7 support, 
-              connect with understanding peers, and access professional care—all in a safe, 
-              confidential space designed specifically for students like you.
-            </p>
-          </div>
+        <section className={`text-center space-y-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          {/* Hero Section */}
+          <div className="relative w-full h-screen flex items-center justify-center text-center px-6">
+            {/* Background Image - The previously generated image */}
+            <img
+              src={LP}
+              alt="Students supporting each other in a peaceful environment"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
 
-          {/* Hero Image */}
-          <div className="relative max-w-4xl mx-auto">
-            <div className="bg-gradient-to-r from-blue-200 to-green-200 rounded-2xl p-1">
-              <img 
-                src="https://images.pexels.com/photos/5428836/pexels-photo-5428836.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&dpr=2"
-                alt="Students supporting each other in a peaceful environment"
-                className="w-full h-96 object-cover rounded-2xl shadow-2xl"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
+            {/* Overlay Gradient - Darker for better text contrast */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+
+            {/* Content */}
+            <div className="relative z-10 max-w-4xl space-y-6 text-white">
+              <h1 className="text-4xl md:text-7xl font-bold leading-tight">
+                <span className="block text-white drop-shadow-lg">Mental Health Support</span>
+                <span className="block bg-gradient-to-r from-cyan-300 via-lime-300 to-fuchsia-300 bg-clip-text text-transparent drop-shadow-lg">
+                  Made for Students
+                </span>
+              </h1>
+
+              <p className="text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed text-gray-100 drop-shadow-md">
+                Breaking the stigma around mental health in Indian education. Get 24/7 support,
+                connect with understanding peers, and access professional care—all in a safe,
+                confidential space designed specifically for students like you.
+              </p>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 px-8 py-4 text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 rounded-full"
+                onClick={onLogin}
+              >
+                <Heart className="w-5 h-5 mr-2" />
+                Start Your Wellness Journey
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
             </div>
           </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 px-8 py-4 text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-              onClick={onLogin}
-            >
-              <Heart className="w-5 h-5 mr-2" />
-              Start Your Wellness Journey
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-            
-          </div>
-          
 
           {/* Trust Indicators */}
           <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-500 pt-8">
@@ -316,7 +326,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
           <div className="text-center space-y-6">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">We Understand What Students Face</h2>
             <p className="text-xl text-slate-600 max-w-4xl mx-auto font-light">
-              Every challenge you're experiencing is valid. Our platform is built around the real struggles 
+              Every challenge you're experiencing is valid. Our platform is built around the real struggles
               Indian students face every day, offering solutions that actually work.
             </p>
           </div>
@@ -416,7 +426,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
           <div className="text-center space-y-6">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">Comprehensive Mental Health Ecosystem</h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto font-light">
-              Six integrated tools designed with student mental health as the priority, 
+              Six integrated tools designed with student mental health as the priority,
               not an afterthought
             </p>
           </div>
@@ -486,12 +496,11 @@ const LandingPage = ({ onLogin, systemStats }) => {
           </div>
 
           <div className="grid gap-8 md:grid-cols-2">
-            <Card className={`cursor-pointer transition-all duration-300 transform hover:scale-105 rounded-2xl ${
-              selectedDemo === 'student' 
-                ? 'ring-4 ring-sky-500 bg-gradient-to-br from-sky-50 to-sky-100/50 shadow-xl' 
-                : 'hover:shadow-lg border-slate-200 bg-white/80 backdrop-blur-sm'
-            }`}
-                  onClick={() => setSelectedDemo('student')}>
+            <Card className={`cursor-pointer transition-all duration-300 transform hover:scale-105 rounded-2xl ${selectedDemo === 'student'
+              ? 'ring-4 ring-sky-500 bg-gradient-to-br from-sky-50 to-sky-100/50 shadow-xl'
+              : 'hover:shadow-lg border-slate-200 bg-white/80 backdrop-blur-sm'
+              }`}
+              onClick={() => setSelectedDemo('student')}>
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-4 text-2xl text-slate-800">
                   <div className="p-3 bg-sky-100 rounded-xl">
@@ -500,7 +509,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
                   Student Experience
                 </CardTitle>
                 <CardDescription className="text-lg text-slate-600">
-                  Discover mental health tools designed specifically for student life
+                  Discover mental health tools designed specifically for student
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-8">
@@ -517,7 +526,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
                     </div>
                   ))}
                 </div>
-                <Button 
+                <Button
                   className={`w-full py-4 rounded-2xl font-medium transition-all duration-300 ${selectedDemo === 'student' ? 'bg-sky-600 shadow-lg hover:bg-sky-700' : 'bg-slate-600 hover:bg-slate-700'}`}
                   onClick={onLogin}
                 >
@@ -527,12 +536,11 @@ const LandingPage = ({ onLogin, systemStats }) => {
               </CardContent>
             </Card>
 
-            <Card className={`cursor-pointer transition-all duration-300 transform hover:scale-105 rounded-2xl ${
-              selectedDemo === 'admin' 
-                ? 'ring-4 ring-violet-500 bg-gradient-to-br from-violet-50 to-violet-100/50 shadow-xl' 
-                : 'hover:shadow-lg border-slate-200 bg-white/80 backdrop-blur-sm'
-            }`}
-                  onClick={() => setSelectedDemo('admin')}>
+            <Card className={`cursor-pointer transition-all duration-300 transform hover:scale-105 rounded-2xl ${selectedDemo === 'admin'
+              ? 'ring-4 ring-violet-500 bg-gradient-to-br from-violet-50 to-violet-100/50 shadow-xl'
+              : 'hover:shadow-lg border-slate-200 bg-white/80 backdrop-blur-sm'
+              }`}
+              onClick={() => setSelectedDemo('admin')}>
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-4 text-2xl text-slate-800">
                   <div className="p-3 bg-violet-100 rounded-xl">
@@ -558,13 +566,14 @@ const LandingPage = ({ onLogin, systemStats }) => {
                     </div>
                   ))}
                 </div>
-                <Button 
-                  className={`w-full py-4 rounded-2xl font-medium transition-all duration-300 ${selectedDemo === 'admin' ? 'bg-violet-600 shadow-lg hover:bg-violet-700' : 'bg-slate-600 hover:bg-slate-700'}`}
-                  onClick={handleNavigation}
-                >
-                  <Building2 className="w-5 h-5 mr-2" />
-                  Access Admin Dashboard
-                </Button>
+                <Link to="/admin">
+                  <Button
+                    className={`w-full py-4 rounded-2xl font-medium transition-all duration-300 ${selectedDemo === 'admin' ? 'bg-violet-600 shadow-lg hover:bg-violet-700' : 'bg-slate-600 hover:bg-slate-700'}`}
+                  >
+                    <Building2 className="w-5 h-5 mr-2" />
+                    Access Admin Dashboard
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -592,8 +601,8 @@ const LandingPage = ({ onLogin, systemStats }) => {
                     "{testimonial.text}"
                   </blockquote>
                   <div className="flex items-center gap-4">
-                    <img 
-                      src={testimonial.image} 
+                    <img
+                      src={testimonial.image}
                       alt={testimonial.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />
@@ -640,65 +649,6 @@ const LandingPage = ({ onLogin, systemStats }) => {
           </div>
         </section>
 
-        {/* Impact & Scalability */}
-        <section className="space-y-8 px-4 max-w-7xl mx-auto">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl font-bold text-gray-900">Proven Impact, Unlimited Scale</h2>
-            <p className="text-lg text-gray-600">
-              Built to serve every student in India with personalized, effective mental health support
-            </p>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-2">
-            <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-green-200">
-              <CardHeader>
-                <CardTitle className="text-2xl text-green-800 flex items-center gap-2">
-                  <TrendingUp className="w-6 h-6" />
-                  Student Outcomes
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {[
-                  { label: "Crisis Prevention Success", value: "96%", desc: "Students avoided crisis with early intervention" },
-                  { label: "Academic Performance", value: "+23%", desc: "Average GPA improvement after 6 months" },
-                  { label: "Help-Seeking Behavior", value: "+180%", desc: "Increase in students accessing mental health support" },
-                  { label: "Peer Connection", value: "89%", desc: "Students report feeling less isolated" }
-                ].map((metric, i) => (
-                  <div key={i} className="flex justify-between items-center p-3 bg-white rounded-lg">
-                    <div>
-                      <div className="font-semibold text-gray-900">{metric.label}</div>
-                      <div className="text-xs text-gray-600">{metric.desc}</div>
-                    </div>
-                    <div className="text-2xl font-bold text-green-600">{metric.value}</div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-              <CardHeader>
-                <CardTitle className="text-2xl text-purple-800 flex items-center gap-2">
-                  <Building2 className="w-6 h-6" />
-                  Institutional Benefits
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {[
-                  { icon: Database, text: "Cloud-native infrastructure scales automatically", color: "text-blue-600" },
-                  { icon: Globe, text: "API-first design for seamless integrations", color: "text-green-600" },
-                  { icon: Lock, text: "Enterprise-grade security and compliance", color: "text-red-600" },
-                  { icon: Award, text: "Proven ROI with reduced crisis interventions", color: "text-orange-600" }
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-center gap-4 p-3 bg-white rounded-lg">
-                    <feature.icon className={`w-5 h-5 ${feature.color}`} />
-                    <span className="text-gray-700">{feature.text}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
         {/* Enhanced CTA Section */}
         <section className="text-center space-y-8 py-16 bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 rounded-3xl text-white mx-4">
           <div className="space-y-6 px-8">
@@ -707,17 +657,17 @@ const LandingPage = ({ onLogin, systemStats }) => {
                 <Heart className="w-12 h-12 text-white" />
               </div>
             </div>
-            
+
             <h2 className="text-4xl md:text-5xl font-bold">Your Mental Health Matters</h2>
             <p className="text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
-              Take the first step towards better mental health. Join thousands of students who've found 
+              Take the first step towards better mental health. Join thousands of students who've found
               support, understanding, and hope through our platform.
             </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-6 justify-center px-8">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
               onClick={onLogin}
             >
@@ -725,8 +675,8 @@ const LandingPage = ({ onLogin, systemStats }) => {
               Begin Your Journey
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               variant="outline"
               className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg transition-all duration-200"
               onClick={onLogin}
@@ -756,7 +706,7 @@ const LandingPage = ({ onLogin, systemStats }) => {
         <section className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-3xl p-8 mx-4 max-w-7xl mx-auto">
           <div className="text-center space-y-8">
             <h2 className="text-3xl font-bold text-gray-900">Your Safety & Well-being Come First</h2>
-            
+
             <div className="grid gap-6 md:grid-cols-3">
               {crisisResources.map((resource, index) => (
                 <Card key={index} className="bg-white border-green-200 hover:shadow-lg transition-all duration-300">
@@ -774,13 +724,15 @@ const LandingPage = ({ onLogin, systemStats }) => {
 
             <div className="bg-green-100 rounded-xl p-6 text-center">
               <p className="text-green-800 font-medium">
-                If you're experiencing thoughts of self-harm or suicide, please reach out immediately. 
+                If you're experiencing thoughts of self-harm or suicide, please reach out immediately.
                 You matter, your life has value, and help is always available.
               </p>
             </div>
           </div>
         </section>
+
       </div>
+      <Footer />
     </div>
   );
 };
