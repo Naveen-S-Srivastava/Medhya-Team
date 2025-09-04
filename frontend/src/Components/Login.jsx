@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -12,13 +13,6 @@ import { Input } from "../ui/Input";
 import { Label } from "../ui/Label";
 import { Alert, AlertDescription } from "../ui/Alert";
 import { Tabs, TabsList, TabsTrigger } from "../ui/Tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/Select";
 import { Checkbox } from "../ui/Checkbox";
 import {
   Heart,
@@ -35,8 +29,10 @@ import {
   Phone,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth.js";
-import { testGoogleOAuth } from "../utils/googleOAuthTest.js";
 import { validateGoogleOAuthConfig, getOAuthErrorMessage } from "../utils/googleOAuthConfig.js";
+
+import LP from "../assets/logo1.jpg";
+import Footer from "./Footer.jsx";
 
 const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
   const navigate = useNavigate();
@@ -223,8 +219,8 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center">
             <Link to="/">
-              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-                <Heart className="w-10 h-10 text-white" />
+              <div >
+                <img src={LP} className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105" />
               </div>
             </Link>
           </div>
@@ -492,32 +488,7 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
           </CardContent>
         </Card>
 
-        {/* Additional Info */}
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Shield className="w-4 h-4 text-green-600" />
-              <span>Secure</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Globe className="w-4 h-4 text-blue-600" />
-              <span>15+ Languages</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Phone className="w-4 h-4 text-purple-600" />
-              <span>24/7 Support</span>
-            </div>
-          </div>
-
-          <div className="text-xs text-muted-foreground">
-            <p>
-              Emergency Support: <strong>1800-599-0019</strong> (iCALL)
-            </p>
-            <p className="mt-1">
-              © 2024 MEDHYA - Built for Smart India Hackathon
-            </p>
-          </div>
-        </div>
+        <Footer/>
       </div>
     </div>
   );
