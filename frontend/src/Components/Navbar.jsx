@@ -51,8 +51,6 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
     streakDays: 12
   };
 
-  console.log(user);
-
   // --- Reusable UI Components ---
 
   const UserMenu = () => (
