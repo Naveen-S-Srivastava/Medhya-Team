@@ -6,8 +6,8 @@ import { useAuth } from './hooks/useAuth.js';
 // Import Layouts & Pages
 import LandingPage from './Components/LandingPage.jsx';
 import Login from './Components/Login.jsx';
-import Signup from './Components/SignUp.jsx';
-import UserSignup from './Components/UserSignup.jsx';
+import UserFinalData from './Components/UserFinalDetails.jsx';
+import UserInitialData from './Components/UserInitialDetails.jsx';
 import AppLayout from './Components/AppLayout.jsx';
 import StudentDashboard from './Components/StudentDashboard.jsx';
 import AdminDashboard from './Components/AdminDashboard.jsx';
@@ -87,7 +87,7 @@ export default function App() {
 
   const systemStats = {
     totalInstitutions: 127,
-    activeUsers: 15420,
+    activeUsers: "3000+",
   };
 
   // Update userRole when user changes
@@ -183,9 +183,9 @@ export default function App() {
               onShowUserSignup={() => navigate('/user-signup')} 
             />
         } />
-        <Route path="/user-signup" element={<UserSignup onNext={(data) => { setUserData(data); navigate('/signup'); }} onShowLogin={() => navigate('/login')} />} />
+        <Route path="/user-signup" element={<UserInitialData onNext={(data) => { setUserData(data); navigate('/signup'); }} onShowLogin={() => navigate('/login')} />} />
         <Route path="/signup" element={
-          <Signup 
+          <UserFinalData 
             onLogin={handleLogin} 
             onShowLogin={() => navigate('/login')} 
             userData={userData} 

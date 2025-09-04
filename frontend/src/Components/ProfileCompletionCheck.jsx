@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Progress } from '../ui/Progress';
-import { CheckCircle, AlertTriangle, UserPlus, ArrowRight } from 'lucide-react';
+import { AlertTriangle, UserPlus, ArrowRight } from 'lucide-react';
 
 const ProfileCompletionCheck = ({ children, requireComplete = false }) => {
   const { user, loading, checkProfileCompletion } = useAuth();
