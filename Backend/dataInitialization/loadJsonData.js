@@ -20,9 +20,9 @@ try {
     await Assessment.deleteMany({});
     console.log("All existing assessments deleted.");
     // Read JSON file
-    const appointments = JSON.parse(fs.readFileSync("json_files/appointments_sample.json", "utf-8"));
-    const crisisAlerts = JSON.parse(fs.readFileSync("json_files/crisis_alerts.json", "utf-8"));
-    const assessments = JSON.parse(fs.readFileSync("json_files/synthetic_mental_health_data.json", "utf-8"));
+    const appointments = JSON.parse(fs.readFileSync("jsonFiles/appointments_sample.json", "utf-8"));
+    const crisisAlerts = JSON.parse(fs.readFileSync("jsonFiles/crisis_alerts.json", "utf-8"));
+    const assessments = JSON.parse(fs.readFileSync("jsonFiles/synthetic_mental_health_data.json", "utf-8"));
     // Insert into DB
     const result = await Appointment.insertMany(appointments);
     console.log("Appointments inserted successfully:", result.length);

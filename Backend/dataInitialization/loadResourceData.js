@@ -28,7 +28,7 @@ const connectDB = async () => {
 const loadResourceData = async () => {
   try {
     // Read the sample data file
-    const sampleDataPath = path.join(__dirname, 'json files', 'resources_sample.json');
+    const sampleDataPath = path.join(__dirname, 'jsonFiles', 'resources_sample.json');
     const sampleData = JSON.parse(fs.readFileSync(sampleDataPath, 'utf8'));
 
     // Clear existing resources

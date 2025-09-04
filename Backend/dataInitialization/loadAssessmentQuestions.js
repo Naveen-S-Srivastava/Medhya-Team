@@ -64,11 +64,11 @@ const PHQ9 = mongoose.model('PHQ9', PHQ9Schema);
 async function seedQuestions() {
   try {
     // Read GAD-7 questions
-    const gad7Path = path.join(__dirname, 'data', 'gad7Questions.json');
+    const gad7Path = path.join(__dirname, 'jsonFiles', 'gad7Questions.json');
     const gad7Data = JSON.parse(fs.readFileSync(gad7Path, 'utf8'));
     
     // Read PHQ-9 questions
-    const phq9Path = path.join(__dirname, 'data', 'phq9Questions.json');
+    const phq9Path = path.join(__dirname, 'jsonFiles', 'phq9Questions.json');
     const phq9Data = JSON.parse(fs.readFileSync(phq9Path, 'utf8'));
 
     // Clear existing questions

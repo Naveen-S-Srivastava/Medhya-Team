@@ -155,38 +155,6 @@ const corsOptions = {
   ]
 };
 
-// Log CORS information for debugging
-console.log('🌐 CORS Configuration:');
-console.log('📍 NODE_ENV:', process.env.NODE_ENV);
-console.log('🌍 FRONTEND_URL:', process.env.FRONTEND_URL);
-console.log('📋 ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS);
-console.log('🔓 CORS_DEBUG:', process.env.CORS_DEBUG);
-console.log('🔧 CORS credentials enabled, preflight handling active');
-console.log('📋 Hardcoded allowed origins:', [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://localhost:5174',
-  'http://localhost:5175',
-  'https://mindcare-frontend.vercel.app',
-  'https://mindcare.vercel.app',
-  'https://mindcare-frontend-git-main-sarafkushagra.vercel.app',
-  'https://mindcare-git-auth-sarafkushagra.vercel.app',
-  'https://mindcare-frontend.netlify.app',
-  'https://mindcare.netlify.app',
-  'https://mindcare.netlify.com',
-  'https://mindcare.onrender.com',
-  'https://mindcare-backend.onrender.com',
-  'https://mindcare-api.onrender.com',
-  'https://mindcare-17y9.onrender.com',
-  'https://mindcare.up.railway.app',
-  'https://mindcare-production.up.railway.app',
-  'https://mindcare.herokuapp.com',
-  'https://mindcare-backend.herokuapp.com',
-  'https://mindcare.app',
-  'https://www.mindcare.app',
-  'https://api.mindcare.app'
-]);
-
 app.use(cors(corsOptions));
 
 // CORS debugging middleware
