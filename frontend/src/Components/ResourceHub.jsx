@@ -91,29 +91,29 @@ const ResourceHub = () => {
   ];
 
   const getTypeIcon = (type) => {
-    if (!type) return <BookOpen className="w-5 h-5 text-gray-500" />;
+    if (!type) return <BookOpen className="w-5 h-5 text-slate-500" />;
     switch (type) {
-      case 'video': return <Play className="w-5 h-5 text-blue-500" />;
-      case 'audio': return <Headphones className="w-5 h-5 text-purple-500" />;
-      case 'article': return <BookOpen className="w-5 h-5 text-green-500" />;
-      case 'guide': return <BookOpen className="w-5 h-5 text-indigo-500" />;
-      case 'worksheet': return <Bookmark className="w-5 h-5 text-orange-500" />;
-      default: return <BookOpen className="w-5 h-5 text-gray-500" />;
+      case 'video': return <Play className="w-5 h-5 text-sky-500" />;
+      case 'audio': return <Headphones className="w-5 h-5 text-lavender-500" />;
+      case 'article': return <BookOpen className="w-5 h-5 text-mint-500" />;
+      case 'guide': return <BookOpen className="w-5 h-5 text-sky-500" />;
+      case 'worksheet': return <Bookmark className="w-5 h-5 text-peach-500" />;
+      default: return <BookOpen className="w-5 h-5 text-slate-500" />;
     }
   };
 
   const getCategoryColor = (category) => {
-    if (!category) return 'bg-gray-100 text-gray-800';
+    if (!category) return 'bg-slate-100 text-slate-800 border-slate-200';
     const colors = {
-      anxiety: 'bg-red-50 text-red-700 border-red-200',
-      depression: 'bg-blue-50 text-blue-700 border-blue-200',
-      stress: 'bg-orange-50 text-orange-700 border-orange-200',
-      sleep: 'bg-purple-50 text-purple-700 border-purple-200',
-      relationships: 'bg-pink-50 text-pink-700 border-pink-200',
-      academic: 'bg-green-50 text-green-700 border-green-200',
-      mindfulness: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+      anxiety: 'bg-sky-50 text-sky-700 border-sky-200',
+      depression: 'bg-mint-50 text-mint-700 border-mint-200',
+      stress: 'bg-peach-50 text-peach-700 border-peach-200',
+      sleep: 'bg-lavender-50 text-lavender-700 border-lavender-200',
+      relationships: 'bg-sky-50 text-sky-700 border-sky-200',
+      academic: 'bg-mint-50 text-mint-700 border-mint-200',
+      mindfulness: 'bg-lavender-50 text-lavender-700 border-lavender-200'
     };
-    return colors[category] || 'bg-gray-50 text-gray-700 border-gray-200';
+    return colors[category] || 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
   const handleSaveResource = async (resourceId) => {
@@ -138,20 +138,20 @@ const ResourceHub = () => {
 
   const LoadingSpinner = () => (
     <div className="flex items-center justify-center py-12">
-      <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-      <span className="ml-4 text-lg text-gray-600">Loading resources...</span>
+      <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+      <span className="ml-4 text-lg text-slate-600 font-medium">Loading resources...</span>
     </div>
   );
 
   const ErrorMessage = ({ error }) => (
-    <Card className="shadow-lg rounded-xl">
+    <Card className="shadow-lg rounded-2xl border border-slate-200">
       <CardContent className="py-12 text-center">
-        <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h3 className="text-xl font-medium mb-2 text-gray-800">Error loading resources</h3>
-        <p className="text-md text-gray-500 mb-6">
+        <BookOpen className="w-16 h-16 mx-auto text-slate-400 mb-4" />
+        <h3 className="text-xl font-semibold mb-2 text-slate-800">Error loading resources</h3>
+        <p className="text-md text-slate-600 mb-6 font-medium">
           {error || 'Something went wrong. Please try again later.'}
         </p>
-        <Button onClick={() => window.location.reload()} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md">
+        <Button onClick={() => window.location.reload()} className="bg-gradient-to-r from-sky-500 to-mint-500 hover:from-sky-600 hover:to-mint-600 text-white shadow-md rounded-2xl transition-all duration-300">
           Retry
         </Button>
       </CardContent>
@@ -167,15 +167,15 @@ const ResourceHub = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div className="bg-white rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="font-bold text-lg text-gray-800">{resource?.title || 'Resource Viewer'}</h3>
-            <div className="flex items-center gap-2">
+        <div className="bg-white rounded-2xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
+          <div className="flex items-center justify-between p-6 border-b border-slate-200">
+            <h3 className="font-bold text-xl text-slate-800">{resource?.title || 'Resource Viewer'}</h3>
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => window.open(url, '_blank')}
-                className="flex items-center gap-1 border-gray-300 hover:bg-gray-100 text-gray-700"
+                className="flex items-center gap-2 border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 rounded-2xl transition-all duration-300"
               >
                 <ExternalLink className="w-4 h-4" />
                 Open in New Tab
@@ -184,15 +184,15 @@ const ResourceHub = () => {
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="hover:bg-red-50 text-gray-700"
+                className="hover:bg-red-50 text-slate-700 rounded-2xl transition-all duration-300"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-slate-500" />
               </Button>
             </div>
           </div>
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-6">
             {(isVideo || isAudio) ? (
-              <div className="w-full h-full rounded-lg overflow-hidden shadow-inner">
+              <div className="w-full h-full rounded-2xl overflow-hidden shadow-inner">
                 <iframe
                   src={url}
                   className="w-full h-full border-0"
@@ -202,18 +202,18 @@ const ResourceHub = () => {
                 />
               </div>
             ) : (
-              <div className="w-full h-full rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+              <div className="w-full h-full rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center">
                 <div className="text-center max-w-md">
-                  <BookOpen className="w-20 h-20 mx-auto text-gray-400 mb-6" />
-                  <h3 className="font-semibold text-2xl mb-2 text-gray-800">External Resource</h3>
-                  <p className="text-md text-gray-500 mb-8">
+                  <BookOpen className="w-20 h-20 mx-auto text-slate-400 mb-6" />
+                  <h3 className="font-semibold text-2xl mb-2 text-slate-800">External Resource</h3>
+                  <p className="text-md text-slate-600 mb-8 font-medium">
                     This resource is hosted externally and cannot be previewed here. 
                     Click the button below to open it in a new tab.
                   </p>
                   <div className="space-y-4">
                     <Button
                       onClick={() => window.open(url, '_blank')}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md"
+                      className="w-full bg-gradient-to-r from-sky-500 to-mint-500 hover:from-sky-600 hover:to-mint-600 text-white shadow-md rounded-2xl transition-all duration-300"
                     >
                       <ExternalLink className="w-4 h-4 mr-2" />
                       Open Resource
@@ -221,7 +221,7 @@ const ResourceHub = () => {
                     <Button
                       variant="outline"
                       onClick={onClose}
-                      className="w-full border-gray-300 hover:bg-gray-100"
+                      className="w-full border-2 border-slate-200 hover:bg-slate-50 rounded-2xl transition-all duration-300"
                     >
                       Close Preview
                     </Button>
@@ -278,34 +278,34 @@ const ResourceHub = () => {
 
   return (
     <ProfileCompletionCheck requireComplete={true}>
-      <div className="min-h-screen p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-blue-50 via-white to-purple-50 text-gray-800 transition-colors duration-500">
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-sky-50 via-white to-lavender-50 text-slate-800 transition-colors duration-500 font-['Poppins',sans-serif]">
       
-      <Card className="shadow-2xl rounded-2xl mb-8 transform transition-transform duration-500 hover:scale-[1.005]">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-4 text-4xl font-extrabold text-indigo-800">
-            <BookOpen className="w-10 h-10 text-indigo-600" />
+      <Card className="shadow-lg rounded-2xl mb-8 transform transition-transform duration-500 hover:scale-[1.005] border border-slate-200">
+        <CardHeader className="p-8">
+          <CardTitle className="flex items-center gap-4 text-4xl font-bold bg-sky-600 via-mint-600 to-lavender-600 bg-clip-text text-transparent">
+            <BookOpen className="w-10 h-10 text-sky-500" />
             Psychoeducational Resource Hub
           </CardTitle>
-          <CardDescription className="text-xl text-gray-600 mt-2">
+          <CardDescription className="text-xl text-slate-600 mt-3 font-medium">
             Access curated mental health resources, guides, and educational content in multiple languages
           </CardDescription>
         </CardHeader>
       </Card>
 
       <Tabs defaultValue="browse" className="space-y-8">
-        <TabsList className="grid w-full grid-cols-3 rounded-2xl bg-gray-200 p-1 shadow-inner">
-          <TabsTrigger value="featured" className="data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-md rounded-xl transition-all duration-300">Featured</TabsTrigger>
-          <TabsTrigger value="browse" className="data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-md rounded-xl transition-all duration-300">Browse All</TabsTrigger>
-          <TabsTrigger value="my-library" className="data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-md rounded-xl transition-all duration-300">My Library</TabsTrigger>
+        <TabsList className="grid h-12 w-full grid-cols-3 rounded-2xl bg-slate-100 p-1.5 border border-slate-200">
+          <TabsTrigger value="featured" className="data-[state=active]:bg-white data-[state=active]:text-sky-600 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-sky-200 rounded-xl transition-all duration-300 font-medium">Featured</TabsTrigger>
+          <TabsTrigger value="browse" className="data-[state=active]:bg-white data-[state=active]:text-sky-600 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-sky-200 rounded-xl transition-all duration-300 font-medium">Browse All</TabsTrigger>
+          <TabsTrigger value="my-library" className="data-[state=active]:bg-white data-[state=active]:text-sky-600 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-sky-200 rounded-xl transition-all duration-300 font-medium">My Library</TabsTrigger>
         </TabsList>
 
         <TabsContent value="featured" className="space-y-6">
-          <Card className="shadow-lg rounded-2xl bg-white">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-900">Featured Resources</CardTitle>
-              <CardDescription className="text-md text-gray-600">Hand-picked resources recommended by our mental health professionals</CardDescription>
+          <Card className="shadow-lg rounded-2xl bg-white border border-slate-200">
+            <CardHeader className="p-6">
+              <CardTitle className="text-2xl font-bold text-slate-800">Featured Resources</CardTitle>
+              <CardDescription className="text-md text-slate-600 font-medium">Hand-picked resources recommended by our mental health professionals</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {resourcesLoading ? (
                 <LoadingSpinner />
               ) : resourcesError ? (
@@ -313,24 +313,24 @@ const ResourceHub = () => {
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {resources?.filter(resource => resource.isFeatured).map((resource) => (
-                    <Card key={resource._id} className="shadow-md rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-xl bg-gray-50">
+                    <Card key={resource._id} className="shadow-sm rounded-2xl p-6 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg bg-white border border-slate-200">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-2">
-                          <div className="p-2 bg-white rounded-md">{getTypeIcon(resource.type)}</div>
-                          <Badge className={`text-xs font-semibold px-3 py-1 border ${getCategoryColor(resource.category)}`}>
+                          <div className="p-2 bg-slate-50 rounded-2xl">{getTypeIcon(resource.type)}</div>
+                          <Badge className={`text-xs font-semibold px-3 py-1 border rounded-2xl ${getCategoryColor(resource.category)}`}>
                             {resource.category}
                           </Badge>
                         </div>
-                        <Badge variant="outline" className="flex items-center gap-1 text-yellow-700 bg-yellow-50 border-yellow-200">
+                        <Badge variant="outline" className="flex items-center gap-1 text-yellow-700 bg-yellow-50 border-yellow-200 rounded-2xl">
                           <Star className="w-3 h-3 fill-current" />
                           {resource.averageRating?.toFixed(1) || 'N/A'}
                         </Badge>
                       </div>
                       
-                      <h3 className="font-bold text-xl mb-2 text-gray-900">{resource.title}</h3>
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-3">{resource.description}</p>
+                      <h3 className="font-bold text-xl mb-2 text-slate-800">{resource.title}</h3>
+                      <p className="text-sm text-slate-600 mb-4 line-clamp-3 font-medium">{resource.description}</p>
                       
-                      <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                      <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           <span>{resource.duration}</span>
@@ -344,7 +344,7 @@ const ResourceHub = () => {
                       <div className="flex gap-3">
                         <Button 
                           size="sm" 
-                          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all duration-300 transform hover:scale-105"
+                          className="flex-1 bg-gradient-to-r from-sky-500 to-mint-500 hover:from-sky-600 hover:to-mint-600 text-white shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 rounded-2xl font-semibold"
                           onClick={() => handleAccessResource(resource)}
                         >
                           {resource.type === 'video' ? 'Watch' : 
@@ -355,8 +355,8 @@ const ResourceHub = () => {
                           size="sm"
                           onClick={() => handleToggleSave(resource._id)}
                           className={`
-                            border-gray-300 text-gray-700 hover:bg-gray-100 transition-all duration-300
-                            ${isResourceInLibrary(resource._id) ? 'bg-indigo-50 border-indigo-200 text-indigo-600 hover:bg-indigo-100' : ''}
+                            border-2 border-slate-200 text-slate-700 hover:bg-slate-50 transition-all duration-300 rounded-2xl
+                            ${isResourceInLibrary(resource._id) ? 'bg-sky-50 border-sky-200 text-sky-600 hover:bg-sky-100' : ''}
                           `}
                           title={isResourceInLibrary(resource._id) ? 'Remove from library' : 'Add to library'}
                         >
@@ -376,23 +376,23 @@ const ResourceHub = () => {
         </TabsContent>
 
         <TabsContent value="browse" className="space-y-6">
-          <Card className="shadow-lg rounded-2xl bg-white">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-900">Search & Filter Resources</CardTitle>
-              <CardDescription className="text-md text-gray-600">Find specific resources based on your needs and preferences</CardDescription>
+          <Card className="shadow-lg rounded-2xl bg-white border border-slate-200">
+            <CardHeader className="p-6">
+              <CardTitle className="text-2xl font-bold text-slate-800">Search & Filter Resources</CardTitle>
+              <CardDescription className="text-md text-slate-600 font-medium">Find specific resources based on your needs and preferences</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 p-6">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <Input
                     placeholder="Search resources..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-12 py-6 rounded-full border-2 border-gray-300 focus-visible:ring-indigo-500 transition-colors"
+                    className="pl-12 py-6 rounded-2xl border-2 border-slate-200 focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300"
                   />
                 </div>
-                <Button variant="outline" className="flex items-center gap-2 border-2 border-gray-300 hover:bg-gray-100 px-6 py-3 rounded-full transition-all duration-300 transform hover:scale-105">
+                <Button variant="outline" className="flex items-center gap-2 border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 px-6 py-3 rounded-2xl transition-all duration-300 transform hover:-translate-y-0.5">
                   <Filter className="w-5 h-5" />
                   Filters
                 </Button>
@@ -400,10 +400,10 @@ const ResourceHub = () => {
 
               <div className="grid gap-4 md:grid-cols-3">
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="border-2 border-green-300 bg-white text-green-800 focus-visible:ring-green-500 rounded-full py-3 px-6 transition-colors hover:bg-green-50">
-                    <SelectValue placeholder="Category" className="text-green-800" />
+                  <SelectTrigger className="border-2 border-sky-200 bg-white text-slate-700 focus-visible:ring-sky-500 rounded-2xl py-3 px-6 transition-colors hover:bg-sky-50">
+                    <SelectValue placeholder="Category" className="text-slate-700" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-xl rounded-lg">
+                  <SelectContent className="bg-white border border-slate-200 shadow-xl rounded-2xl">
                     {categories.map((category) => (
                       <SelectItem key={category.value} value={category.value}>
                         {category.label}
@@ -413,10 +413,10 @@ const ResourceHub = () => {
                 </Select>
 
                 <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                  <SelectTrigger className="border-2 border-green-300 bg-white text-green-800 focus-visible:ring-green-500 rounded-full py-3 px-6 transition-colors hover:bg-green-50">
-                    <SelectValue placeholder="Language" className="text-green-800" />
+                  <SelectTrigger className="border-2 border-mint-200 bg-white text-slate-700 focus-visible:ring-mint-500 rounded-2xl py-3 px-6 transition-colors hover:bg-mint-50">
+                    <SelectValue placeholder="Language" className="text-slate-700" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-xl rounded-lg">
+                  <SelectContent className="bg-white border border-slate-200 shadow-xl rounded-2xl">
                     {languages.map((language) => (
                       <SelectItem key={language.value} value={language.value}>
                         {language.label}
@@ -426,10 +426,10 @@ const ResourceHub = () => {
                 </Select>
 
                 <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger className="border-2 border-green-300 bg-white text-green-800 focus-visible:ring-green-500 rounded-full py-3 px-6 transition-colors hover:bg-green-50">
-                    <SelectValue placeholder="Type" className="text-green-800" />
+                  <SelectTrigger className="border-2 border-lavender-200 bg-white text-slate-700 focus-visible:ring-lavender-500 rounded-2xl py-3 px-6 transition-colors hover:bg-lavender-50">
+                    <SelectValue placeholder="Type" className="text-slate-700" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-xl rounded-lg">
+                  <SelectContent className="bg-white border border-slate-200 shadow-xl rounded-2xl">
                     {types.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         {type.label}
@@ -449,24 +449,24 @@ const ResourceHub = () => {
             <>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {resources?.map((resource) => (
-                  <Card key={resource._id} className="shadow-md rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-xl bg-white">
+                  <Card key={resource._id} className="shadow-sm rounded-2xl p-6 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg bg-white border border-slate-200">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <div className="p-2 bg-gray-100 rounded-md">{getTypeIcon(resource.type)}</div>
-                        <Badge className={`text-xs font-semibold px-3 py-1 border ${getCategoryColor(resource.category)}`}>
+                        <div className="p-2 bg-slate-50 rounded-2xl">{getTypeIcon(resource.type)}</div>
+                        <Badge className={`text-xs font-semibold px-3 py-1 border rounded-2xl ${getCategoryColor(resource.category)}`}>
                           {resource.category}
                         </Badge>
                       </div>
-                      <Badge variant="outline" className="flex items-center gap-1 text-yellow-700 bg-yellow-50 border-yellow-200">
+                      <Badge variant="outline" className="flex items-center gap-1 text-yellow-700 bg-yellow-50 border-yellow-200 rounded-2xl">
                         <Star className="w-3 h-3 fill-current" />
                         {resource.averageRating?.toFixed(1) || 'N/A'}
                       </Badge>
                     </div>
                     
-                    <h3 className="font-bold text-xl mb-2 text-gray-900">{resource.title}</h3>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-3">{resource.description}</p>
+                    <h3 className="font-bold text-xl mb-2 text-slate-800">{resource.title}</h3>
+                    <p className="text-sm text-slate-600 mb-4 line-clamp-3 font-medium">{resource.description}</p>
                     
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         <span>{resource.duration}</span>
@@ -480,7 +480,7 @@ const ResourceHub = () => {
                     <div className="flex gap-3">
                       <Button 
                         size="sm" 
-                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all duration-300 transform hover:scale-105"
+                        className="flex-1 bg-sky-500 hover:from-sky-600 hover:to-mint-600 text-white shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 rounded-2xl font-semibold"
                         onClick={() => handleAccessResource(resource)}
                       >
                         Access Resource
@@ -490,8 +490,8 @@ const ResourceHub = () => {
                         size="sm"
                         onClick={() => handleToggleSave(resource._id)}
                         className={`
-                          border-gray-300 text-gray-700 hover:bg-gray-100 transition-all duration-300
-                          ${isResourceInLibrary(resource._id) ? 'bg-indigo-50 border-indigo-200 text-indigo-600 hover:bg-indigo-100' : ''}
+                          border-2 border-slate-200 text-slate-700 hover:bg-slate-50 transition-all duration-300 rounded-2xl
+                          ${isResourceInLibrary(resource._id) ? 'bg-sky-50 border-sky-200 text-sky-600 hover:bg-sky-100' : ''}
                         `}
                         title={isResourceInLibrary(resource._id) ? 'Remove from library' : 'Add to library'}
                       >
@@ -507,11 +507,11 @@ const ResourceHub = () => {
               </div>
 
               {resources && resources.length === 0 && (
-                <Card className="shadow-lg rounded-xl bg-white">
+                <Card className="shadow-lg rounded-2xl bg-white border border-slate-200">
                   <CardContent className="py-12 text-center">
-                    <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-xl font-medium mb-2 text-gray-800">No resources found</h3>
-                    <p className="text-md text-gray-500">
+                    <BookOpen className="w-16 h-16 mx-auto text-slate-400 mb-4" />
+                    <h3 className="text-xl font-semibold mb-2 text-slate-800">No resources found</h3>
+                    <p className="text-md text-slate-600 font-medium">
                       Try adjusting your search terms or filters to find what you're looking for.
                     </p>
                   </CardContent>
@@ -526,11 +526,11 @@ const ResourceHub = () => {
                     size="lg"
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(currentPage - 1)}
-                    className="border-gray-300 hover:bg-gray-100 px-6"
+                    className="border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 px-6 rounded-2xl transition-all duration-300"
                   >
                     Previous
                   </Button>
-                  <span className="flex items-center px-4 text-md font-medium text-gray-700">
+                  <span className="flex items-center px-4 text-md font-semibold text-slate-700">
                     Page {currentPage} of {resourcesPagination.totalPages}
                   </span>
                   <Button
@@ -538,7 +538,7 @@ const ResourceHub = () => {
                     size="lg"
                     disabled={currentPage === resourcesPagination.totalPages}
                     onClick={() => setCurrentPage(currentPage + 1)}
-                    className="border-gray-300 hover:bg-gray-100 px-6"
+                    className="border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 px-6 rounded-2xl transition-all duration-300"
                   >
                     Next
                   </Button>
@@ -549,12 +549,12 @@ const ResourceHub = () => {
         </TabsContent>
 
         <TabsContent value="my-library" className="space-y-6">
-          <Card className="shadow-lg rounded-2xl bg-white">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-900">My Saved Resources</CardTitle>
-              <CardDescription className="text-md text-gray-600">Resources you've bookmarked for easy access</CardDescription>
+          <Card className="shadow-lg rounded-2xl bg-white border border-slate-200">
+            <CardHeader className="p-6">
+              <CardTitle className="text-2xl font-bold text-slate-800">My Saved Resources</CardTitle>
+              <CardDescription className="text-md text-slate-600 font-medium">Resources you've bookmarked for easy access</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {libraryLoading ? (
                 <LoadingSpinner />
               ) : libraryError ? (
@@ -562,24 +562,24 @@ const ResourceHub = () => {
               ) : userResources && userResources.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {userResources?.map((userResource) => (
-                    <Card key={userResource._id} className="shadow-md rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-xl bg-white">
+                    <Card key={userResource._id} className="shadow-sm rounded-2xl p-6 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg bg-white border border-slate-200">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-2">
-                          <div className="p-2 bg-gray-100 rounded-md">{getTypeIcon(userResource.resource.type)}</div>
-                          <Badge className={`text-xs font-semibold px-3 py-1 border ${getCategoryColor(userResource.resource.category)}`}>
+                          <div className="p-2 bg-slate-50 rounded-2xl">{getTypeIcon(userResource.resource.type)}</div>
+                          <Badge className={`text-xs font-semibold px-3 py-1 border rounded-2xl ${getCategoryColor(userResource.resource.category)}`}>
                             {userResource.resource.category}
                           </Badge>
                         </div>
-                        <Badge variant="outline" className="flex items-center gap-1 text-yellow-700 bg-yellow-50 border-yellow-200">
+                        <Badge variant="outline" className="flex items-center gap-1 text-yellow-700 bg-yellow-50 border-yellow-200 rounded-2xl">
                           <Star className="w-3 h-3 fill-current" />
                           {userResource.resource.averageRating?.toFixed(1) || 'N/A'}
                         </Badge>
                       </div>
                       
-                      <h3 className="font-bold text-xl mb-2 text-gray-900">{userResource.resource.title}</h3>
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-3">{userResource.resource.description}</p>
+                      <h3 className="font-bold text-xl mb-2 text-slate-800">{userResource.resource.title}</h3>
+                      <p className="text-sm text-slate-600 mb-4 line-clamp-3 font-medium">{userResource.resource.description}</p>
                       
-                      <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                      <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           <span>{userResource.resource.duration}</span>
@@ -593,7 +593,7 @@ const ResourceHub = () => {
                       <div className="flex gap-3">
                         <Button 
                           size="sm" 
-                          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all duration-300 transform hover:scale-105"
+                          className="flex-1 bg-gradient-to-r from-sky-500 to-mint-500 hover:from-sky-600 hover:to-mint-600 text-white shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 rounded-2xl font-semibold"
                           onClick={() => handleAccessResource(userResource.resource)}
                         >
                           Access Resource
@@ -602,7 +602,7 @@ const ResourceHub = () => {
                           variant="outline" 
                           size="sm"
                           onClick={() => handleRemoveFromLibrary(userResource.resource._id)}
-                          className="border-red-300 text-red-600 hover:bg-red-50 transition-colors duration-300"
+                          className="border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-300 rounded-2xl"
                         >
                           Remove
                         </Button>
@@ -612,14 +612,14 @@ const ResourceHub = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-xl font-medium mb-2 text-gray-800">No saved resources yet</h3>
-                  <p className="text-md text-gray-500 mb-6">
+                  <BookOpen className="w-16 h-16 mx-auto text-slate-400 mb-4" />
+                  <h3 className="text-xl font-semibold mb-2 text-slate-800">No saved resources yet</h3>
+                  <p className="text-md text-slate-600 mb-6 font-medium">
                     Start building your personal library by bookmarking resources that are helpful to you.
                   </p>
                   <Button 
                     onClick={() => document.querySelector('[value="browse"]')?.click()}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md"
+                    className="bg-gradient-to-r from-sky-500 to-mint-500 hover:from-sky-600 hover:to-mint-600 text-white shadow-md rounded-2xl transition-all duration-300"
                   >
                     Browse Resources
                   </Button>
@@ -630,24 +630,24 @@ const ResourceHub = () => {
         </TabsContent>
       </Tabs>
 
-      <Card className="shadow-lg rounded-2xl bg-white">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-gray-900">Language Support</CardTitle>
-          <CardDescription className="text-md text-gray-600">Resources available in multiple languages for cultural accessibility</CardDescription>
+      <Card className="shadow-lg rounded-2xl bg-white border border-slate-200">
+        <CardHeader className="p-6">
+          <CardTitle className="text-2xl font-bold text-slate-800">Language Support</CardTitle>
+          <CardDescription className="text-md text-slate-600 font-medium">Resources available in multiple languages for cultural accessibility</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <div className="grid gap-6 md:grid-cols-3">
-            <div className="text-center p-6 border-2 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] bg-white border-gray-200">
-              <h4 className="font-semibold text-lg text-gray-800 mb-2">English</h4>
-              <p className="text-sm text-gray-600">45+ resources</p>
+            <div className="text-center p-6 border-2 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] bg-white border-sky-200 hover:border-sky-300">
+              <h4 className="font-semibold text-lg text-slate-800 mb-2">English</h4>
+              <p className="text-sm text-slate-600 font-medium">45+ resources</p>
             </div>
-            <div className="text-center p-6 border-2 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] bg-white border-gray-200">
-              <h4 className="font-semibold text-lg text-gray-800 mb-2">Hindi</h4>
-              <p className="text-sm text-gray-600">32+ resources</p>
+            <div className="text-center p-6 border-2 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] bg-white border-mint-200 hover:border-mint-300">
+              <h4 className="font-semibold text-lg text-slate-800 mb-2">Hindi</h4>
+              <p className="text-sm text-slate-600 font-medium">32+ resources</p>
             </div>
-            <div className="text-center p-6 border-2 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] bg-white border-gray-200">
-              <h4 className="font-semibold text-lg text-gray-800 mb-2">Regional Languages</h4>
-              <p className="text-sm text-gray-600">18+ resources</p>
+            <div className="text-center p-6 border-2 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] bg-white border-lavender-200 hover:border-lavender-300">
+              <h4 className="font-semibold text-lg text-slate-800 mb-2">Regional Languages</h4>
+              <p className="text-sm text-slate-600 font-medium">18+ resources</p>
             </div>
           </div>
         </CardContent>
