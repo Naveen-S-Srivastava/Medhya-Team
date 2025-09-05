@@ -48,7 +48,7 @@ const StressAssessment = ({ isPopup = false, onAssessmentComplete }) => {
         console.error('Error loading initial data:', error);
       }
     };
-    
+
     loadData();
   }, []);
 
@@ -83,13 +83,13 @@ const StressAssessment = ({ isPopup = false, onAssessmentComplete }) => {
       await submitAssessment(currentAssessment, responses);
       setShowQuiz(false);
       setCurrentAssessment(null);
-      
+
       // Refresh data
       getAssessmentHistory();
       getFiveDayAverages();
       getAssessmentStats();
       getTodayAssessments();
-      
+
       // Notify parent component
       if (onAssessmentComplete) {
         onAssessmentComplete();
@@ -130,7 +130,7 @@ const StressAssessment = ({ isPopup = false, onAssessmentComplete }) => {
     if (!showQuiz) return null;
     if (!questions || questions.length === 0) {
       return (
-        <div className="absolute inset-0 bg-white flex items-center justify-center z-10">
+        <div className="flex items-center justify-center py-8">
           <Card className="w-full max-w-2xl">
             <CardContent className="p-6">
               <div className="text-center">
@@ -149,16 +149,30 @@ const StressAssessment = ({ isPopup = false, onAssessmentComplete }) => {
     const progress = ((currentQuestion + 1) / questions.length) * 100;
 
     return (
-      <div className="absolute inset-0 bg-white flex items-center justify-center z-10">
-        <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+      <div className="flex items-center justify-center py-4">
+        <Card className="w-full max-w-2xl max-h-[70vh] overflow-y-auto">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl">
                 {currentAssessment} Assessment
               </CardTitle>
-              <Badge variant="outline">
-                {currentQuestion + 1} of {questions.length}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowQuiz(false);
+                    setCurrentAssessment(null);
+                    setCurrentQuestion(0);
+                    setResponses([]);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Badge variant="outline">
+                  {currentQuestion + 1} of {questions.length}
+                </Badge>
+              </div>
             </div>
             <Progress value={progress} className="w-full" />
           </CardHeader>
@@ -234,64 +248,64 @@ const StressAssessment = ({ isPopup = false, onAssessmentComplete }) => {
         </CardContent>
       </Card>
 
-             {/* Quick Assessment */}
-       <Card>
-         <CardHeader>
-           <CardTitle>Quick Assessment</CardTitle>
-         </CardHeader>
-         <CardContent>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div className="text-center p-6 border rounded-lg">
-               <h4 className="font-semibold mb-2">Anxiety Assessment (GAD-7)</h4>
-               <p className="text-sm text-muted-foreground mb-4">
-                 Assess your anxiety levels over the past 2 weeks
-               </p>
-                               {todayAssessments['GAD-7'] && todayAssessments['GAD-7'].score !== undefined ? (
-                  <div className="space-y-2">
-                    <Button disabled className="w-full">
-                      Already Completed Today
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      Score: {todayAssessments['GAD-7'].score}
-                    </p>
-                  </div>
-                ) : (
-                 <Button 
-                   onClick={() => handleStartAssessment('GAD-7')}
-                   className="w-full"
-                   disabled={loading}
-                 >
-                   {loading ? 'Loading...' : 'Start GAD-7'}
-                 </Button>
-               )}
-             </div>
-             <div className="text-center p-6 border rounded-lg">
-               <h4 className="font-semibold mb-2">Depression Assessment (PHQ-9)</h4>
-               <p className="text-sm text-muted-foreground mb-4">
-                 Assess your depression levels over the past 2 weeks
-               </p>
-                               {todayAssessments['PHQ-9'] && todayAssessments['PHQ-9'].score !== undefined ? (
-                  <div className="space-y-2">
-                    <Button disabled className="w-full">
-                      Already Completed Today
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      Score: {todayAssessments['PHQ-9'].score}
-                    </p>
-                  </div>
-                ) : (
-                 <Button 
-                   onClick={() => handleStartAssessment('PHQ-9')}
-                   className="w-full"
-                   disabled={loading}
-                 >
-                   {loading ? 'Loading...' : 'Start PHQ-9'}
-                 </Button>
-               )}
-             </div>
-           </div>
-         </CardContent>
-       </Card>
+      {/* Quick Assessment */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Assessment</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="text-center p-6 border rounded-lg">
+              <h4 className="font-semibold mb-2">Anxiety Assessment (GAD-7)</h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                Assess your anxiety levels over the past 2 weeks
+              </p>
+              {todayAssessments['GAD-7'] && todayAssessments['GAD-7'].score !== undefined ? (
+                <div className="space-y-2">
+                  <Button disabled className="w-full">
+                    Already Completed Today
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Score: {todayAssessments['GAD-7'].score}
+                  </p>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => handleStartAssessment('GAD-7')}
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? 'Loading...' : 'Start GAD-7'}
+                </Button>
+              )}
+            </div>
+            <div className="text-center p-6 border rounded-lg">
+              <h4 className="font-semibold mb-2">Depression Assessment (PHQ-9)</h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                Assess your depression levels over the past 2 weeks
+              </p>
+              {todayAssessments['PHQ-9'] && todayAssessments['PHQ-9'].score !== undefined ? (
+                <div className="space-y-2">
+                  <Button disabled className="w-full">
+                    Already Completed Today
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Score: {todayAssessments['PHQ-9'].score}
+                  </p>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => handleStartAssessment('PHQ-9')}
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? 'Loading...' : 'Start PHQ-9'}
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Statistics */}
       <Card>
@@ -301,27 +315,27 @@ const StressAssessment = ({ isPopup = false, onAssessmentComplete }) => {
             Assessment Statistics
           </CardTitle>
         </CardHeader>
-                 <CardContent>
-           {stats && stats.totalAssessments > 0 ? (
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-               <div className="text-center">
-                 <div className="text-2xl font-bold">{stats.totalAssessments}</div>
-                 <div className="text-sm text-muted-foreground">Total Assessments</div>
-               </div>
-               <div className="text-center">
-                 <div className="text-2xl font-bold">{stats.averageScore.toFixed(1)}</div>
-                 <div className="text-sm text-muted-foreground">Average Score</div>
-               </div>
-               <div className="text-center">
-                 <div className="text-2xl font-bold">{stats.highestScore}</div>
-                 <div className="text-sm text-muted-foreground">Highest Score</div>
-               </div>
-               <div className="text-center">
-                 <div className="text-2xl font-bold">{stats.lowestScore}</div>
-                 <div className="text-sm text-muted-foreground">Lowest Score</div>
-               </div>
-             </div>
-           ) : (
+        <CardContent>
+          {stats && stats.totalAssessments > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold">{stats.totalAssessments}</div>
+                <div className="text-sm text-muted-foreground">Total Assessments</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">{stats.averageScore.toFixed(1)}</div>
+                <div className="text-sm text-muted-foreground">Average Score</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">{stats.highestScore}</div>
+                <div className="text-sm text-muted-foreground">Highest Score</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">{stats.lowestScore}</div>
+                <div className="text-sm text-muted-foreground">Lowest Score</div>
+              </div>
+            </div>
+          ) : (
             <div className="text-center py-8">
               <BarChart3 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="font-medium mb-2">No statistics available</h3>
@@ -335,7 +349,7 @@ const StressAssessment = ({ isPopup = false, onAssessmentComplete }) => {
     </div>
   );
 
-    const renderHistory = () => {
+  const renderHistory = () => {
     const filteredAssessments = (assessmentHistory || []).filter(
       assessment => activeTab === 'all' || assessment.type === activeTab
     );
@@ -343,19 +357,19 @@ const StressAssessment = ({ isPopup = false, onAssessmentComplete }) => {
     return (
       <div className="space-y-4">
         <div className="flex gap-2 mb-4">
-          <Button 
+          <Button
             variant={activeTab === 'all' ? 'default' : 'outline'}
             onClick={() => setActiveTab('all')}
           >
             All
           </Button>
-          <Button 
+          <Button
             variant={activeTab === 'GAD-7' ? 'default' : 'outline'}
             onClick={() => setActiveTab('GAD-7')}
           >
             GAD-7
           </Button>
-          <Button 
+          <Button
             variant={activeTab === 'PHQ-9' ? 'default' : 'outline'}
             onClick={() => setActiveTab('PHQ-9')}
           >
@@ -375,8 +389,8 @@ const StressAssessment = ({ isPopup = false, onAssessmentComplete }) => {
             <BarChart3 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="font-medium mb-2">No assessments found</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {activeTab === 'all' 
-                ? 'You haven\'t completed any assessments yet.' 
+              {activeTab === 'all'
+                ? 'You haven\'t completed any assessments yet.'
                 : `You haven\'t completed any ${activeTab} assessments yet.`}
             </p>
             <Button onClick={() => setActiveTab('overview')}>
@@ -457,20 +471,22 @@ const StressAssessment = ({ isPopup = false, onAssessmentComplete }) => {
         </Alert>
       )}
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="space-y-4">
-          {renderOverview()}
-        </TabsContent>
-        <TabsContent value="history" className="space-y-4">
-          {renderHistory()}
-        </TabsContent>
-      </Tabs>
-
-      {renderQuiz()}
+      {showQuiz ? (
+        renderQuiz()
+      ) : (
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="space-y-4">
+            {renderOverview()}
+          </TabsContent>
+          <TabsContent value="history" className="space-y-4">
+            {renderHistory()}
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 };

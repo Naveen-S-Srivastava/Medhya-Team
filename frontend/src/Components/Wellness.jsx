@@ -363,8 +363,8 @@ export default function Wellness() {
 
       {/* Journal Popup */}
       {showJournalPopup && (
-        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-black  flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
@@ -422,7 +422,7 @@ export default function Wellness() {
                   </div>
                 ) : (
                   <form onSubmit={handleJournalSubmit} className="space-y-6">
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div className="grid  gap-6 md:grid-cols-2">
                       <div>
                         <label className="block text-sm font-medium mb-2">How are you feeling today?</label>
                         <Select value={journalForm.mood} onValueChange={(value) => setJournalForm({ ...journalForm, mood: value })}>
