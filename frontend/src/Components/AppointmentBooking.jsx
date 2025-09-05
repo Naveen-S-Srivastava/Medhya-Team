@@ -345,7 +345,7 @@ const AppointmentBooking = () => {
                                 <p className="text-red-600">Error loading counselors: {counselorsError}</p>
                             </div>
                         ) : (
-                            <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
+                            <div className="max-h-156 overflow-y-auto space-y-4 pr-2">
                                 {filteredCounselors.length > 0 ? (
                                     filteredCounselors.map((counselor) => (
                                         <Card
@@ -467,7 +467,7 @@ const AppointmentBooking = () => {
                     <div className="flex justify-between items-center pt-4">
                         <Alert className="flex-1 mr-4">
                             <Shield className="h-4 w-4" />
-                            <AlertDescription>
+                            <AlertDescription className="mt-1">
                                 All appointments are completely confidential and HIPAA compliant.
                             </AlertDescription>
                         </Alert>
