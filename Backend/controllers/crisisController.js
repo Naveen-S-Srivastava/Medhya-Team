@@ -30,6 +30,82 @@ export const listCrisisAlerts = async (req, res) => {
   }
 };
 
+export const getCrisisAnalytics = async (req, res) => {
+  try {
+    const { timeRange = '30d' } = req.query;
+
+    // Calculate date range
+    const now = new Date();
+    let startDate;
+    switch (timeRange) {
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90d':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    // Get crisis alerts within the time range
+    const crisisAlerts = await CrisisAlert.find({
+      createdAt: { $gte: startDate }
+    });
+
+    // Aggregate by type
+    const typeStats = {};
+    crisisAlerts.forEach(alert => {
+      if (!typeStats[alert.type]) {
+        typeStats[alert.type] = {
+          count: 0,
+          severityBreakdown: { critical: 0, high: 0, medium: 0, low: 0 }
+        };
+      }
+      typeStats[alert.type].count++;
+      typeStats[alert.type].severityBreakdown[alert.severity]++;
+    });
+
+    // Aggregate by severity
+    const severityStats = { critical: 0, high: 0, medium: 0, low: 0 };
+    crisisAlerts.forEach(alert => {
+      severityStats[alert.severity]++;
+    });
+
+    // Aggregate by source
+    const sourceStats = {};
+    crisisAlerts.forEach(alert => {
+      if (!sourceStats[alert.source]) {
+        sourceStats[alert.source] = 0;
+      }
+      sourceStats[alert.source]++;
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        timeRange,
+        summary: {
+          totalAlerts: crisisAlerts.length,
+          uniqueTypes: Object.keys(typeStats).length,
+          dateRange: {
+            start: startDate.toISOString().split('T')[0],
+            end: now.toISOString().split('T')[0]
+          }
+        },
+        typeBreakdown: typeStats,
+        severityBreakdown: severityStats,
+        sourceBreakdown: sourceStats
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const updateCrisisStatus = async (req, res) => {
   try {
     const { id } = req.params;

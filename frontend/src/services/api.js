@@ -219,6 +219,8 @@ export const crisisAPI = {
   resolveCrisisAlert: (id) => apiCall(`/crisis/${id}/resolve`, {
     method: 'POST',
   }),
+  
+  getCrisisAnalytics: (timeRange = '30d') => apiCall(`/crisis/analytics?timeRange=${timeRange}`),
 };
 
 export default {
