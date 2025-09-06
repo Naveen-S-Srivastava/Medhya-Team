@@ -12,7 +12,7 @@ export const useAssessmentAnalytics = (timeRange = '7d') => {
       setLoading(true);
       setError(null);
       const result = await assessmentAPI.getAssessmentAnalytics(timeRange);
-      setData(result);
+      setData(result.data); // Extract data from response
     } catch (err) {
       setError(err.message);
       console.error('Error fetching assessment analytics:', err);
@@ -44,7 +44,7 @@ export const useWeeklyPatterns = () => {
         setLoading(true);
         setError(null);
         const result = await assessmentAPI.getWeeklyPatterns();
-        setData(result);
+        setData(result.data); // Extract data from response
       } catch (err) {
         setError(err.message);
         console.error('Error fetching weekly patterns:', err);
@@ -60,37 +60,28 @@ export const useWeeklyPatterns = () => {
 };
 
 // Hook for processing assessment data for charts
-export const useAssessmentChartData = (assessments) => {
+export const useAssessmentChartData = (analyticsData) => {
   return useMemo(() => {
-    if (!assessments || assessments.length === 0) {
+    if (!analyticsData || !analyticsData.typeBreakdown) {
       return {
         labels: [],
         datasets: []
       };
     }
 
-    // Group assessments by type and calculate averages
-    const groupedData = assessments.reduce((acc, assessment) => {
-      if (!acc[assessment.type]) {
-        acc[assessment.type] = [];
-      }
-      acc[assessment.type].push(assessment.score);
-      return acc;
-    }, {});
-
-    // Calculate average scores for each assessment type
-    const averageScores = Object.entries(groupedData).map(([type, scores]) => ({
+    // Use the aggregated typeBreakdown data from backend
+    const typeData = Object.entries(analyticsData.typeBreakdown).map(([type, data]) => ({
       type,
-      averageScore: scores.reduce((sum, score) => sum + score, 0) / scores.length,
-      count: scores.length
+      averageScore: data.averageScore,
+      count: data.count
     }));
 
     // Prepare chart data
-    const labels = averageScores.map(item => item.type);
+    const labels = typeData.map(item => item.type);
     const datasets = [
       {
         label: 'Average Score',
-        data: averageScores.map(item => Math.round(item.averageScore * 10) / 10),
+        data: typeData.map(item => item.averageScore),
         backgroundColor: [
           'rgba(255, 99, 132, 0.6)',
           'rgba(54, 162, 235, 0.6)',
@@ -109,7 +100,7 @@ export const useAssessmentChartData = (assessments) => {
       },
       {
         label: 'Number of Assessments',
-        data: averageScores.map(item => item.count),
+        data: typeData.map(item => item.count),
         backgroundColor: [
           'rgba(255, 99, 132, 0.3)',
           'rgba(54, 162, 235, 0.3)',
@@ -129,7 +120,7 @@ export const useAssessmentChartData = (assessments) => {
     ];
 
     return { labels, datasets };
-  }, [assessments]);
+  }, [analyticsData]);
 };
 
 // Hook for processing weekly patterns data
