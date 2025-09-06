@@ -195,6 +195,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         if (!formData.studentId) newErrors.studentId = "Student ID is required"
         if (!formData.course) newErrors.course = "Course is required"
         if (!formData.year) newErrors.year = "Academic year is required"
+        if (!formData.gender) newErrors.gender = "Gender is required"
         break
       case 2:
         if (!formData.password) {
@@ -309,26 +310,43 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         if (!token) {
           throw new Error('No authentication token found. Please log in again.');
         }
+        // Validate required fields
+        const requiredFields = [
+          'firstName', 'lastName', 'phone', 'dateOfBirth', 'gender',
+          'institutionId', 'studentId', 'course', 'year',
+          'securityQuestion', 'securityAnswer',
+          'emergencyContact', 'emergencyPhone'
+        ];
+        
+        const missingFields = requiredFields.filter(field => !formData[field] || String(formData[field]).trim() === '');
+        if (missingFields.length > 0) {
+          throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
+        }
+        
+        if (!formData.privacyConsent || !formData.dataProcessingConsent || !formData.mentalHealthConsent) {
+          throw new Error('Please accept all required consents');
+        }
+
         const userDetailsData = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          username: `${(formData.firstName || "").toLowerCase()}${(formData.lastName || "").toLowerCase()}${Date.now()}`,
-          phone: formData.phone,
+          firstName: formData.firstName?.trim(),
+          lastName: formData.lastName?.trim(),
+          username: `${(formData.firstName || "").toLowerCase().substring(0, 10)}${(formData.lastName || "").toLowerCase().substring(0, 10)}${Date.now().toString().slice(-6)}`,
+          phone: formData.phone?.trim(),
           dateOfBirth: formData.dateOfBirth,
           gender: formData.gender,
           institutionId: formData.institutionId,
-          studentId: formData.studentId,
+          studentId: formData.studentId?.trim(),
           course: formData.course,
           year: formData.year,
-          department: formData.department,
+          department: formData.department?.trim() || undefined,
           securityQuestion: formData.securityQuestion,
-          securityAnswer: formData.securityAnswer,
-          privacyConsent: formData.privacyConsent,
-          dataProcessingConsent: formData.dataProcessingConsent,
-          emergencyContact: formData.emergencyContact,
-          emergencyPhone: formData.emergencyPhone,
-          mentalHealthConsent: formData.mentalHealthConsent,
-          communicationConsent: formData.communicationConsent,
+          securityAnswer: formData.securityAnswer?.trim(),
+          privacyConsent: Boolean(formData.privacyConsent),
+          dataProcessingConsent: Boolean(formData.dataProcessingConsent),
+          emergencyContact: formData.emergencyContact?.trim(),
+          emergencyPhone: formData.emergencyPhone?.trim(),
+          mentalHealthConsent: Boolean(formData.mentalHealthConsent),
+          communicationConsent: Boolean(formData.communicationConsent),
         };
         if (!user || !user._id) {
           throw new Error('User not found. Please log in again.');
@@ -517,14 +535,29 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
                 {errors.year && <p className="text-sm text-red-600">{errors.year}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
-                <Input
-                  id="department"
-                  value={formData.department}
-                  onChange={(e) => handleInputChange("department", e.target.value)}
-                  placeholder="e.g., Computer Science"
-                />
+                <Label htmlFor="gender">Gender *</Label>
+                <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
+                  <SelectTrigger className={errors.gender ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.gender && <p className="text-sm text-red-600">{errors.gender}</p>}
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="department">Department</Label>
+              <Input
+                id="department"
+                value={formData.department}
+                onChange={(e) => handleInputChange("department", e.target.value)}
+                placeholder="e.g., Computer Science"
+              />
             </div>
           </div>
         )

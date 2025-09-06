@@ -187,6 +187,13 @@ export const appointmentAPI = {
   getAvailableSlots: (counselorId, date) => apiCall(`/appointments/available-slots?counselorId=${counselorId}&date=${date}`),
 };
 
+// Admin API
+export const adminAPI = {
+  getDashboardStats: () => apiCall('/admin/dashboard-stats'),
+  
+  getTest: () => apiCall('/admin/test'),
+};
+
 // Crisis API
 export const crisisAPI = {
   createCrisisAlert: (crisisData) => apiCall('/crisis', {
@@ -230,4 +237,5 @@ export default {
   assessmentAPI,
   appointmentAPI,
   crisisAPI,
+  adminAPI,
 };

@@ -98,9 +98,11 @@ export default function Wellness() {
     getTodayEntry();
     getWeeklyProgress();
     getJournalStats();
-    getJournalEntries({ page: currentPage, limit: 10 });
+    if (activeTab === 'view') {
+      getJournalEntries({ page: currentPage, limit: 10 });
+    }
     getTodayAssessments();
-  }, [currentPage]);
+  }, [currentPage, activeTab]);
 
   const handleMoodSelect = (mood) => {
     setCurrentMood(mood)
