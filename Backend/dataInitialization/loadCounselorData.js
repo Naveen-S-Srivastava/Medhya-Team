@@ -4,14 +4,14 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Load environment variables
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 // Import the Counselor model
-import Counselor from './models/counselorModel.js';
+import Counselor from '../models/counselorModel.js';
 
 // Connect to MongoDB
 const connectDB = async () => {
@@ -28,7 +28,7 @@ const connectDB = async () => {
 const loadCounselorData = async () => {
   try {
     // Read the sample data file
-    const sampleDataPath = path.join(__dirname, 'jsonFiles', 'counselors_sample.json');
+    const sampleDataPath = path.join(__dirname, '..', 'jsonFiles', 'counselors_sample.json');
     const sampleData = JSON.parse(fs.readFileSync(sampleDataPath, 'utf8'));
 
     // Clear existing counselors

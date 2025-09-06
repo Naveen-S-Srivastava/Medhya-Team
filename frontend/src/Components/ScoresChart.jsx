@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Bar } from "react-chartjs-2";
 import {
@@ -29,7 +30,7 @@ ChartJS.register(
 export default function ScoresChart({ timeRange: initialTimeRange = '7d', title = "Assessment Scores Analytics" }) {
   const [timeRange, setTimeRange] = React.useState(initialTimeRange);
   const { data: analyticsData, loading, error, refetch } = useAssessmentAnalytics(timeRange);
-  const chartData = useAssessmentChartData(analyticsData?.assessments || []) || { labels: [], datasets: [] };
+  const chartData = useAssessmentChartData(analyticsData) || { labels: [], datasets: [] };
 
   // Chart options
   const options = {
@@ -170,23 +171,23 @@ export default function ScoresChart({ timeRange: initialTimeRange = '7d', title 
         </div>
         
         {/* Summary stats */}
-        {analyticsData && (
+        {analyticsData && analyticsData.summary && (
           <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {analyticsData.totalAssessments || 0}
+                {analyticsData.summary.totalAssessments || 0}
               </div>
               <div className="text-sm text-muted-foreground">Total Assessments</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {analyticsData.uniqueUsers || 0}
+                {analyticsData.summary.uniqueUsers || 0}
               </div>
               <div className="text-sm text-muted-foreground">Active Users</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">
-                {analyticsData.averageScore ? Math.round(analyticsData.averageScore * 10) / 10 : 0}
+                {analyticsData.summary.averageScore ? Math.round(analyticsData.summary.averageScore * 10) / 10 : 0}
               </div>
               <div className="text-sm text-muted-foreground">Avg Score</div>
             </div>

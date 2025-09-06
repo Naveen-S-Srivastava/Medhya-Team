@@ -3,21 +3,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
-import { Badge } from '../ui/Badge';
 import { Alert, AlertDescription } from '../ui/Alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
-import { 
-  Heart, Shield, UserPlus, Globe, CheckCircle, AlertTriangle,
-  Phone, Mail, MapPin, Calendar, ArrowRight, ArrowLeft
+import {
+  Shield, UserPlus, ArrowRight, ArrowLeft,
 } from 'lucide-react';
 
+import LP from "../assets/logo1.jpg";
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Footer from './Footer';
 
 const UserSignup = ({ onNext, onShowLogin, onBack }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [progress, setProgress] = useState(0);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -27,42 +28,48 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
     gender: '',
   });
 
-  // Handle Google OAuth flow
+  const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'dateOfBirth', 'gender'];
+
+  // Handle Google OAuth flow and pre-fill form
   useEffect(() => {
     if (location.state?.user && location.state?.isProfileCompletion) {
       const user = location.state.user;
-      console.log('🔍 Pre-filling form with user data:', user);
-      
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
         phone: user.phone || '',
         dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
-        gender: user.gender || '',
-      });
+      }));
     }
   }, [location.state]);
+
+  // Update progress bar
+  useEffect(() => {
+    const completedFields = requiredFields.filter(field => formData[field] && String(formData[field]).trim() !== '');
+    const newProgress = (completedFields.length / requiredFields.length) * 100;
+    setProgress(Math.round(newProgress));
+  }, [formData]);
 
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
     const newErrors = {};
-    
-    if (!formData.firstName) newErrors.firstName = 'First name is required';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required';
-    if (!formData.email) {
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-    if (!formData.phone) {
+    if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
     } else if (!/^\+?[\d\s-()]{10,}$/.test(formData.phone)) {
       newErrors.phone = 'Please enter a valid phone number';
     }
-    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-    
+    if (!formData.dateOfBirth.trim()) newErrors.dateOfBirth = 'Date of birth is required';
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -76,20 +83,16 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
+
     try {
-      // Always redirect to Signup.jsx for academic details
-      // This ensures users complete their full profile before accessing dashboard
-      console.log('🔄 Redirecting to Signup for academic details');
-      navigate('/signup', { 
-        state: { 
+      navigate('/signup', {
+        state: {
           userData: formData,
           fromUserSignup: true,
-          // Preserve any existing state
           ...location.state
-        } 
+        }
       });
     } catch (error) {
       console.error('❌ Error in handleSubmit:', error);
@@ -105,9 +108,9 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center">
             <Link to="/">
-            <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg">
-              <Heart className="w-8 h-8 text-white" />
-            </div>
+              <div>
+                <img className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg" src={LP} alt="MEDHYA Logo" />
+              </div>
             </Link>
           </div>
           <div>
@@ -119,17 +122,19 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
             </p>
           </div>
         </div>
-
         <Card className="shadow-xl border-0">
           <CardHeader className="space-y-4">
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Step 1 of 1</span>
-                <span>100% Complete</span>
+                <span>{progress}% Complete</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full" style={{ width: '100%' }}></div>
+                <div
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
+                ></div>
               </div>
             </div>
 
@@ -242,9 +247,9 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
                   </Button>
                 )}
               </div>
-              
+
               <div className="flex gap-2">
-                <Button 
+                <Button
                   onClick={handleSubmit}
                   disabled={isLoading}
                   className="bg-gradient-to-r from-blue-600 to-purple-600"
@@ -280,31 +285,13 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
         <Alert className="border-blue-200 bg-blue-50">
           <Shield className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            <strong>Your data is secure.</strong> We use industry-standard encryption and comply with 
+            <strong>Your data is secure.</strong> We use industry-standard encryption and comply with
             privacy regulations to protect your mental health information.
           </AlertDescription>
         </Alert>
 
         {/* Footer */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Shield className="w-4 h-4" />
-              <span>HIPAA Compliant</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Globe className="w-4 h-4" />
-              <span>15+ Languages</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              <span>24/7 Support</span>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            © 2024 MEDHYA - Built for Smart India Hackathon
-          </p>
-        </div>
+        <Footer />
       </div>
     </div>
   );

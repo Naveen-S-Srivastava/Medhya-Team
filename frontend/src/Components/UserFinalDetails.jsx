@@ -1,14 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/Card"
-import { Button } from "../ui/Button"
-import { Input } from "../ui/Input"
-import { Label } from "../ui/Label"
-import { Alert, AlertDescription } from "../ui/Alert"
-import { Progress } from "../ui/Progress"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/Select"
-import { Checkbox } from "../ui/Checkbox"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/Card.jsx"
+import { Button } from "../ui/Button.jsx"
+import { Input } from "../ui/Input.jsx"
+import { Label } from "../ui/Label.jsx"
+import { Alert, AlertDescription } from "../ui/Alert.jsx"
+import { Progress } from "../ui/Progress.jsx"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/Select.jsx"
+import { Checkbox } from "../ui/Checkbox.jsx"
 import {
   Heart,
   Shield,
@@ -24,9 +24,12 @@ import {
   ArrowRight,
   Clock,
 } from "lucide-react"
-import { useLocation, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { API_BASE_URL } from "../config/environment.js"
 import { useAuth } from "../hooks/useAuth.js"
+
+import LP from "../assets/logo1.jpg";
+import Footer from "./Footer.jsx"
 
 const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
   const location = useLocation()
@@ -36,30 +39,24 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [progress, setProgress] = useState(0);
 
   const [formData, setFormData] = useState({
-    // Basic User Information (from UserSignup)
     firstName: userData?.firstName || "",
     lastName: userData?.lastName || "",
     email: userData?.email || "",
     phone: userData?.phone || "",
     dateOfBirth: userData?.dateOfBirth || "",
     gender: userData?.gender || "",
-
-    // Step 1: Academic Information
     institutionId: "",
     studentId: "",
     course: "",
     year: "",
     department: "",
-
-    // Step 2: Account Security
     password: "",
     confirmPassword: "",
     securityQuestion: "",
     securityAnswer: "",
-
-    // Step 3: Consent & Privacy
     privacyConsent: false,
     dataProcessingConsent: false,
     emergencyContact: "",
@@ -83,10 +80,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         gender: userData.gender || "",
       }))
     }
-
-    // Handle Google OAuth flow from location state
     if (location.state?.userData) {
-      console.log("🔍 Setting form data from location state:", location.state.userData)
       setFormData((prev) => ({
         ...prev,
         firstName: location.state.userData.firstName || "",
@@ -97,10 +91,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         gender: location.state.userData.gender || "",
       }))
     }
-
-    // Handle Google data from login flow (user not found)
     if (location.state?.googleData) {
-      console.log("🔍 Setting form data from Google login flow:", location.state.googleData)
       setFormData((prev) => ({
         ...prev,
         firstName: location.state.googleData.firstName || "",
@@ -113,6 +104,52 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
     }
   }, [userData, location.state])
 
+  // Update progress based on form data and current step
+  useEffect(() => {
+    const totalSteps = 3;
+    const stepWeight = 100 / totalSteps;
+    let completedFieldsInCurrentStep = 0;
+    let requiredFieldsInCurrentStep = 0;
+
+    switch (currentStep) {
+      case 1:
+        requiredFieldsInCurrentStep = 4;
+        const academicFields = ['institutionId', 'studentId', 'course', 'year'];
+        completedFieldsInCurrentStep = academicFields.filter(field => formData[field] && String(formData[field]).trim() !== '').length;
+        break;
+      case 2:
+        requiredFieldsInCurrentStep = 3;
+        const securityFields = ['password', 'confirmPassword', 'securityQuestion', 'securityAnswer'];
+        completedFieldsInCurrentStep = securityFields.filter(field => formData[field] && String(formData[field]).trim() !== '').length;
+        // Password validation counts as one completion point for both fields if they match
+        if (formData.password && formData.password === formData.confirmPassword) {
+            completedFieldsInCurrentStep = Math.min(completedFieldsInCurrentStep, 3);
+        } else if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+            completedFieldsInCurrentStep = completedFieldsInCurrentStep -1;
+        }
+        break;
+      case 3:
+        requiredFieldsInCurrentStep = 4;
+        const consentFields = ['privacyConsent', 'dataProcessingConsent', 'mentalHealthConsent', 'emergencyContact', 'emergencyPhone'];
+        completedFieldsInCurrentStep = consentFields.filter(field => {
+          if (field === 'privacyConsent' || field === 'dataProcessingConsent' || field === 'mentalHealthConsent') {
+            return formData[field] === true;
+          }
+          return formData[field] && String(formData[field]).trim() !== '';
+        }).length;
+        break;
+      default:
+        break;
+    }
+
+    const currentStepProgress = requiredFieldsInCurrentStep > 0 ? (completedFieldsInCurrentStep / requiredFieldsInCurrentStep) * stepWeight : 0;
+    const previousStepsProgress = (currentStep - 1) * stepWeight;
+    const totalProgress = previousStepsProgress + currentStepProgress;
+
+    setProgress(Math.round(totalProgress));
+  }, [formData, currentStep]);
+
+  // Data arrays
   const institutions = [
     { id: "iit-delhi", name: "Indian Institute of Technology, Delhi" },
     { id: "iit-bombay", name: "Indian Institute of Technology, Bombay" },
@@ -152,15 +189,14 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
 
   const validateStep = (step) => {
     const newErrors = {}
-
     switch (step) {
       case 1:
         if (!formData.institutionId) newErrors.institutionId = "Institution is required"
         if (!formData.studentId) newErrors.studentId = "Student ID is required"
         if (!formData.course) newErrors.course = "Course is required"
         if (!formData.year) newErrors.year = "Academic year is required"
+        if (!formData.gender) newErrors.gender = "Gender is required"
         break
-
       case 2:
         if (!formData.password) {
           newErrors.password = "Password is required"
@@ -175,7 +211,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         if (!formData.securityQuestion) newErrors.securityQuestion = "Security question is required"
         if (!formData.securityAnswer) newErrors.securityAnswer = "Security answer is required"
         break
-
       case 3:
         if (!formData.privacyConsent) newErrors.privacyConsent = "Privacy consent is required"
         if (!formData.dataProcessingConsent) newErrors.dataProcessingConsent = "Data processing consent is required"
@@ -184,7 +219,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         if (!formData.emergencyPhone) newErrors.emergencyPhone = "Emergency contact phone is required"
         break
     }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -215,39 +249,29 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
       email: originalUser?.email || payload.email,
       googleId: originalUser?.googleId,
     })
-
-            const response = await fetch(`${API_BASE_URL}/users/complete-profile`, {
+    const response = await fetch(`${API_BASE_URL}/users/complete-profile`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body,
     })
-
     let data;
     try {
       data = await response.json()
     } catch (error) {
       throw new Error("Server error - please try again later")
     }
-
     if (!response.ok) {
       throw new Error(data?.message || `Profile completion failed (${response.status})`)
     }
-
     return data
   }
 
   const handleSubmit = async () => {
     if (!validateStep(3)) return
-
     setIsLoading(true)
-
     try {
-      // Generate username from first and last name
       const username = `${(formData.firstName || "").toLowerCase()}${(formData.lastName || "").toLowerCase()}${Date.now()}`
-
-      // Prepare the complete user data
       const compiledUserData = {
-        // Basic information (from UserSignup)
         firstName: formData.firstName,
         lastName: formData.lastName,
         username,
@@ -255,21 +279,15 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         phone: formData.phone,
         dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
-
-        // Academic information
         institutionId: formData.institutionId,
         studentId: formData.studentId,
         course: formData.course,
         year: formData.year,
         department: formData.department,
-
-        // Security information
         password: formData.password,
         passwordConfirm: formData.confirmPassword,
         securityQuestion: formData.securityQuestion,
         securityAnswer: formData.securityAnswer,
-
-        // Consent information
         privacyConsent: formData.privacyConsent,
         dataProcessingConsent: formData.dataProcessingConsent,
         emergencyContact: formData.emergencyContact,
@@ -277,203 +295,152 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         mentalHealthConsent: formData.mentalHealthConsent,
         communicationConsent: formData.communicationConsent,
       }
-
-      // Check if this is from Google login flow (user not found)
       const isFromGoogleLogin = location.state?.googleData;
-      
-      // Check if this is from UserSignup flow
       const isFromUserSignup = location.state?.fromUserSignup;
-      
+
       if (fromGoogle) {
         await completeGoogleProfile(compiledUserData)
-
-        // Success - profile completed; redirect
         if (onLogin) onLogin("student")
         navigate("/contact-choice")
         return
       }
 
       if (isFromUserSignup && user && localStorage.getItem('token')) {
-        console.log('🚀 UserSignup flow - saving to user details schema');
-        console.log('🔍 Current user from useAuth:', user);
-        console.log('🔍 Token from localStorage:', localStorage.getItem('token'));
-        
-        // Get the current user's token
         const token = localStorage.getItem('token');
         if (!token) {
           throw new Error('No authentication token found. Please log in again.');
         }
+        // Validate required fields
+        const requiredFields = [
+          'firstName', 'lastName', 'phone', 'dateOfBirth', 'gender',
+          'institutionId', 'studentId', 'course', 'year',
+          'securityQuestion', 'securityAnswer',
+          'emergencyContact', 'emergencyPhone'
+        ];
+        
+        const missingFields = requiredFields.filter(field => !formData[field] || String(formData[field]).trim() === '');
+        if (missingFields.length > 0) {
+          throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
+        }
+        
+        if (!formData.privacyConsent || !formData.dataProcessingConsent || !formData.mentalHealthConsent) {
+          throw new Error('Please accept all required consents');
+        }
 
-        // Prepare the user details data
         const userDetailsData = {
-          // Basic information (from UserSignup)
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          username: `${(formData.firstName || "").toLowerCase()}${(formData.lastName || "").toLowerCase()}${Date.now()}`,
-          phone: formData.phone,
+          firstName: formData.firstName?.trim(),
+          lastName: formData.lastName?.trim(),
+          username: `${(formData.firstName || "").toLowerCase().substring(0, 10)}${(formData.lastName || "").toLowerCase().substring(0, 10)}${Date.now().toString().slice(-6)}`,
+          phone: formData.phone?.trim(),
           dateOfBirth: formData.dateOfBirth,
           gender: formData.gender,
-
-          // Academic information
           institutionId: formData.institutionId,
-          studentId: formData.studentId,
+          studentId: formData.studentId?.trim(),
           course: formData.course,
           year: formData.year,
-          department: formData.department,
-
-          // Security information
+          department: formData.department?.trim() || undefined,
           securityQuestion: formData.securityQuestion,
-          securityAnswer: formData.securityAnswer,
-
-          // Consent information
-          privacyConsent: formData.privacyConsent,
-          dataProcessingConsent: formData.dataProcessingConsent,
-          emergencyContact: formData.emergencyContact,
-          emergencyPhone: formData.emergencyPhone,
-          mentalHealthConsent: formData.mentalHealthConsent,
-          communicationConsent: formData.communicationConsent,
+          securityAnswer: formData.securityAnswer?.trim(),
+          privacyConsent: Boolean(formData.privacyConsent),
+          dataProcessingConsent: Boolean(formData.dataProcessingConsent),
+          emergencyContact: formData.emergencyContact?.trim(),
+          emergencyPhone: formData.emergencyPhone?.trim(),
+          mentalHealthConsent: Boolean(formData.mentalHealthConsent),
+          communicationConsent: Boolean(formData.communicationConsent),
         };
-
-        console.log('🔍 Saving user details:', userDetailsData);
-
-        // Get user ID from the current user context
         if (!user || !user._id) {
           throw new Error('User not found. Please log in again.');
         }
         const userId = user._id;
 
-        // Save user details
         const detailsResponse = await fetch(`${API_BASE_URL}/user-details/${userId}`, {
           method: "POST",
-          headers: { 
+          headers: {
             "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json" 
+            "Content-Type": "application/json"
           },
           body: JSON.stringify(userDetailsData),
         });
-
         if (!detailsResponse.ok) {
           const detailsResult = await detailsResponse.json();
           throw new Error(detailsResult.message || 'Failed to save user details');
         }
-
-        // Mark profile as complete
-        console.log('🔍 Marking profile as complete for user:', userId);
         const completeResponse = await fetch(`${API_BASE_URL}/user-details/${userId}/complete`, {
           method: "PATCH",
-          headers: { 
+          headers: {
             "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json" 
+            "Content-Type": "application/json"
           }
         });
-
         if (!completeResponse.ok) {
           const completeResult = await completeResponse.json();
-          console.error('❌ Failed to mark profile complete:', completeResult);
           throw new Error(completeResult.message || 'Failed to mark profile complete');
         }
-        
-        const completeResult = await completeResponse.json();
-        console.log('✅ Profile marked complete successfully:', completeResult);
-
-        console.log('✅ Profile completed successfully!');
-
-        // Force refresh the user's profile completion status using the useAuth hook
-        // This ensures the dashboard shows the full content immediately
-        try {
-          console.log('🔍 Force refreshing profile status using useAuth hook');
-          await forceRefreshProfileStatus();
-          console.log('✅ Profile status refreshed successfully');
-        } catch (error) {
-          console.warn('Could not refresh profile status:', error);
-        }
-
-        // Success - redirect to student dashboard
+        await forceRefreshProfileStatus();
         alert("Profile completed successfully! Welcome to MindCare.");
         navigate('/dashboard');
         return;
       }
 
       if (isFromGoogleLogin) {
-        // User came from Google login (not found in database) - create user with Google data
-        console.log('🚀 Creating user from Google login flow');
-        
-        // Add Google data to the user registration
         const googleUserData = {
           ...compiledUserData,
           googleId: location.state.googleData.googleId,
           profilePicture: location.state.googleData.profilePicture,
           isEmailVerified: true
         };
-
         const response = await fetch(`${API_BASE_URL}/users/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(googleUserData),
         });
-
         let result;
         try {
           result = await response.json();
         } catch {
           throw new Error("Server error - please try again later");
         }
-
         if (!response.ok) {
           if (response.status === 409 || /duplicate|exists/i.test(result?.message || "")) {
             throw new Error("An account with this email already exists. Please sign in instead.");
           }
           throw new Error(result?.message || `Signup failed (${response.status})`);
         }
-
-                 // Success - redirect to ContactChoice
-         console.log('🚀 Google user registered, redirecting to ContactChoice');
-         if (onLogin) {
-           onLogin("student", result.data?.user || googleUserData);
-         }
-         navigate('/contact-choice');
-         return;
+        if (onLogin) {
+          onLogin("student", result.data?.user || googleUserData);
+        }
+        navigate('/contact-choice');
+        return;
       }
 
-             // Regular signup flow (new user registration)
-               const response = await fetch(`${API_BASE_URL}/users/register`, {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify(compiledUserData),
-       })
-
+      const response = await fetch(`${API_BASE_URL}/users/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(compiledUserData),
+      })
       let result;
       try {
         result = await response.json()
       } catch {
         throw new Error("Server error - please try again later")
       }
-
       if (!response.ok) {
-        // If duplicate email happens here, surface a friendlier message
         if (response.status === 409 || /duplicate|exists/i.test(result?.message || "")) {
           throw new Error("An account with this email already exists. Please sign in instead.")
         }
         throw new Error(result?.message || `Signup failed (${response.status})`)
       }
-
-             // Check if user came from login (user not found scenario)
-       const isFromLogin = location.state?.fromLogin;
-       
-       if (isFromLogin) {
-         // User came from login (not found in database) - redirect to ContactChoice
-         console.log('🚀 User registered from login flow, redirecting to ContactChoice');
-         if (onLogin) {
-           onLogin("student", result.data?.user || compiledUserData);
-         }
-         navigate('/contact-choice');
-       } else {
-        // Regular signup flow - show success message and redirect to login
+      const isFromLogin = location.state?.fromLogin;
+      if (isFromLogin) {
+        if (onLogin) {
+          onLogin("student", result.data?.user || compiledUserData);
+        }
+        navigate('/contact-choice');
+      } else {
         alert("Account created successfully! Please check your email for verification.")
         onShowLogin?.()
       }
     } catch (error) {
-      console.error("❌ Signup error:", error)
       alert(`Signup failed: ${error.message}`)
     } finally {
       setIsLoading(false)
@@ -522,7 +489,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
               </Select>
               {errors.institutionId && <p className="text-sm text-red-600">{errors.institutionId}</p>}
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="studentId">Student ID *</Label>
               <Input
@@ -534,7 +500,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
               />
               {errors.studentId && <p className="text-sm text-red-600">{errors.studentId}</p>}
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="course">Course/Program *</Label>
               <Select value={formData.course} onValueChange={(value) => handleInputChange("course", value)}>
@@ -551,7 +516,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
               </Select>
               {errors.course && <p className="text-sm text-red-600">{errors.course}</p>}
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="year">Academic Year *</Label>
@@ -571,18 +535,32 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
                 {errors.year && <p className="text-sm text-red-600">{errors.year}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
-                <Input
-                  id="department"
-                  value={formData.department}
-                  onChange={(e) => handleInputChange("department", e.target.value)}
-                  placeholder="e.g., Computer Science"
-                />
+                <Label htmlFor="gender">Gender *</Label>
+                <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
+                  <SelectTrigger className={errors.gender ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.gender && <p className="text-sm text-red-600">{errors.gender}</p>}
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="department">Department</Label>
+              <Input
+                id="department"
+                value={formData.department}
+                onChange={(e) => handleInputChange("department", e.target.value)}
+                placeholder="e.g., Computer Science"
+              />
             </div>
           </div>
         )
-
       case 2:
         return (
           <div className="space-y-4">
@@ -612,7 +590,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
                 Password must be 8+ characters with uppercase, lowercase, and number
               </p>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password *</Label>
               <div className="relative">
@@ -636,7 +613,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
               </div>
               {errors.confirmPassword && <p className="text-sm text-red-600">{errors.confirmPassword}</p>}
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="securityQuestion">Security Question *</Label>
               <Select
@@ -656,7 +632,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
               </Select>
               {errors.securityQuestion && <p className="text-sm text-red-600">{errors.securityQuestion}</p>}
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="securityAnswer">Security Answer *</Label>
               <Input
@@ -670,7 +645,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
             </div>
           </div>
         )
-
       case 3:
         return (
           <div className="space-y-6">
@@ -699,10 +673,8 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
                 {errors.emergencyPhone && <p className="text-sm text-red-600">{errors.emergencyPhone}</p>}
               </div>
             </div>
-
             <div className="space-y-4">
               <h3 className="font-medium">Privacy & Consent Agreements</h3>
-
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
                   <Checkbox
@@ -720,7 +692,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id="dataProcessingConsent"
@@ -737,7 +708,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id="mentalHealthConsent"
@@ -754,7 +724,6 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id="communicationConsent"
@@ -771,21 +740,19 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
                   </div>
                 </div>
               </div>
-
               {Object.keys(errors).some((key) =>
-                ["privacyConsent", "dataProcessingConsent", "mentalHealthConsent"].includes(key),
+                ["privacyConsent", "dataProcessingConsent", "mentalHealthConsent"].includes(key)
               ) && (
-                <Alert className="border-red-200 bg-red-50">
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-800">
-                    Please accept all required consent agreements to proceed.
-                  </AlertDescription>
-                </Alert>
-              )}
+                  <Alert className="border-red-200 bg-red-50">
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                    <AlertDescription className="text-red-800">
+                      Please accept all required consent agreements to proceed.
+                    </AlertDescription>
+                  </Alert>
+                )}
             </div>
           </div>
         )
-
       default:
         return null
     }
@@ -797,9 +764,11 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center">
-            <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg">
-              <Heart className="w-8 h-8 text-white" />
-            </div>
+            <Link to="/">
+              <div >
+                <img src={LP} alt="MindCare Logo" className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg" />
+              </div>
+            </Link>
           </div>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -812,84 +781,46 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
             </p>
           </div>
         </div>
-
         <Card className="shadow-xl border-0">
           <CardHeader className="space-y-4">
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>{userData ? `Step ${currentStep + 1} of 4` : `Step ${currentStep} of 3`}</span>
-                <span>
-                  {userData ? Math.round(((currentStep + 1) / 4) * 100) : Math.round((currentStep / 3) * 100)}% Complete
-                </span>
+                <span>Step {currentStep} of 3</span>
+                <span>{progress}% Complete</span>
               </div>
-              <Progress value={userData ? ((currentStep + 1) / 4) * 100 : (currentStep / 3) * 100} className="h-2" />
+              <Progress value={progress} className="h-2" />
             </div>
 
             {/* Step Indicator */}
             <div className="flex justify-between items-center">
-              {userData
-                ? [1, 2, 3, 4].map((step) => (
-                    <div key={step} className="flex items-center">
-                      <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
-                          step === 1
-                            ? "bg-green-600 border-green-600 text-white"
-                            : step <= currentStep + 1
-                              ? "bg-blue-600 border-blue-600 text-white"
-                              : "border-gray-300 text-gray-400"
-                        }`}
-                      >
-                        {step === 1 ? (
-                          <CheckCircle className="w-5 h-5" />
-                        ) : step < currentStep + 1 ? (
-                          <CheckCircle className="w-5 h-5" />
-                        ) : (
-                          getStepIcon(step - 1)
-                        )}
-                      </div>
-                      {step < 4 && (
-                        <div className={`w-12 h-0.5 mx-2 ${step < currentStep + 1 ? "bg-blue-600" : "bg-gray-300"}`} />
-                      )}
-                    </div>
-                  ))
-                : [1, 2, 3].map((step) => (
-                    <div key={step} className="flex items-center">
-                      <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
-                          step <= currentStep
-                            ? "bg-blue-600 border-blue-600 text-white"
-                            : "border-gray-300 text-gray-400"
-                        }`}
-                      >
-                        {step < currentStep ? <CheckCircle className="w-5 h-5" /> : getStepIcon(step)}
-                      </div>
-                      {step < 3 && (
-                        <div className={`w-12 h-0.5 mx-2 ${step < currentStep ? "bg-blue-600" : "bg-gray-300"}`} />
-                      )}
-                    </div>
-                  ))}
+              {[1, 2, 3].map((step) => (
+                <div key={step} className="flex items-center">
+                  <div
+                    className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
+                      step < currentStep ? "bg-green-600 border-green-600 text-white" :
+                      step === currentStep ? "bg-blue-600 border-blue-600 text-white" :
+                      "border-gray-300 text-gray-400"
+                    }`}
+                  >
+                    {step < currentStep ? <CheckCircle className="w-5 h-5" /> : getStepIcon(step)}
+                  </div>
+                  {step < 3 && (
+                    <div className={`w-12 h-0.5 mx-2 ${step < currentStep ? "bg-green-600" : "bg-gray-300"}`} />
+                  )}
+                </div>
+              ))}
             </div>
-
+            
             <div className="text-center">
               <CardTitle className="flex items-center justify-center gap-2">
                 {getStepIcon(currentStep)}
                 {getStepTitle(currentStep)}
               </CardTitle>
               <CardDescription className="mt-2">
-                {userData ? (
-                  <>
-                    {currentStep === 1 && "Tell us about your academic background"}
-                    {currentStep === 2 && "Secure your account with a strong password"}
-                    {currentStep === 3 && "Review and accept our privacy agreements"}
-                  </>
-                ) : (
-                  <>
-                    {currentStep === 1 && "Tell us about your academic background"}
-                    {currentStep === 2 && "Secure your account with a strong password"}
-                    {currentStep === 3 && "Review and accept our privacy agreements"}
-                  </>
-                )}
+                {currentStep === 1 && "Tell us about your academic background"}
+                {currentStep === 2 && "Secure your account with a strong password"}
+                {currentStep === 3 && "Review and accept our privacy agreements"}
               </CardDescription>
             </div>
           </CardHeader>
@@ -900,8 +831,8 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
             {/* Navigation Buttons */}
             <div className="flex justify-between pt-6">
               <div>
-                {userData && currentStep === 1 ? (
-                  <Button variant="outline" onClick={onBackToUserSignup}>
+                {currentStep === 1 && (userData || location.state?.fromGoogle) ? (
+                  <Button variant="outline" onClick={onBackToUserSignup || onShowLogin}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Basic Info
                   </Button>
@@ -963,23 +894,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         </Alert>
 
         {/* Footer */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Shield className="w-4 h-4" />
-              <span>HIPAA Compliant</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Globe className="w-4 h-4" />
-              <span>15+ Languages</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>24/7 Support</span>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">© 2024 MEDHYA - Built for Smart India Hackathon</p>
-        </div>
+        <Footer />
       </div>
     </div>
   )

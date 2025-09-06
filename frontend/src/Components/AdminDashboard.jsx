@@ -1,27 +1,24 @@
+
 import React, { useState } from 'react';
+import useAdminAnalytics from '../hooks/useAdminAnalytics';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
 import { Alert, AlertDescription } from '../ui/Alert';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { BarChart3, Users, MessageCircle, Calendar, AlertTriangle, TrendingUp, Download, Filter, Eye, Shield } from 'lucide-react';
 import ScoresChart from './ScoresChart';
+import CrisisChart from './CrisisChart';
 import { runAssessmentTests } from '../utils/testAssessmentData';
 
 const AdminDashboard = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
   const [selectedMetric, setSelectedMetric] = useState('all');
 
-  const analytics = {
-    totalUsers: 1247,
-    activeUsers: 342,
-    chatSessions: 156,
-    appointments: 89,
-    forumPosts: 234,
-    criticalAlerts: 3
-  };
+  // Fetch analytics from backend
+  const analytics = useAdminAnalytics();
 
   const usageData = [
     { name: 'Mon', chatSessions: 24, appointments: 8, forumPosts: 15 },
@@ -95,28 +92,21 @@ const AdminDashboard = () => {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
           <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-md font-medium text-gray-500">Total Users</CardTitle>
               <Users className="h-6 w-6 text-indigo-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">{analytics.totalUsers}</div>
+              <div className="text-4xl font-bold text-gray-900">
+                {analytics.loading ? '...' : analytics.totalUsers}
+              </div>
               <p className="text-xs text-gray-500 mt-1">Registered students</p>
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-md font-medium text-gray-500">Active Users</CardTitle>
-              <Eye className="h-6 w-6 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-gray-900">{analytics.activeUsers}</div>
-              <p className="text-xs text-gray-500 mt-1">This week</p>
-            </CardContent>
-          </Card>
+         
 
           <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -124,7 +114,9 @@ const AdminDashboard = () => {
               <MessageCircle className="h-6 w-6 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">{analytics.chatSessions}</div>
+              <div className="text-4xl font-bold text-gray-900">
+                {analytics.loading ? '...' : analytics.chatSessions}
+              </div>
               <p className="text-xs text-gray-500 mt-1">This week</p>
             </CardContent>
           </Card>
@@ -135,7 +127,9 @@ const AdminDashboard = () => {
               <Calendar className="h-6 w-6 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">{analytics.appointments}</div>
+              <div className="text-4xl font-bold text-gray-900">
+                {analytics.loading ? '...' : analytics.appointments}
+              </div>
               <p className="text-xs text-gray-500 mt-1">This week</p>
             </CardContent>
           </Card>
@@ -146,7 +140,9 @@ const AdminDashboard = () => {
               <Users className="h-6 w-6 text-pink-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">{analytics.forumPosts}</div>
+              <div className="text-4xl font-bold text-gray-900">
+                {analytics.loading ? '...' : analytics.forumPosts}
+              </div>
               <p className="text-xs text-gray-500 mt-1">This week</p>
             </CardContent>
           </Card>
@@ -157,7 +153,9 @@ const AdminDashboard = () => {
               <AlertTriangle className="h-6 w-6 text-red-600 animate-pulse" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-red-600">{analytics.criticalAlerts}</div>
+              <div className="text-4xl font-bold text-red-600">
+                {analytics.loading ? '...' : analytics.criticalAlerts}
+              </div>
               <p className="text-xs text-gray-500 mt-1">Needs attention</p>
             </CardContent>
           </Card>
@@ -171,38 +169,12 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="usage" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-8 lg:grid-cols-2">
               <ScoresChart
                 timeRange="7d"
                 title="Weekly Assessment Patterns"
               />
-              <Card className="shadow-lg rounded-2xl p-6">
-                <CardHeader className="p-0 mb-4">
-                  <CardTitle className="text-2xl font-bold text-gray-900">Issue Categories</CardTitle>
-                  <CardDescription className="text-md text-gray-600">Distribution of mental health concerns</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={100}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+              <CrisisChart timeRange="30d" title="Crisis Management Analytics" />
             </div>
           </TabsContent>
 

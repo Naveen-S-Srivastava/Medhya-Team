@@ -28,4 +28,4 @@ const assessmentAverageSchema = new mongoose.Schema({
 const Assessment = mongoose.model("Assessment", assessmentSchema);
 const AssessmentAverage = mongoose.model("AssessmentAverage", assessmentAverageSchema);
 
-export { Assessment, AssessmentAverage };
+export default { Assessment, AssessmentAverage };

@@ -18,20 +18,20 @@ import StressAssessment from './StressAssessment.jsx'
 
 export default function Wellness() {
   const { user } = useAuth();
-  const { 
-    entries, 
-    todayEntry, 
-    weeklyProgress, 
-    stats, 
-    loading, 
-    error, 
+  const {
+    entries,
+    todayEntry,
+    weeklyProgress,
+    stats,
+    loading,
+    error,
     pagination,
-    getJournalEntries, 
-    getTodayEntry, 
-    getWeeklyProgress, 
+    getJournalEntries,
+    getTodayEntry,
+    getWeeklyProgress,
     getJournalStats,
-    createJournalEntry, 
-    updateJournalEntry, 
+    createJournalEntry,
+    updateJournalEntry,
     deleteJournalEntry,
     clearError
   } = useJournal();
@@ -46,14 +46,14 @@ export default function Wellness() {
   const calculateCurrentWellnessScore = () => {
     const gad7Score = todayAssessments['GAD-7']?.score || 0;
     const phq9Score = todayAssessments['PHQ-9']?.score || 0;
-    
+
     if (gad7Score === 0 && phq9Score === 0) {
       return 78; // Default score if no assessments
     }
-    
+
     return calculateWellnessScore(gad7Score, phq9Score);
   };
-  
+
   const wellnessScore = calculateCurrentWellnessScore();
   const wellnessLevel = getWellnessLevel(wellnessScore);
   const [showJournalPopup, setShowJournalPopup] = useState(false)
@@ -98,9 +98,11 @@ export default function Wellness() {
     getTodayEntry();
     getWeeklyProgress();
     getJournalStats();
-    getJournalEntries({ page: currentPage, limit: 10 });
+    if (activeTab === 'view') {
+      getJournalEntries({ page: currentPage, limit: 10 });
+    }
     getTodayAssessments();
-  }, [currentPage]);
+  }, [currentPage, activeTab]);
 
   const handleMoodSelect = (mood) => {
     setCurrentMood(mood)
@@ -110,7 +112,7 @@ export default function Wellness() {
 
   const handleJournalSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const entryData = {
         content: journalForm.content,
@@ -128,7 +130,7 @@ export default function Wellness() {
       };
 
       await createJournalEntry(entryData);
-      
+
       // Reset form
       setJournalForm({
         content: '',
@@ -144,7 +146,7 @@ export default function Wellness() {
         challenges: '',
         achievements: ''
       });
-      
+
       setActiveTab('view');
     } catch (err) {
       console.error('Failed to create journal entry:', err);
@@ -154,11 +156,11 @@ export default function Wellness() {
   const getTimeAgo = (timestamp) => {
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - new Date(timestamp).getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Less than an hour ago';
     if (diffInHours === 1) return '1 hour ago';
     if (diffInHours < 24) return `${diffInHours} hours ago`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays === 1) return '1 day ago';
     return `${diffInDays} days ago`;
@@ -175,7 +177,7 @@ export default function Wellness() {
   }
 
   return (
-    <div className="space-y-6 bg-blue-50">
+    <div className="space-y-6">
       {/* Main Wellness Card */}
       <Card>
         <CardHeader>
@@ -192,7 +194,7 @@ export default function Wellness() {
             <Brain className="w-16 h-16 mx-auto text-blue-600 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Advanced Wellness Features</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Track your mood, sleep patterns, stress levels, and receive AI-powered insights 
+              Track your mood, sleep patterns, stress levels, and receive AI-powered insights
               for better mental health management.
             </p>
             <div className="grid gap-4 md:grid-cols-2 max-w-2xl mx-auto">
@@ -200,8 +202,8 @@ export default function Wellness() {
                 <Heart className="w-6 h-6" />
                 <span>Daily Mood Check-in</span>
               </Button>
-              <Button 
-                className="h-16 flex-col gap-2" 
+              <Button
+                className="h-16 flex-col gap-2"
                 variant="outline"
                 onClick={() => setShowStressAssessment(true)}
               >
@@ -212,14 +214,14 @@ export default function Wellness() {
                 <Clock className="w-6 h-6" />
                 <span>Sleep Quality Tracker</span>
               </Button>
-                             <Button 
-                 className="h-16 flex-col gap-2" 
-                 variant="outline"
-                 onClick={() => {
-                   setShowJournalPopup(true);
-                   clearError(); // Clear any previous errors
-                 }}
-               >
+              <Button
+                className="h-16 flex-col gap-2"
+                variant="outline"
+                onClick={() => {
+                  setShowJournalPopup(true);
+                  clearError(); // Clear any previous errors
+                }}
+              >
                 <TrendingUp className="w-6 h-6" />
                 <span>Wellness Insights (Journal)</span>
               </Button>
@@ -237,28 +239,28 @@ export default function Wellness() {
               Current Wellness Score
             </CardTitle>
           </CardHeader>
-                     <CardContent>
-             <div className="text-center">
-               <div className="text-4xl font-bold text-green-600 mb-2">{wellnessScore}%</div>
-               <Progress value={wellnessScore} className="mb-4" />
-               <p className={`text-sm font-medium mb-2 ${wellnessLevel.color}`}>
-                 {wellnessLevel.level} Wellness
-               </p>
-               <p className="text-sm text-muted-foreground">
-                 {wellnessScore >= 80 ? 'Excellent! Keep up the great work!' : 
-                  wellnessScore >= 60 ? 'Good progress! You\'re doing well.' : 
-                  wellnessScore >= 40 ? 'Fair wellness. Consider taking assessments to improve.' :
-                  'Let\'s work on improving your wellness together. Try the stress assessments!'}
-               </p>
-               {(todayAssessments['GAD-7']?.score !== undefined || todayAssessments['PHQ-9']?.score !== undefined) && (
-                 <div className="mt-3 text-xs text-muted-foreground">
-                   <p>Based on today's assessments:</p>
-                   {todayAssessments['GAD-7']?.score !== undefined && <p>GAD-7: {todayAssessments['GAD-7'].score}</p>}
-                   {todayAssessments['PHQ-9']?.score !== undefined && <p>PHQ-9: {todayAssessments['PHQ-9'].score}</p>}
-                 </div>
-               )}
-             </div>
-           </CardContent>
+          <CardContent>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-600 mb-2">{wellnessScore}%</div>
+              <Progress value={wellnessScore} className="mb-4" />
+              <p className={`text-sm font-medium mb-2 ${wellnessLevel.color}`}>
+                {wellnessLevel.level} Wellness
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {wellnessScore >= 80 ? 'Excellent! Keep up the great work!' :
+                  wellnessScore >= 60 ? 'Good progress! You\'re doing well.' :
+                    wellnessScore >= 40 ? 'Fair wellness. Consider taking assessments to improve.' :
+                      'Let\'s work on improving your wellness together. Try the stress assessments!'}
+              </p>
+              {(todayAssessments['GAD-7']?.score !== undefined || todayAssessments['PHQ-9']?.score !== undefined) && (
+                <div className="mt-3 text-xs text-muted-foreground">
+                  <p>Based on today's assessments:</p>
+                  {todayAssessments['GAD-7']?.score !== undefined && <p>GAD-7: {todayAssessments['GAD-7'].score}</p>}
+                  {todayAssessments['PHQ-9']?.score !== undefined && <p>PHQ-9: {todayAssessments['PHQ-9'].score}</p>}
+                </div>
+              )}
+            </div>
+          </CardContent>
         </Card>
 
         <Card>
@@ -312,7 +314,7 @@ export default function Wellness() {
                 <div className="w-full bg-gray-200 rounded-full h-24 relative">
                   {day.hasEntry ? (
                     <>
-                      <div 
+                      <div
                         className="bg-gradient-to-t from-green-400 to-green-600 rounded-full absolute bottom-0 w-full"
                         style={{ height: `${day.entry?.wellnessScore || 70}%` }}
                       ></div>
@@ -363,8 +365,8 @@ export default function Wellness() {
 
       {/* Journal Popup */}
       {showJournalPopup && (
-        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-black  flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
@@ -380,14 +382,14 @@ export default function Wellness() {
                     Clear Error
                   </Button>
                 )}
-                                 <Button
-                   variant="ghost"
-                   size="sm"
-                   onClick={() => {
-                     setShowJournalPopup(false);
-                     clearError(); // Clear errors when closing popup
-                   }}
-                 >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowJournalPopup(false);
+                    clearError(); // Clear errors when closing popup
+                  }}
+                >
                   <X className="w-4 h-4" />
                 </Button>
               </div>
@@ -408,7 +410,7 @@ export default function Wellness() {
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
-                
+
                 {todayEntry ? (
                   <div className="text-center py-8">
                     <CheckCircle className="w-12 h-12 mx-auto text-green-600 mb-4" />
@@ -422,10 +424,10 @@ export default function Wellness() {
                   </div>
                 ) : (
                   <form onSubmit={handleJournalSubmit} className="space-y-6">
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div className="grid  gap-6 md:grid-cols-2">
                       <div>
                         <label className="block text-sm font-medium mb-2">How are you feeling today?</label>
-                        <Select value={journalForm.mood} onValueChange={(value) => setJournalForm({...journalForm, mood: value})}>
+                        <Select value={journalForm.mood} onValueChange={(value) => setJournalForm({ ...journalForm, mood: value })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select your mood" />
                           </SelectTrigger>
@@ -449,7 +451,7 @@ export default function Wellness() {
                           min="1"
                           max="10"
                           value={journalForm.moodScore}
-                          onChange={(e) => setJournalForm({...journalForm, moodScore: e.target.value})}
+                          onChange={(e) => setJournalForm({ ...journalForm, moodScore: e.target.value })}
                         />
                       </div>
                     </div>
@@ -459,7 +461,7 @@ export default function Wellness() {
                       <Textarea
                         placeholder="Write about your day, thoughts, feelings, or anything you'd like to reflect on..."
                         value={journalForm.content}
-                        onChange={(e) => setJournalForm({...journalForm, content: e.target.value})}
+                        onChange={(e) => setJournalForm({ ...journalForm, content: e.target.value })}
                         rows={6}
                         required
                       />
@@ -473,7 +475,7 @@ export default function Wellness() {
                           min="0"
                           max="100"
                           value={journalForm.wellnessScore}
-                          onChange={(e) => setJournalForm({...journalForm, wellnessScore: e.target.value})}
+                          onChange={(e) => setJournalForm({ ...journalForm, wellnessScore: e.target.value })}
                         />
                       </div>
 
@@ -485,7 +487,7 @@ export default function Wellness() {
                           max="24"
                           step="0.5"
                           value={journalForm.sleepHours}
-                          onChange={(e) => setJournalForm({...journalForm, sleepHours: e.target.value})}
+                          onChange={(e) => setJournalForm({ ...journalForm, sleepHours: e.target.value })}
                         />
                       </div>
                     </div>
@@ -498,7 +500,7 @@ export default function Wellness() {
                           min="1"
                           max="10"
                           value={journalForm.stressLevel}
-                          onChange={(e) => setJournalForm({...journalForm, stressLevel: e.target.value})}
+                          onChange={(e) => setJournalForm({ ...journalForm, stressLevel: e.target.value })}
                         />
                       </div>
 
@@ -507,7 +509,7 @@ export default function Wellness() {
                         <Input
                           placeholder="productive, grateful, exercise"
                           value={journalForm.tags}
-                          onChange={(e) => setJournalForm({...journalForm, tags: e.target.value})}
+                          onChange={(e) => setJournalForm({ ...journalForm, tags: e.target.value })}
                         />
                       </div>
                     </div>
@@ -518,7 +520,7 @@ export default function Wellness() {
                         <Input
                           placeholder="studying, exercise, socializing"
                           value={journalForm.activities}
-                          onChange={(e) => setJournalForm({...journalForm, activities: e.target.value})}
+                          onChange={(e) => setJournalForm({ ...journalForm, activities: e.target.value })}
                         />
                       </div>
 
@@ -527,7 +529,7 @@ export default function Wellness() {
                         <Input
                           placeholder="Supportive friends, Good health"
                           value={journalForm.gratitude}
-                          onChange={(e) => setJournalForm({...journalForm, gratitude: e.target.value})}
+                          onChange={(e) => setJournalForm({ ...journalForm, gratitude: e.target.value })}
                         />
                       </div>
                     </div>
@@ -538,7 +540,7 @@ export default function Wellness() {
                         <Input
                           placeholder="Complete project, Exercise regularly"
                           value={journalForm.goals}
-                          onChange={(e) => setJournalForm({...journalForm, goals: e.target.value})}
+                          onChange={(e) => setJournalForm({ ...journalForm, goals: e.target.value })}
                         />
                       </div>
 
@@ -547,7 +549,7 @@ export default function Wellness() {
                         <Input
                           placeholder="Time management, Stress"
                           value={journalForm.challenges}
-                          onChange={(e) => setJournalForm({...journalForm, challenges: e.target.value})}
+                          onChange={(e) => setJournalForm({ ...journalForm, challenges: e.target.value })}
                         />
                       </div>
                     </div>
@@ -557,19 +559,19 @@ export default function Wellness() {
                       <Input
                         placeholder="Finished project, Went for a run"
                         value={journalForm.achievements}
-                        onChange={(e) => setJournalForm({...journalForm, achievements: e.target.value})}
+                        onChange={(e) => setJournalForm({ ...journalForm, achievements: e.target.value })}
                       />
                     </div>
 
                     <div className="flex justify-end gap-3">
-                                             <Button
-                         type="button"
-                         variant="outline"
-                         onClick={() => {
-                           setShowJournalPopup(false);
-                           clearError(); // Clear errors when canceling
-                         }}
-                       >
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowJournalPopup(false);
+                          clearError(); // Clear errors when canceling
+                        }}
+                      >
                         Cancel
                       </Button>
                       <Button type="submit" disabled={loading}>
@@ -596,7 +598,7 @@ export default function Wellness() {
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
-                
+
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin mr-2" />
@@ -725,12 +727,12 @@ export default function Wellness() {
                   <X className="w-5 h-5" />
                 </Button>
               </div>
-                             <StressAssessment 
-                 isPopup={true} 
-                 onAssessmentComplete={() => {
-                   getTodayAssessments();
-                 }}
-               />
+              <StressAssessment
+                isPopup={true}
+                onAssessmentComplete={() => {
+                  getTodayAssessments();
+                }}
+              />
             </div>
           </div>
         </div>

@@ -2,11 +2,11 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger } from '../ui/Tabs.jsx';
-import { Badge } from '../ui/Badge.jsx';
 import {
   MessageCircle, Calendar, BookOpen, Users, BarChart3, Heart, AlertTriangle, Zap, Building2
 } from 'lucide-react';
 import Navbar from './Navbar.jsx';
+import Footer from './Footer.jsx';
 
 const studentNavItems = [
   { path: '/dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -87,11 +87,7 @@ const AppLayout = ({ userRole, user, onLogout, systemStats }) => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-white mt-12">
-        <div className="container mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
-          <p>© 2024 MEDHYA . Built for Smart India Hackathon 2024.</p>
-        </div>
-      </footer>
+      <Footer/>
     </div>
   );
 };

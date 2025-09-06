@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import User from './models/usermodel.js';
+import User from '../models/usermodel.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -14,7 +14,18 @@ async function createAdminUser() {
     // Check if admin user already exists
     const existingAdmin = await User.findOne({ email: 'admin@mindcare.com' });
     if (existingAdmin) {
-      console.log("Admin user already exists ✅");
+      console.log("Admin user already exists, updating with password ✅");
+      
+      // Update the existing admin user with a password
+      existingAdmin.password = 'admin123';
+      existingAdmin.passwordConfirm = 'admin123';
+      existingAdmin.googleId = undefined; // Remove Google ID to allow password login
+      await existingAdmin.save();
+      
+      console.log("Admin user updated successfully ✅");
+      console.log("Email: admin@mindcare.com");
+      console.log("Password: admin123");
+      console.log("Role: admin");
       process.exit(0);
     }
 

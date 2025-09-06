@@ -1,4 +1,3 @@
-// src/Components/StudentDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card.jsx';
 import { Button } from '../ui/Button.jsx';
@@ -26,17 +25,10 @@ const StudentDashboard = () => {
 
   const isProfileComplete = user?.isProfileComplete;
   
-  // Debug logging
-  console.log('🔍 StudentDashboard - User profile status:', {
-    userId: user?._id,
-    isProfileComplete: user?.isProfileComplete,
-    user: user
-  });
 
   // Force refresh profile status when component mounts
   useEffect(() => {
     if (user?._id && !isProfileComplete) {
-      console.log('🔍 Force refreshing profile status on dashboard load');
       forceRefreshProfileStatus();
     }
   }, [user?._id, isProfileComplete, forceRefreshProfileStatus]);

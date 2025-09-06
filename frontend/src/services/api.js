@@ -187,6 +187,13 @@ export const appointmentAPI = {
   getAvailableSlots: (counselorId, date) => apiCall(`/appointments/available-slots?counselorId=${counselorId}&date=${date}`),
 };
 
+// Admin API
+export const adminAPI = {
+  getDashboardStats: () => apiCall('/admin/dashboard-stats'),
+  
+  getTest: () => apiCall('/admin/test'),
+};
+
 // Crisis API
 export const crisisAPI = {
   createCrisisAlert: (crisisData) => apiCall('/crisis', {
@@ -219,6 +226,8 @@ export const crisisAPI = {
   resolveCrisisAlert: (id) => apiCall(`/crisis/${id}/resolve`, {
     method: 'POST',
   }),
+  
+  getCrisisAnalytics: (timeRange = '30d') => apiCall(`/crisis/analytics?timeRange=${timeRange}`),
 };
 
 export default {
@@ -228,4 +237,5 @@ export default {
   assessmentAPI,
   appointmentAPI,
   crisisAPI,
+  adminAPI,
 };
