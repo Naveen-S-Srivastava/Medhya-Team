@@ -9,12 +9,15 @@ import {
   Heart, Menu, X, Bell, Settings, LogOut, User,
   Building2, GraduationCap, ChevronDown
 } from 'lucide-react';
+import { authAPI } from '../services/api.js';
 import medha from '../assets/logo1.jpg';
+import ChangePasswordModal from './ChangePasswordModal';
 
 const Navbar = ({ userRole, user, onLogout, systemStats }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,7 +47,37 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
   useEffect(() => {
     setIsMenuOpen(false);
     setIsUserMenuOpen(false);
+    setIsChangePasswordModalOpen(false);
   }, [location.pathname]);
+
+  // Handle password change
+  const handlePasswordChange = async (passwordData) => {
+    console.log('🔐 handlePasswordChange called with:', passwordData);
+    try {
+      // Make API call to change password
+      console.log('🔐 Making API call to change password...');
+      await authAPI.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+        newPasswordConfirm: passwordData.newPasswordConfirm // Backend expects newPasswordConfirm
+      });
+
+      console.log('🔐 Password change API call successful');
+      // Show success message
+      alert('Password changed successfully!');
+
+    } catch (error) {
+      console.error('🔐 Password change failed:', error);
+      console.error('🔐 Error details:', {
+        message: error.message,
+        status: error.status,
+        stack: error.stack
+      });
+      
+      // Let the modal handle the error display
+      throw error;
+    }
+  };
 
   const studentStats = {
     wellnessScore: 78,
@@ -85,23 +118,41 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
             )}
           </div>
           <div className="p-2 space-y-1">
-            <Link to="/profile" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-slate-700 rounded-md hover:bg-slate-100">
-              <User className="h-4 w-4 text-slate-500" /> Profile
-            </Link>
-            {!user?.isProfileComplete && (
-              <Link to="/user-signup" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-orange-600 rounded-md hover:bg-orange-50 bg-orange-50">
-                <User className="h-4 w-4 text-orange-500" /> Complete Profile
-              </Link>
+            {user?.role === 'admin' ? (
+              // Admin menu - simplified
+              <>
+                <button
+                  onClick={() => {
+                    setIsChangePasswordModalOpen(true);
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 w-full px-3 py-2 text-sm text-slate-700 rounded-md hover:bg-slate-100"
+                >
+                  <Settings className="h-4 w-4 text-slate-500" /> Change Password
+                </button>
+              </>
+            ) : (
+              // Non-admin menu
+              <>
+                <Link to="/profile" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-slate-700 rounded-md hover:bg-slate-100">
+                  <User className="h-4 w-4 text-slate-500" /> Profile
+                </Link>
+                {!user?.isProfileComplete && (
+                  <Link to="/user-signup" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-orange-600 rounded-md hover:bg-orange-50 bg-orange-50">
+                    <User className="h-4 w-4 text-orange-500" /> Complete Profile
+                  </Link>
+                )}
+                {user?.isProfileComplete && (
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs text-green-600 font-medium">Profile Complete</span>
+                  </div>
+                )}
+                <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-slate-700 rounded-md hover:bg-slate-100">
+                  <Settings className="h-4 w-4 text-slate-500" /> Settings
+                </button>
+              </>
             )}
-            {user?.isProfileComplete && (
-              <div className="flex items-center gap-2 px-3 py-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-xs text-green-600 font-medium">Profile Complete</span>
-              </div>
-            )}
-            <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-slate-700 rounded-md hover:bg-slate-100">
-              <Settings className="h-4 w-4 text-slate-500" /> Settings
-            </button>
           </div>
           <div className="p-2 border-t border-slate-100">
             <button
@@ -181,17 +232,35 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
           </div>
           <div className="mt-6 space-y-2">
             <p className="px-3 py-2 text-sm font-semibold text-slate-800">Welcome, {user?.name || 'User'}</p>
-            <Link to="/profile" className="flex items-center gap-3 w-full px-3 py-2 text-base text-slate-700 rounded-md hover:bg-slate-100">
-              <User className="h-5 w-5 text-slate-500" /> Profile
-            </Link>
-            {!user?.isProfileComplete && (
-              <Link to="/user-signup" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-orange-600 rounded-md hover:bg-orange-50 bg-orange-50">
-                <User className="h-4 w-4 text-orange-500" /> Complete Profile
-              </Link>
+            {user?.role === 'admin' ? (
+              // Admin mobile menu - simplified
+              <>
+                <button
+                  onClick={() => {
+                    setIsChangePasswordModalOpen(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 w-full px-3 py-2 text-base text-slate-700 rounded-md hover:bg-slate-100"
+                >
+                  <Settings className="h-5 w-5 text-slate-500" /> Change Password
+                </button>
+              </>
+            ) : (
+              // Non-admin mobile menu
+              <>
+                <Link to="/profile" className="flex items-center gap-3 w-full px-3 py-2 text-base text-slate-700 rounded-md hover:bg-slate-100">
+                  <User className="h-5 w-5 text-slate-500" /> Profile
+                </Link>
+                {!user?.isProfileComplete && (
+                  <Link to="/user-signup" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-orange-600 rounded-md hover:bg-orange-50 bg-orange-50">
+                    <User className="h-4 w-4 text-orange-500" /> Complete Profile
+                  </Link>
+                )}
+                <Link to="/settings" className="flex items-center gap-3 w-full px-3 py-2 text-base text-slate-700 rounded-md hover:bg-slate-100">
+                  <Settings className="h-5 w-5 text-slate-500" /> Settings
+                </Link>
+              </>
             )}
-            <Link to="/settings" className="flex items-center gap-3 w-full px-3 py-2 text-base text-slate-700 rounded-md hover:bg-slate-100">
-              <Settings className="h-5 w-5 text-slate-500" /> Settings
-            </Link>
             <div className="pt-4 border-t border-slate-200">
               <button
                 onClick={onLogout}
@@ -203,6 +272,13 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
           </div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
+        onSubmit={handlePasswordChange}
+      />
     </>
   );
 };

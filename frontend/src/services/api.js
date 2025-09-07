@@ -12,7 +12,8 @@ export const apiCall = async (endpoint, options = {}) => {
     url,
     method: options.method || 'GET',
     endpoint,
-    API_BASE_URL
+    API_BASE_URL,
+    hasAuth: !!localStorage.getItem('token')
   });
   
   const defaultOptions = {
@@ -38,8 +39,16 @@ export const apiCall = async (endpoint, options = {}) => {
   };
 
   try {
+    console.log('🔧 Making fetch request...');
     const response = await fetch(url, config);
+    console.log('🔧 Fetch response received:', {
+      status: response.status,
+      ok: response.ok,
+      statusText: response.statusText
+    });
+    
     const data = await response.json();
+    console.log('🔧 Response data:', data);
 
     console.log('🔧 API Response:', {
       url,
@@ -117,6 +126,11 @@ export const authAPI = {
   completeGoogleProfile: (profileData) => apiCall('/users/complete-profile', {
     method: 'PUT',
     body: JSON.stringify(profileData),
+  }),
+  
+  changePassword: (passwordData) => apiCall('/users/change-password', {
+    method: 'PATCH',
+    body: JSON.stringify(passwordData),
   }),
 };
 

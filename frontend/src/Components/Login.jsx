@@ -142,6 +142,19 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
             if (err.message.includes('access blocked') || err.message.includes('invalid')) {
               const errorMessage = getOAuthErrorMessage(err);
               alert(errorMessage);
+            } else if (err.message.includes('Google login is not allowed for')) {
+              // Handle case where user tries to use Google OAuth for admin/counselor
+              const role = err.message.includes('admin') ? 'admin' : 'counselor';
+              const errorMessage = `Google login is not allowed for ${role} accounts. Please use the regular login form with your password.`;
+              alert(errorMessage);
+              return;
+            } else if (err.message.includes('registered as admin') || err.message.includes('registered as counselor')) {
+              // Handle case where user is already registered as admin/counselor
+              const role = err.message.includes('admin') ? 'admin' : 'counselor';
+              const errorMessage = `This email is registered as ${role}. For security reasons, ${role} accounts cannot use Google login. Please use the regular login form with your password.`;
+              alert(errorMessage);
+              // Optionally redirect to login or reset the form
+              return;
             } else if (err.code === 'USER_NOT_FOUND' && loginType !== 'counselor') {
               if (onLoginError) {
                 onLoginError(loginType, err.message, err.googleData);
@@ -235,22 +248,23 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
                 </Button>
               </div>
             )}
-
-            <div className="space-y-4">
-              <div className="text-center md:text-left">
-                <p className="text-lg font-semibold text-slate-700 mb-1">Just want to explore?</p>
-                <p className="text-sm text-slate-500">Try our demo with sample data</p>
+            {loginType !== "admin" && (
+              <div className="space-y-4">
+                <div className="text-center md:text-left">
+                  <p className="text-lg font-semibold text-slate-700 mb-1">Just want to explore?</p>
+                  <p className="text-sm text-slate-500">Try our demo with sample data</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full h-12 border-2 border-sky-200 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700 transition-all duration-300 rounded-2xl shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold"
+                  onClick={fillDemoCredentials}
+                  type="button"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  Use Demo Credentials
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                className="w-full h-12 border-2 border-sky-200 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700 transition-all duration-300 rounded-2xl shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold"
-                onClick={fillDemoCredentials}
-                type="button"
-              >
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Use Demo Credentials
-              </Button>
-            </div>
+            )}
           </div>
         </div>
 
@@ -321,13 +335,14 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
             </CardHeader>
 
             <CardContent className="space-y-6 p-6">
-              
+
               <Button
                 type="button"
                 variant="outline"
                 className="w-full h-12 border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 rounded-2xl shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-medium"
                 onClick={handleGoogleLogin}
                 disabled={loading || loginType === "admin" || loginType === "counselor"}
+                title={loginType === "admin" || loginType === "counselor" ? "Google login is not available for admin and counselor accounts. Please use password login." : ""}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path
@@ -349,6 +364,16 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
                 </svg>
                 Continue with Google
               </Button>
+
+              {(loginType === "admin" || loginType === "counselor") && (
+                <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                  <div className="flex items-center gap-1">
+                    <Shield className="w-3 h-3" />
+                    <span className="font-medium">Security Notice:</span>
+                  </div>
+                  <p className="mt-1">Google login is disabled for {loginType} accounts. Please use your password to login for enhanced security.</p>
+                </div>
+              )}
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">

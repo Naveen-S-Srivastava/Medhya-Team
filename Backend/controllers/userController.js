@@ -267,6 +267,21 @@ export const googleAuth = catchAsync(async (req, res, next) => {
     return next(new AppError('Invalid login type. Must be "admin", "student", or "counselor"', 400));
   }
 
+  // EARLY SECURITY CHECK: Prevent admin/counselor role selection for Google OAuth
+  if (loginType === 'admin' || loginType === 'counselor') {
+    console.log('🚫 SECURITY VIOLATION: Attempted Google OAuth with admin/counselor role:', {
+      email,
+      attemptedRole: loginType,
+      timestamp: new Date().toISOString(),
+      reason: 'Admin/Counselor roles require password authentication',
+      severity: 'HIGH'
+    });
+    return next(new AppError(
+      `Google login is not allowed for ${loginType} accounts. Please use the regular login form with your password.`,
+      403
+    ));
+  }
+
   // Check if user exists with this Google ID
   let user = await User.findOne({ googleId });
 
@@ -275,7 +290,25 @@ export const googleAuth = catchAsync(async (req, res, next) => {
     user = await User.findOne({ email });
 
     if (user) {
-      // User exists but doesn't have Google ID, update it
+      // SECURITY CHECK: Block Google OAuth for ANY existing admin/counselor accounts
+      // This prevents role escalation or bypass attempts
+      if ((user.role === 'admin' || user.role === 'counselor') && user.password) {
+        console.log('🚫 SECURITY VIOLATION: Attempted Google OAuth bypass for existing admin/counselor:', {
+          email: user.email,
+          actualRole: user.role,
+          hasPassword: !!user.password,
+          attemptedLoginType: loginType,
+          timestamp: new Date().toISOString(),
+          reason: 'Attempted to bypass password requirement for privileged account',
+          severity: 'CRITICAL'
+        });
+        return next(new AppError(
+          `This email is registered as ${user.role}. For security reasons, ${user.role} accounts cannot use Google login. Please use the regular login form with your password.`,
+          403
+        ));
+      }
+
+      // For non-admin/counselor users, allow Google OAuth linking
       user.googleId = googleId;
       
       // Update role if loginType is provided and different from current role
