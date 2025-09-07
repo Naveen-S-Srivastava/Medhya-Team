@@ -10,19 +10,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { BarChart3, Users, MessageCircle, Calendar, AlertTriangle, TrendingUp, Download, Filter, Eye, Shield } from 'lucide-react';
 import ScoresChart from './ScoresChart';
 import CrisisChart from './CrisisChart';
+import useAdminAnalytics from '../hooks/useAdminAnalytics';
 import { runAssessmentTests } from '../utils/testAssessmentData';
 
 const AdminDashboard = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
   const [selectedMetric, setSelectedMetric] = useState('all');
-
-  const analytics = {
-    totalUsers: 1247,
-    chatSessions: 156,
-    appointments: 89,
-    forumPosts: 234,
-    criticalAlerts: 3
-  };
+  const analytics = useAdminAnalytics();
 
   const usageData = [
     { name: 'Mon', chatSessions: 24, appointments: 8, forumPosts: 15 },
@@ -52,9 +46,9 @@ const AdminDashboard = () => {
   ];
 
   return (
-    
+
     <div className="min-h-screen  text-gray-800 bg-gradient-to-br from-sky-100 via-white to-blue-100 transition-colors duration-300">
-<div className="container mx-auto px-4 py-8 shadow-2xl shadow-gray-800 rounded-lg">
+      <div className="container mx-auto px-4 py-8 shadow-2xl shadow-gray-800 rounded-lg">
         <Card className="shadow-2xl rounded-2xl mb-8 transform transition-transform duration-500 hover:scale-[1.005]">
           <CardHeader>
             <CardTitle className="flex items-center gap-4 text-4xl font-extrabold text-indigo-800">
@@ -66,7 +60,7 @@ const AdminDashboard = () => {
             </CardDescription>
           </CardHeader>
         </Card>
-        
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center my-8 gap-4">
           <div className="flex flex-wrap gap-3">
             <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
@@ -103,12 +97,14 @@ const AdminDashboard = () => {
               <Users className="h-6 w-6 text-indigo-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">{analytics.totalUsers}</div>
+              <div className="text-4xl font-bold text-gray-900">
+                {analytics.loading ? '...' : analytics.totalUsers}
+              </div> 
               <p className="text-xs text-gray-500 mt-1">Registered students</p>
             </CardContent>
           </Card>
 
-         
+
 
           <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -116,8 +112,10 @@ const AdminDashboard = () => {
               <MessageCircle className="h-6 w-6 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">{analytics.chatSessions}</div>
-              <p className="text-xs text-gray-500 mt-1">This week</p>
+             <div className="text-4xl font-bold text-gray-900">
+                {analytics.loading ? '...' : analytics.chatSessions}
+              </div>
+               <p className="text-xs text-gray-500 mt-1">This week</p>
             </CardContent>
           </Card>
 
@@ -127,18 +125,21 @@ const AdminDashboard = () => {
               <Calendar className="h-6 w-6 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">{analytics.appointments}</div>
-              <p className="text-xs text-gray-500 mt-1">This week</p>
+              <div className="text-4xl font-bold text-gray-900">
+                {analytics.loading ? '...' : analytics.appointments}
+              </div>  <p className="text-xs text-gray-500 mt-1">This week</p>
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
+ <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-md font-medium text-gray-500">Forum Posts</CardTitle>
               <Users className="h-6 w-6 text-pink-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">{analytics.forumPosts}</div>
+              <div className="text-4xl font-bold text-gray-900">
+                {analytics.loading ? '...' : analytics.forumPosts}
+              </div>
               <p className="text-xs text-gray-500 mt-1">This week</p>
             </CardContent>
           </Card>
@@ -149,8 +150,9 @@ const AdminDashboard = () => {
               <AlertTriangle className="h-6 w-6 text-red-600 animate-pulse" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-red-600">{analytics.criticalAlerts}</div>
-              <p className="text-xs text-gray-500 mt-1">Needs attention</p>
+               <div className="text-4xl font-bold text-red-600">
+                {analytics.loading ? '...' : analytics.criticalAlerts}
+              </div> <p className="text-xs text-gray-500 mt-1">Needs attention</p>
             </CardContent>
           </Card>
         </div>

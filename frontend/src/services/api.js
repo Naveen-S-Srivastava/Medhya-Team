@@ -168,6 +168,11 @@ export const assessmentAPI = {
   }),
 };
 
+export const adminAPI = {
+  getDashboardStats: () => apiCall('/admin/dashboard-stats'),
+  
+  getTest: () => apiCall('/admin/test'),
+};
 // Appointment API
 export const appointmentAPI = {
   createAppointment: (appointmentData) => apiCall('/appointments', {
