@@ -17,7 +17,7 @@ const assessmentAverageSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   type: { 
     type: String, 
-    enum: ["PHQ-9", "GAD-7"], 
+    enum: ["PHQ-9", "GAD-7", "GHQ-12"], 
     required: true 
   },
   fiveDayAverage: { type: Number, required: true },
@@ -28,4 +28,4 @@ const assessmentAverageSchema = new mongoose.Schema({
 const Assessment = mongoose.model("Assessment", assessmentSchema);
 const AssessmentAverage = mongoose.model("AssessmentAverage", assessmentAverageSchema);
 
-export default { Assessment, AssessmentAverage };
+export { Assessment, AssessmentAverage };

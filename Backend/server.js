@@ -1,4 +1,3 @@
-import adminRoutes from "./routes/adminRoutes.js";
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
@@ -204,7 +203,6 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/journal", journalRoutes);
 app.use("/api/counselor-dashboard", counselorDashboardRoutes);
-app.use("/api/admin", adminRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

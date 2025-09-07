@@ -185,7 +185,7 @@ const UserProfile = () => {
       setSuccess('Password set successfully! You can now login with email and password.');
       setPasswordData({ newPassword: '', newPasswordConfirm: '', currentPassword: '' });
       setShowPasswordSection(false);
-      
+      console.log(response.data);
       // Update password status from response
       if (response.data && response.data.hasPassword !== undefined) {
         setHasPassword(response.data.hasPassword);

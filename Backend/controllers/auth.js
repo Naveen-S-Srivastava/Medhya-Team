@@ -1,7 +1,7 @@
 import User from "../models/usermodel.js";
 import AppError from "../utils/appError.js";
 import catchAsync from "../utils/catchAsync.js";
-import sendEmail from "../utils/email.js";
+// import sendEmail from "../utils/email.js";
 import generateOtp from "../utils/generateOtp.js";
 import jwt from "jsonwebtoken";
 
@@ -27,16 +27,19 @@ const createSendToken = (user, statusCode, res, message) => {
 
   res.cookie("token", token, cookieOptions);
 
-  user.password = undefined;
-  user.passwordConfirm = undefined;
-  user.otp = undefined;
+  // Create user object without sensitive fields but with hasPassword flag
+  const userResponse = user.toObject();
+  userResponse.hasPassword = Boolean(user.password);
+  delete userResponse.password;
+  delete userResponse.passwordConfirm;
+  delete userResponse.otp;
 
   res.status(statusCode).json({
     status: "success",
     message,
     token,
     data: {
-      user,
+      user: userResponse,
     },
   });
 };
@@ -140,8 +143,8 @@ export const verifyAccount = catchAsync(async (req, res, next) => {
   }
 
   user.isVerified = true;
-  user.otp = undefined;
-  user.otpExpires = undefined;
+  // user.otp = undefined;
+  // user.otpExpires = undefined;
 
   await user.save({ validateBeforeSave: false });
 
@@ -173,7 +176,7 @@ export const resentOTP = catchAsync(async (req, res, next) => {
   // now if anything is not then we have to send a new otp again
   const newOtp = generateOtp();
   user.otp = newOtp;
-  user.otpExpires = Date.now() + 10 * 60 * 1000;
+  user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
   await user.save({ validateBeforeSave: false });
 
@@ -203,8 +206,8 @@ export const resentOTP = catchAsync(async (req, res, next) => {
       message: "A new OTP has been sent to your email",
     });
   } catch (error) {
-    user.otp = undefined;
-    user.otpExpires = undefined;
+    // user.otp = undefined;
+    // user.otpExpires = undefined;
     await user.save({ validateBeforeSave: false });
 
     return next(
@@ -268,8 +271,8 @@ export const forgetPassword = catchAsync(async (req, res, next) => {
 
   const otp = generateOtp();
   // if all is good
-  user.resetPasswordOTP = otp;
-  user.resetPasswordOTPExpires = Date.now() + 300000;
+  // user.resetPasswordOTP = otp;
+  // user.resetPasswordOTPExpires = Date.now() + 300000;
 
   await user.save({ validateBeforeSave: false });
 
@@ -299,8 +302,8 @@ export const forgetPassword = catchAsync(async (req, res, next) => {
       message: "Password reset OTP has been sent to your email",
     });
   } catch (error) {
-    user.resetPasswordOTP = undefined;
-    user.resetPasswordOTPExpires = undefined;
+    // user.resetPasswordOTP = undefined;
+    // user.resetPasswordOTPExpires = undefined;
 
     await user.save({ validateBeforeSave: false });
 
@@ -317,8 +320,8 @@ export const resetPassword = catchAsync(async (req, res, next) => {
 
   const user = await User.findOne({
     email,
-    resetPasswordOTP: otp,
-    resetPasswordOTPExpires: { $gt: Date.now() },
+    // resetPasswordOTP: otp,
+    // resetPasswordOTPExpires: { $gt: Date.now() },
   });
 
   if (!user) {
@@ -327,8 +330,8 @@ export const resetPassword = catchAsync(async (req, res, next) => {
 
   user.password = password;
   user.passwordConfirm = passwordConfirm;
-  user.resetPasswordOTP = undefined;
-  user.resetPasswordOTPExpires = undefined;
+  // user.resetPasswordOTP = undefined;
+  // user.resetPasswordOTPExpires = undefined;
 
   await user.save();
 

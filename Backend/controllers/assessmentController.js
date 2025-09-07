@@ -1,10 +1,8 @@
-import assessmentModels  from '../models/assessmentModel.js';
+import { Assessment, AssessmentAverage } from '../models/assessmentModel.js';
 import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
 import GAD7 from '../models/gad7Model.js';
 import PHQ9 from '../models/phq9Model.js';
-
-const { Assessment, AssessmentAverage } = assessmentModels;
 
 // Get questions for a specific assessment type
 export const getQuestions = catchAsync(async (req, res) => {

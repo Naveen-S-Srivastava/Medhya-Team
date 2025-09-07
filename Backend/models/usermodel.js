@@ -66,10 +66,10 @@ const userSchema = new mongoose.Schema({
     default: null
   },
   
-  isEmailVerified: {
-    type: Boolean,
-    default: false,
-  },
+  // isEmailVerified: {
+  //   type: Boolean,
+  //   default: false,
+  // },
 
   isVerified: {
     type: Boolean,
@@ -93,15 +93,15 @@ const userSchema = new mongoose.Schema({
     default: null,
   },
 
-  resetPasswordOTP: {
-    type: String,
-    default: null,
-  },
+  // resetPasswordOTP: {
+  //   type: String,
+  //   default: null,
+  // },
 
-  resetPasswordOTPExpires: {
-    type: Date,
-    default: null,
-  },
+  // resetPasswordOTPExpires: {
+  //   type: Date,
+  //   default: null,
+  // },
 
   refreshToken: {
     type: String,
@@ -120,24 +120,32 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 userSchema.pre("save", async function (next) {
-  console.log('🔐 Pre-save hook triggered');
+  console.log('🔐 Pre-save hook triggered for user:', this._id);
   console.log('🔐 Password modified:', this.isModified("password"));
   console.log('🔐 Has password:', !!this.password);
-  console.log('🔐 Password value:', this.password);
+  console.log('🔐 Password value length:', this.password ? this.password.length : 0);
+  console.log('🔐 PasswordConfirm value:', !!this.passwordConfirm);
   
-  if (!this.isModified("password") || !this.password) {
-    console.log('🔐 Skipping password hashing');
+if (!this.password) {
+    console.log('🔐 Skipping password hashing - no password');
     return next();
   }
-  
+
+  // Check if password is already hashed (starts with $2a$ or $2b$)
+  if (this.password.startsWith('$2a$') || this.password.startsWith('$2b$')) {
+    console.log('🔐 Password already hashed, skipping');
+    return next();
+  }
+
   try {
     console.log('🔐 Hashing password...');
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    console.log('🔐 Password hashed successfully');
+    console.log('🔐 Password hashed successfully, new length:', this.password.length);
+    console.log('🔐 Hashed password starts with:', this.password.substring(0, 10));
     
     // Remove passwordConfirm from the document (it's not needed in the database)
-    this.passwordConfirm = null;
+    delete this.passwordConfirm;
     
     next();
   } catch (err) {
