@@ -3,9 +3,9 @@ import User from '../models/usermodel.js';
 import Counselor from '../models/counselorModel.js';
 import dotenv from 'dotenv';
 
-dotenv.config({ path: "../.env" });
+dotenv.config({ path: "./.env" });
 
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://ksaraf0004_db_user:Ajasz20j3uSFOeRC@cluster0.nr7dg5u.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 async function createDemoUsers() {
   try {
@@ -19,8 +19,8 @@ async function createDemoUsers() {
         firstName: 'Admin',
         lastName: 'User',
         email: 'admin@mindcare.com',
-        password: 'admin123',
-        passwordConfirm: 'admin123',
+        password: 'Admin@123',
+        passwordConfirm: 'Admin@123',
         phone: '1234567890',
         institutionId: 'ADMIN001',
         studentId: 'ADMIN001',
@@ -44,8 +44,8 @@ async function createDemoUsers() {
         firstName: 'Dr. Sarah',
         lastName: 'Johnson',
         email: 'counselor@mindcare.com',
-        password: 'counselor123',
-        passwordConfirm: 'counselor123',
+        password: 'Counselor@123',
+        passwordConfirm: 'Counselor@123',
         phone: '2345678901',
         institutionId: 'COUNSELOR001',
         studentId: 'COUNSELOR001',
@@ -66,11 +66,11 @@ async function createDemoUsers() {
       },
       {
         // Student User - Access to student features
-        firstName: 'John',
-        lastName: 'Doe',
+        firstName: 'Alex',
+        lastName: 'Thompson',
         email: 'student@mindcare.com',
-        password: 'student123',
-        passwordConfirm: 'student123',
+        password: 'Student@123',
+        passwordConfirm: 'Student@123',
         phone: '3456789012',
         institutionId: 'iit-delhi',
         studentId: 'CS2024001',
@@ -78,36 +78,11 @@ async function createDemoUsers() {
         year: '3',
         department: 'Computer Science',
         securityQuestion: 'What is your favorite color?',
-        securityAnswer: 'Red',
+        securityAnswer: 'Blue',
         privacyConsent: true,
         dataProcessingConsent: true,
         emergencyContact: 'Parent Name',
         emergencyPhone: '3456789012',
-        mentalHealthConsent: true,
-        communicationConsent: true,
-        role: 'student',
-        isVerified: true,
-        isProfileComplete: true
-      },
-      {
-        // Additional Student User for testing
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'student2@mindcare.com',
-        password: 'student123',
-        passwordConfirm: 'student123',
-        phone: '4567890123',
-        institutionId: 'du-north',
-        studentId: 'PSY2024002',
-        course: 'BA - Psychology',
-        year: '2',
-        department: 'Psychology',
-        securityQuestion: 'What is your favorite color?',
-        securityAnswer: 'Purple',
-        privacyConsent: true,
-        dataProcessingConsent: true,
-        emergencyContact: 'Guardian Name',
-        emergencyPhone: '4567890123',
         mentalHealthConsent: true,
         communicationConsent: true,
         role: 'student',
@@ -133,23 +108,28 @@ async function createDemoUsers() {
       // If counselor, create counselor profile
       if (userData.role === 'counselor') {
         const counselorProfile = new Counselor({
-          user: user._id,
-          specialization: ['Anxiety', 'Depression', 'Stress Management'],
+          name: userData.firstName + ' ' + userData.lastName,
+          email: userData.email,
+          phone: userData.phone,
+          specialization: ['Anxiety', 'Depression', 'Stress Management', 'Academic Stress'],
+          languages: ['English', 'Hindi'],
+          appointmentType: 'both',
           experience: 8,
-          qualifications: ['PhD in Clinical Psychology', 'Licensed Professional Counselor'],
-          bio: 'Experienced clinical psychologist specializing in mental health support for students.',
-          availability: {
-            monday: { start: '09:00', end: '17:00' },
-            tuesday: { start: '09:00', end: '17:00' },
-            wednesday: { start: '09:00', end: '17:00' },
-            thursday: { start: '09:00', end: '17:00' },
-            friday: { start: '09:00', end: '17:00' }
+          education: {
+            degree: 'PhD in Clinical Psychology',
+            institution: 'IIT Delhi',
+            year: 2015
           },
+          license: {
+            number: 'PSY001234',
+            issuingAuthority: 'Delhi Medical Council',
+            expiryDate: new Date('2025-12-31')
+          },
+          bio: 'Experienced clinical psychologist specializing in mental health support for students. I help students navigate academic stress, anxiety, depression, and personal challenges.',
           rating: 4.8,
           totalSessions: 150,
-          languages: ['English', 'Hindi'],
-          emergencyContact: userData.emergencyPhone,
-          isActive: true
+          isActive: true,
+          userAccount: user._id
         });
         await counselorProfile.save();
 
@@ -159,7 +139,7 @@ async function createDemoUsers() {
       }
 
       console.log(`✅ Created ${userData.role} user: ${userData.email}`);
-      console.log(`   Password: ${userData.password}`);
+      console.log(`   Password: ${userData.role === 'admin' ? 'Admin@123' : userData.role === 'counselor' ? 'Counselor@123' : 'Student@123'}`);
       console.log(`   Role: ${userData.role}`);
       console.log('');
     }
@@ -169,24 +149,20 @@ async function createDemoUsers() {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("👑 ADMIN ACCESS:");
     console.log("   Email: admin@mindcare.com");
-    console.log("   Password: admin123");
+    console.log("   Password: Admin@123");
     console.log("   Access: Full admin panel, user management, counselor management");
     console.log("");
     console.log("👩‍⚕️ COUNSELOR ACCESS:");
     console.log("   Email: counselor@mindcare.com");
-    console.log("   Password: counselor123");
+    console.log("   Password: Counselor@123");
     console.log("   Access: Counselor dashboard, appointment management, session notes");
     console.log("");
     console.log("🎓 STUDENT ACCESS:");
     console.log("   Email: student@mindcare.com");
-    console.log("   Password: student123");
-    console.log("   Access: Student portal, assessments, appointments, chat");
-    console.log("");
-    console.log("🎓 STUDENT 2 ACCESS:");
-    console.log("   Email: student2@mindcare.com");
-    console.log("   Password: student123");
+    console.log("   Password: Student@123");
     console.log("   Access: Student portal, assessments, appointments, chat");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("\n💡 To run this script: node sampleData/createDemoUser.js");
 
     process.exit(0);
   } catch (err) {
