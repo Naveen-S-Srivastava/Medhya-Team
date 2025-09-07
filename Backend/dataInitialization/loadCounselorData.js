@@ -10,8 +10,9 @@ dotenv.config({ path: "../.env" });
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Import the Counselor model
+// Import the models
 import Counselor from '../models/counselorModel.js';
+import User from '../models/usermodel.js';
 
 // Connect to MongoDB
 const connectDB = async () => {
@@ -35,8 +36,48 @@ const loadCounselorData = async () => {
     await Counselor.deleteMany({});
     console.log('Cleared existing counselors');
 
-    // Insert sample data
-    const counselors = await Counselor.insertMany(sampleData);
+    // Process each counselor and create associated user account
+    const counselors = [];
+    for (const counselorData of sampleData) {
+      try {
+        // Check if user already exists
+        let user = await User.findOne({ email: counselorData.email });
+
+        if (!user) {
+          // Create user account for counselor
+          const userData = {
+            email: counselorData.email,
+            password: 'counselor123', // Default password
+            passwordConfirm: 'counselor123',
+            role: 'counselor',
+            isVerified: true,
+            isProfileComplete: true
+          };
+
+          user = await User.create(userData);
+          console.log(`Created user account for counselor: ${counselorData.email}`);
+        }
+
+        // Create counselor with user account reference
+        const counselorWithUser = {
+          ...counselorData,
+          userAccount: user._id
+        };
+
+        const counselor = await Counselor.create(counselorWithUser);
+        counselors.push(counselor);
+
+        // Update user with counselor profile reference
+        user.counselorProfile = counselor._id;
+        await user.save();
+
+        console.log(`Created counselor: ${counselorData.name}`);
+
+      } catch (error) {
+        console.error(`Error creating counselor ${counselorData.name}:`, error.message);
+      }
+    }
+
     console.log(`Successfully loaded ${counselors.length} counselors`);
 
     // Log some statistics
