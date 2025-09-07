@@ -28,12 +28,6 @@ export const useAuth = () => {
         isGoogleUser: Boolean(data.data.user.googleId)
       };
       
-      console.log('🔍 useAuth - Profile loaded:', {
-        userId: userWithMetadata._id,
-        isProfileComplete: userWithMetadata.isProfileComplete,
-        backendValue: data.data.user.isProfileComplete
-      });
-      
       setUser(userWithMetadata);
     } catch (err) {
       if (err.message.includes('401')) {
@@ -252,21 +246,17 @@ export const useAuth = () => {
 
   const forceRefreshProfileStatus = async () => {
     if (!user?._id) {
-      console.log('❌ forceRefreshProfileStatus: No user ID found');
       return null;
     }
     
     try {
-      console.log('🔍 forceRefreshProfileStatus: Starting refresh for user:', user._id);
       const token = localStorage.getItem('token');
       if (!token) {
-        console.log('❌ forceRefreshProfileStatus: No token found');
         return null;
       }
 
       // First, refresh the complete user profile
       try {
-        console.log('🔍 forceRefreshProfileStatus: Refreshing complete user profile');
         const profileData = await authAPI.getProfile();
         const userWithMetadata = {
           ...profileData.data.user,
@@ -275,15 +265,10 @@ export const useAuth = () => {
           isGoogleUser: Boolean(profileData.data.user.googleId)
         };
         
-        console.log('✅ forceRefreshProfileStatus: User profile refreshed:', {
-          userId: userWithMetadata._id,
-          isProfileComplete: userWithMetadata.isProfileComplete
-        });
-        
         setUser(userWithMetadata);
         return { isProfileComplete: userWithMetadata.isProfileComplete };
       } catch (profileError) {
-        console.log('⚠️ forceRefreshProfileStatus: Profile refresh failed, trying profile status API');
+        // Fallback: use the profile status API
       }
 
       // Fallback: use the profile status API
@@ -296,7 +281,6 @@ export const useAuth = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ forceRefreshProfileStatus: Profile status data received:', data);
         
         const updatedUser = {
           ...user,
@@ -304,19 +288,11 @@ export const useAuth = () => {
           profileCompletionPercentage: data.data.completionPercentage
         };
         
-        console.log('✅ forceRefreshProfileStatus: Updating user state:', {
-          oldIsProfileComplete: user.isProfileComplete,
-          newIsProfileComplete: updatedUser.isProfileComplete
-        });
-        
         setUser(updatedUser);
         return data.data;
-      } else {
-        const errorData = await response.json();
-        console.error('❌ forceRefreshProfileStatus: Failed to get profile status:', errorData);
       }
     } catch (error) {
-      console.error('❌ forceRefreshProfileStatus: Error refreshing profile status:', error);
+      // Error handling without console spam
     }
     return null;
   };

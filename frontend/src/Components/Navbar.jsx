@@ -7,7 +7,7 @@ import { Badge } from '../ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/Avatar';
 import {
   Heart, Menu, X, Bell, Settings, LogOut, User,
-  Building2, GraduationCap, ChevronDown
+  Building2, GraduationCap, ChevronDown, RefreshCw, CheckCircle, AlertCircle
 } from 'lucide-react';
 import { authAPI } from '../services/api.js';
 import medha from '../assets/logo1.jpg';
@@ -18,6 +18,20 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [profileStatus, setProfileStatus] = useState(() => {
+    // Initialize with current user profile status if available
+    if (user?.isProfileComplete !== undefined) {
+      return {
+        isComplete: user.isProfileComplete,
+        lastChecked: new Date().toLocaleTimeString(),
+        message: user.isProfileComplete 
+          ? 'Profile is complete! All features are available.' 
+          : 'Consider completing your profile for a better experience.'
+      };
+    }
+    return null;
+  });
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,6 +62,7 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
     setIsMenuOpen(false);
     setIsUserMenuOpen(false);
     setIsChangePasswordModalOpen(false);
+    // Don't clear profile status on route change, only on logout
   }, [location.pathname]);
 
   // Handle password change
@@ -82,6 +97,40 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
   const studentStats = {
     wellnessScore: 78,
     streakDays: 12
+  };
+
+  // Handle profile status check
+  const handleCheckProfileStatus = async () => {
+    setIsCheckingStatus(true);
+    try {
+      // Here you would make an API call to check profile status
+      // For now, we'll use the current user data
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Update profile status based on current user data
+      const isComplete = user?.isProfileComplete || false;
+      const status = {
+        isComplete,
+        lastChecked: new Date().toLocaleTimeString(),
+        message: isComplete 
+          ? 'Profile is complete! All features are available.' 
+          : 'Profile is incomplete. Complete your profile to unlock all features.'
+      };
+      
+      setProfileStatus(status);
+      
+    } catch (error) {
+      console.error('❌ Failed to check profile status:', error);
+      setProfileStatus({
+        isComplete: false,
+        lastChecked: new Date().toLocaleTimeString(),
+        message: 'Failed to check profile status. Please try again.'
+      });
+    } finally {
+      setIsCheckingStatus(false);
+    }
   };
 
   // --- Reusable UI Components ---
@@ -137,6 +186,37 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
                 <Link to="/profile" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-slate-700 rounded-md hover:bg-slate-100">
                   <User className="h-4 w-4 text-slate-500" /> Profile
                 </Link>
+                
+                {/* Profile Status Display */}
+                {profileStatus && (
+                  <div className={`mx-3 my-2 p-2 rounded-md text-xs ${
+                    profileStatus.isComplete 
+                      ? 'bg-green-50 border border-green-200' 
+                      : 'bg-orange-50 border border-orange-200'
+                  }`}>
+                    <div className="flex items-center gap-1 mb-1">
+                      {profileStatus.isComplete ? (
+                        <CheckCircle className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-3 w-3 text-orange-500" />
+                      )}
+                      <span className={`font-medium ${
+                        profileStatus.isComplete ? 'text-green-700' : 'text-orange-700'
+                      }`}>
+                        {profileStatus.isComplete ? 'Profile Complete' : 'Profile Incomplete'}
+                      </span>
+                    </div>
+                    <p className={`text-xs ${
+                      profileStatus.isComplete ? 'text-green-600' : 'text-orange-600'
+                    }`}>
+                      {profileStatus.message}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Last checked: {profileStatus.lastChecked}
+                    </p>
+                  </div>
+                )}
+                
                 {!user?.isProfileComplete && (
                   <Link to="/user-signup" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-orange-600 rounded-md hover:bg-orange-50 bg-orange-50">
                     <User className="h-4 w-4 text-orange-500" /> Complete Profile
@@ -199,6 +279,38 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
 
             {/* Right Section: Actions */}
             <div className="flex items-center gap-4">
+              {/* Profile Status Check Button */}
+              {userRole === 'student' && (
+                <button
+                  onClick={handleCheckProfileStatus}
+                  disabled={isCheckingStatus}
+                  className="relative p-2 rounded-full hover:bg-slate-100 transition-colors disabled:opacity-50"
+                  title={isCheckingStatus ? "Checking..." : profileStatus ? "Profile status checked" : "Check Profile Status"}
+                >
+                  {isCheckingStatus ? (
+                    <RefreshCw className="h-5 w-5 text-slate-500 animate-spin" />
+                  ) : profileStatus ? (
+                    profileStatus.isComplete ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-orange-500" />
+                    )
+                  ) : (
+                    <RefreshCw className="h-5 w-5 text-slate-500" />
+                  )}
+                  {profileStatus && (
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                        profileStatus.isComplete ? 'bg-green-400' : 'bg-orange-400'
+                      } opacity-75`}></span>
+                      <span className={`relative inline-flex rounded-full h-3 w-3 ${
+                        profileStatus.isComplete ? 'bg-green-500' : 'bg-orange-500'
+                      }`}></span>
+                    </span>
+                  )}
+                </button>
+              )}
+
               <button className="relative p-2 rounded-full hover:bg-slate-100">
                 <Bell className="h-5 w-5 text-slate-500" />
                 <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
@@ -231,7 +343,32 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
             </button>
           </div>
           <div className="mt-6 space-y-2">
-            <p className="px-3 py-2 text-sm font-semibold text-slate-800">Welcome, {user?.name || 'User'}</p>
+            <div className="flex items-center justify-between px-3">
+              <p className="text-sm font-semibold text-slate-800">Welcome, {user?.firstName || 'User'}</p>
+              
+              {/* Mobile Profile Status Check Button */}
+              {userRole === 'student' && (
+                <button
+                  onClick={handleCheckProfileStatus}
+                  disabled={isCheckingStatus}
+                  className="p-2 rounded-full hover:bg-slate-100 transition-colors disabled:opacity-50"
+                  title={isCheckingStatus ? "Checking..." : profileStatus ? "Profile status checked" : "Check Profile Status"}
+                >
+                  {isCheckingStatus ? (
+                    <RefreshCw className="h-4 w-4 text-slate-500 animate-spin" />
+                  ) : profileStatus ? (
+                    profileStatus.isComplete ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-orange-500" />
+                    )
+                  ) : (
+                    <RefreshCw className="h-4 w-4 text-slate-500" />
+                  )}
+                </button>
+              )}
+            </div>
+            
             {user?.role === 'admin' ? (
               // Admin mobile menu - simplified
               <>
@@ -251,6 +388,37 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
                 <Link to="/profile" className="flex items-center gap-3 w-full px-3 py-2 text-base text-slate-700 rounded-md hover:bg-slate-100">
                   <User className="h-5 w-5 text-slate-500" /> Profile
                 </Link>
+                
+                {/* Mobile Profile Status Display */}
+                {profileStatus && (
+                  <div className={`mx-3 my-2 p-3 rounded-md text-sm ${
+                    profileStatus.isComplete 
+                      ? 'bg-green-50 border border-green-200' 
+                      : 'bg-orange-50 border border-orange-200'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      {profileStatus.isComplete ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-orange-500" />
+                      )}
+                      <span className={`font-medium ${
+                        profileStatus.isComplete ? 'text-green-700' : 'text-orange-700'
+                      }`}>
+                        {profileStatus.isComplete ? 'Profile Complete' : 'Profile Incomplete'}
+                      </span>
+                    </div>
+                    <p className={`text-sm ${
+                      profileStatus.isComplete ? 'text-green-600' : 'text-orange-600'
+                    }`}>
+                      {profileStatus.message}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Last checked: {profileStatus.lastChecked}
+                    </p>
+                  </div>
+                )}
+                
                 {!user?.isProfileComplete && (
                   <Link to="/user-signup" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-orange-600 rounded-md hover:bg-orange-50 bg-orange-50">
                     <User className="h-4 w-4 text-orange-500" /> Complete Profile

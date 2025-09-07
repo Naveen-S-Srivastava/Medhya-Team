@@ -4,13 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Progress } from '../ui/Progress';
-import { AlertTriangle, UserPlus, ArrowRight } from 'lucide-react';
+import { AlertTriangle, UserPlus, ArrowRight, X } from 'lucide-react';
 
 const ProfileCompletionCheck = ({ children, requireComplete = false }) => {
   const { user, loading, checkProfileCompletion } = useAuth();
   const navigate = useNavigate();
   const [profileStatus, setProfileStatus] = useState(null);
   const [checkingProfile, setCheckingProfile] = useState(true);
+  const [dismissedWarning, setDismissedWarning] = useState(false);
 
   useEffect(() => {
     const checkProfileStatus = async () => {
@@ -31,6 +32,10 @@ const ProfileCompletionCheck = ({ children, requireComplete = false }) => {
     checkProfileStatus();
   }, [user, loading, checkProfileCompletion]);
 
+  const handleDismissWarning = () => {
+    setDismissedWarning(true);
+  };
+
   // Show loading while checking
   if (loading || checkingProfile) {
     return (
@@ -49,89 +54,12 @@ const ProfileCompletionCheck = ({ children, requireComplete = false }) => {
     return null;
   }
 
-  // If profile is complete, render children
-  if (profileStatus?.isProfileComplete) {
-    return children;
-  }
-
-  // If profile is not complete and we require completion
-  if (requireComplete && !profileStatus?.isProfileComplete) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl shadow-2xl border-0">
-          <CardHeader className="text-center space-y-4">
-            <div className="flex items-center justify-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg flex items-center justify-center">
-                <UserPlus className="w-8 h-8 text-white" />
-              </div>
-            </div>
-            <div>
-              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Profile Completion Required
-              </CardTitle>
-              <CardDescription className="text-lg mt-2">
-                Complete your profile to access all features
-              </CardDescription>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="space-y-6">
-            {/* Progress Bar */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Profile Completion</span>
-                <span>{profileStatus?.completionPercentage || 0}% Complete</span>
-              </div>
-              <Progress value={profileStatus?.completionPercentage || 0} className="h-2" />
-            </div>
-
-            {/* Missing Fields */}
-            {profileStatus?.missingFields && profileStatus.missingFields.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="font-semibold text-gray-800">Missing Information:</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {profileStatus.missingFields.map((field, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
-                      <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                      <span className="capitalize">{field.replace(/([A-Z])/g, ' $1').trim()}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 justify-center">
-              <Button 
-                onClick={() => navigate('/complete-profile')}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md"
-              >
-                Complete Profile
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => navigate('/dashboard')}
-              >
-                Go to Dashboard
-              </Button>
-            </div>
-
-            {/* Info */}
-            <div className="text-center text-sm text-gray-500">
-              <p>Completing your profile helps us provide personalized mental health support and resources.</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   // If we don't require completion, render children with a warning
   return (
     <>
       {children}
-      {!profileStatus?.isProfileComplete && (
+      {!profileStatus?.isProfileComplete && !dismissedWarning && (
         <div className="fixed bottom-4 right-4 z-50">
           <Card className="w-80 shadow-lg border-yellow-200 bg-yellow-50">
             <CardContent className="p-4">
@@ -150,6 +78,13 @@ const ProfileCompletionCheck = ({ children, requireComplete = false }) => {
                     Complete Now
                   </Button>
                 </div>
+                <button
+                  onClick={handleDismissWarning}
+                  className="text-yellow-600 hover:text-yellow-800 transition-colors p-1 hover:bg-yellow-100 rounded"
+                  title="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             </CardContent>
           </Card>
