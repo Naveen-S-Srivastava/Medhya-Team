@@ -37,6 +37,34 @@ const userSchema = new mongoose.Schema({
     enum: ["student", "admin", "counselor"], 
     default: "student" 
   },
+
+  // Profile information
+  firstName: {
+    type: String,
+    trim: true
+  },
+
+  lastName: {
+    type: String,
+    trim: true
+  },
+
+  phone: {
+    type: String,
+    trim: true
+  },
+
+  profileImage: {
+    type: String,
+    default: null
+  },
+
+  // Reference to counselor profile (for counselor users)
+  counselorProfile: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Counselor',
+    default: null
+  },
   
   isEmailVerified: {
     type: Boolean,
@@ -125,5 +153,39 @@ userSchema.methods.correctPassword = async function (enteredPassword) {
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+// Virtual for full name
+userSchema.virtual('fullName').get(function() {
+  if (this.firstName && this.lastName) {
+    return `${this.firstName} ${this.lastName}`;
+  }
+  return this.firstName || this.email;
+});
+
+// Virtual to check if user is a counselor
+userSchema.virtual('isCounselor').get(function() {
+  return this.role === 'counselor' && this.counselorProfile;
+});
+
+// Method to get counselor profile
+userSchema.methods.getCounselorProfile = async function() {
+  if (this.role === 'counselor' && this.counselorProfile) {
+    const Counselor = mongoose.model('Counselor');
+    return await Counselor.findById(this.counselorProfile);
+  }
+  return null;
+};
+
+// Method to check if user has complete profile
+userSchema.methods.hasCompleteProfile = function() {
+  if (this.role === 'counselor') {
+    return this.counselorProfile && this.firstName && this.lastName;
+  }
+  return this.firstName && this.lastName;
+};
+
+// Ensure virtual fields are serialized
+userSchema.set('toJSON', { virtuals: true });
+userSchema.set('toObject', { virtuals: true });
 
 export default mongoose.model("User", userSchema);

@@ -178,6 +178,14 @@ const counselorSchema = new mongoose.Schema({
   crisisIntervention: {
     type: Boolean,
     default: false
+  },
+
+  // Reference to the User account
+  userAccount: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true
   }
 }, {
   timestamps: true,
@@ -210,6 +218,18 @@ counselorSchema.methods.getAvailableSlotsForDate = function(date) {
   }
   
   return this.availability[dayOfWeek].slots.filter(slot => slot.isAvailable);
+};
+
+// Method to get the associated user account
+counselorSchema.methods.getUserAccount = async function() {
+  const User = mongoose.model('User');
+  return await User.findById(this.userAccount);
+};
+
+// Method to check if counselor is active and verified
+counselorSchema.methods.isActiveAndVerified = async function() {
+  const user = await this.getUserAccount();
+  return this.isActive && user && user.isVerified;
 };
 
 // Indexes for better query performance

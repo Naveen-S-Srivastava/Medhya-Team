@@ -13,7 +13,9 @@ import {
   getStudentList,
   updateAppointmentStatus,
   getCounselorProfile,
-  updateCounselorProfile
+  updateCounselorProfile,
+  getCounselorAnalytics,
+  getCounselorNotifications
 } from '../controllers/counselorDashboardController.js';
 
 const router = express.Router();
@@ -49,5 +51,11 @@ router.get('/students', getStudentList);
 // Profile
 router.get('/profile', getCounselorProfile);
 router.patch('/profile', updateCounselorProfile);
+
+// Analytics
+router.get('/analytics', getCounselorAnalytics);
+
+// Notifications
+router.get('/notifications', getCounselorNotifications);
 
 export default router;

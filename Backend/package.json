@@ -4,7 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "create-test-data": "node scripts/createTestData.js",
+    "create-simple-test": "node sampleData/createSimpleTestData.js",
+    "verify-test-data": "node sampleData/verifyAndFixTestData.js",
+    "test-connection": "node sampleData/testUserCounselorConnection.js",
+    "create-password-counselor": "node sampleData/createPasswordEnabledCounselor.js"
   },
   "repository": {
     "type": "git",

@@ -7,19 +7,23 @@ import CounselorStats from '../models/counselorStatsModel.js';
 import Payment from '../models/paymentModel.js';
 import User from '../models/usermodel.js';
 import Counselor from '../models/counselorModel.js';
+import Assessment from '../models/assessmentModel.js';
+import CrisisAlert from '../models/crisisAlertModel.js';
+import mongoose from 'mongoose';
+
+// Helper function to get actual counselor ID
+const getActualCounselorId = async (userId) => {
+  const user = await User.findById(userId);
+  if (user && user.role === 'counselor' && user.counselorProfile) {
+    return user.counselorProfile;
+  }
+  return userId;
+};
 
 // Get counselor dashboard overview
 export const getDashboardOverview = catchAsync(async (req, res) => {
   const counselorId = req.user.id;
-
-  // Get the actual counselor ID (either from User model or direct)
-  let actualCounselorId = counselorId;
-  
-  // Check if this is an OAuth user with a counselor profile
-  const user = await User.findById(counselorId);
-  if (user && user.role === 'counselor' && user.counselorProfile) {
-    actualCounselorId = user.counselorProfile;
-  }
+  const actualCounselorId = await getActualCounselorId(counselorId);
 
   // Get today's appointments
   const today = new Date();
@@ -114,18 +118,21 @@ export const getDashboardOverview = catchAsync(async (req, res) => {
 // Get upcoming sessions
 export const getUpcomingSessions = catchAsync(async (req, res) => {
   const counselorId = req.user.id;
-  const { page = 1, limit = 10, status } = req.query;
-
-  // Get the actual counselor ID
-  let actualCounselorId = counselorId;
-  const user = await User.findById(counselorId);
-  if (user && user.role === 'counselor' && user.counselorProfile) {
-    actualCounselorId = user.counselorProfile;
-  }
+  const { page = 1, limit = 10, status, date } = req.query;
+  const actualCounselorId = await getActualCounselorId(counselorId);
 
   const filter = { counselor: actualCounselorId };
+  
   if (status) {
     filter.status = status;
+  }
+  
+  if (date) {
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    filter.date = { $gte: startDate, $lte: endDate };
   }
 
   const appointments = await Appointment.find(filter)
@@ -154,13 +161,7 @@ export const getUpcomingSessions = catchAsync(async (req, res) => {
 export const getRecentMessages = catchAsync(async (req, res) => {
   const counselorId = req.user.id;
   const { page = 1, limit = 20, unreadOnly = false } = req.query;
-
-  // Get the actual counselor ID
-  let actualCounselorId = counselorId;
-  const user = await User.findById(counselorId);
-  if (user && user.role === 'counselor' && user.counselorProfile) {
-    actualCounselorId = user.counselorProfile;
-  }
+  const actualCounselorId = await getActualCounselorId(counselorId);
 
   const filter = {
     $or: [
@@ -203,9 +204,10 @@ export const getRecentMessages = catchAsync(async (req, res) => {
 export const sendMessage = catchAsync(async (req, res) => {
   const { recipientId, content, messageType = 'text', appointmentId, priority = 'normal' } = req.body;
   const counselorId = req.user.id;
+  const actualCounselorId = await getActualCounselorId(counselorId);
 
   const message = await Message.create({
-    sender: counselorId,
+    sender: actualCounselorId,
     senderModel: 'Counselor',
     recipient: recipientId,
     recipientModel: 'User',
@@ -231,11 +233,12 @@ export const sendMessage = catchAsync(async (req, res) => {
 export const markMessageAsRead = catchAsync(async (req, res) => {
   const { messageId } = req.params;
   const counselorId = req.user.id;
+  const actualCounselorId = await getActualCounselorId(counselorId);
 
   const message = await Message.findOneAndUpdate(
     {
       _id: messageId,
-      recipient: counselorId,
+      recipient: actualCounselorId,
       recipientModel: 'Counselor'
     },
     {
@@ -260,11 +263,27 @@ export const markMessageAsRead = catchAsync(async (req, res) => {
 // Get session notes
 export const getSessionNotes = catchAsync(async (req, res) => {
   const counselorId = req.user.id;
-  const { page = 1, limit = 10, studentId } = req.query;
+  const { page = 1, limit = 10, studentId, appointmentId } = req.query;
+  const actualCounselorId = await getActualCounselorId(counselorId);
 
-  // For now, return empty data
-  const sessionNotes = [];
-  const total = 0;
+  const filter = { counselor: actualCounselorId };
+  
+  if (studentId) {
+    filter.student = studentId;
+  }
+  
+  if (appointmentId) {
+    filter.appointment = appointmentId;
+  }
+
+  const sessionNotes = await SessionNote.find(filter)
+    .populate('student', 'firstName lastName email')
+    .populate('appointment', 'date timeSlot status')
+    .sort({ sessionDate: -1 })
+    .limit(parseInt(limit))
+    .skip((parseInt(page) - 1) * parseInt(limit));
+
+  const total = await SessionNote.countDocuments(filter);
 
   res.status(200).json({
     status: 'success',
@@ -283,6 +302,8 @@ export const getSessionNotes = catchAsync(async (req, res) => {
 // Create session note
 export const createSessionNote = catchAsync(async (req, res) => {
   const counselorId = req.user.id;
+  const actualCounselorId = await getActualCounselorId(counselorId);
+  
   const {
     appointmentId,
     studentId,
@@ -303,7 +324,7 @@ export const createSessionNote = catchAsync(async (req, res) => {
 
   const sessionNote = await SessionNote.create({
     appointment: appointmentId,
-    counselor: counselorId,
+    counselor: actualCounselorId,
     student: studentId,
     sessionDate,
     sessionDuration,
@@ -335,18 +356,20 @@ export const createSessionNote = catchAsync(async (req, res) => {
 // Get payment records
 export const getPaymentRecords = catchAsync(async (req, res) => {
   const counselorId = req.user.id;
-  const { page = 1, limit = 10, status } = req.query;
-
-  // Get the actual counselor ID
-  let actualCounselorId = counselorId;
-  const user = await User.findById(counselorId);
-  if (user && user.role === 'counselor' && user.counselorProfile) {
-    actualCounselorId = user.counselorProfile;
-  }
+  const { page = 1, limit = 10, status, startDate, endDate } = req.query;
+  const actualCounselorId = await getActualCounselorId(counselorId);
 
   const filter = { counselor: actualCounselorId };
+  
   if (status) {
     filter.paymentStatus = status;
+  }
+  
+  if (startDate && endDate) {
+    filter.createdAt = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate)
+    };
   }
 
   const payments = await Payment.find(filter)
@@ -382,8 +405,9 @@ export const getPaymentRecords = catchAsync(async (req, res) => {
 export const getCounselorStats = catchAsync(async (req, res) => {
   const counselorId = req.user.id;
   const { period = 'month' } = req.query;
+  const actualCounselorId = await getActualCounselorId(counselorId);
 
-  const stats = await CounselorStats.findOne({ counselor: counselorId });
+  const stats = await CounselorStats.findOne({ counselor: actualCounselorId });
 
   // Get appointments for the specified period
   const startDate = new Date();
@@ -396,7 +420,7 @@ export const getCounselorStats = catchAsync(async (req, res) => {
   }
 
   const appointments = await Appointment.find({
-    counselor: counselorId,
+    counselor: actualCounselorId,
     date: { $gte: startDate }
   });
 
@@ -423,16 +447,61 @@ export const getCounselorStats = catchAsync(async (req, res) => {
 // Get student list
 export const getStudentList = catchAsync(async (req, res) => {
   const counselorId = req.user.id;
-  const { page = 1, limit = 10, search } = req.query;
+  const { page = 1, limit = 10, search, status } = req.query;
+  const actualCounselorId = await getActualCounselorId(counselorId);
 
-  // For now, return empty data
-  const students = [];
-  const total = 0;
+  // Get students who have appointments with this counselor
+  const appointmentFilter = { counselor: actualCounselorId };
+  if (status) {
+    appointmentFilter.status = status;
+  }
+
+  const appointments = await Appointment.find(appointmentFilter)
+    .populate('student', 'firstName lastName email profileImage phone')
+    .sort({ date: -1 });
+
+  // Get unique students
+  const studentMap = new Map();
+  appointments.forEach(appointment => {
+    if (appointment.student && !studentMap.has(appointment.student._id.toString())) {
+      studentMap.set(appointment.student._id.toString(), {
+        ...appointment.student.toObject(),
+        lastAppointment: appointment.date,
+        appointmentStatus: appointment.status,
+        totalAppointments: 1
+      });
+    } else if (appointment.student) {
+      const existingStudent = studentMap.get(appointment.student._id.toString());
+      existingStudent.totalAppointments += 1;
+      if (appointment.date > existingStudent.lastAppointment) {
+        existingStudent.lastAppointment = appointment.date;
+        existingStudent.appointmentStatus = appointment.status;
+      }
+    }
+  });
+
+  let students = Array.from(studentMap.values());
+
+  // Apply search filter
+  if (search) {
+    const searchRegex = new RegExp(search, 'i');
+    students = students.filter(student => 
+      student.firstName?.match(searchRegex) ||
+      student.lastName?.match(searchRegex) ||
+      student.email?.match(searchRegex)
+    );
+  }
+
+  // Apply pagination
+  const total = students.length;
+  const startIndex = (parseInt(page) - 1) * parseInt(limit);
+  const endIndex = startIndex + parseInt(limit);
+  const paginatedStudents = students.slice(startIndex, endIndex);
 
   res.status(200).json({
     status: 'success',
     data: {
-      students,
+      students: paginatedStudents,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -448,11 +517,12 @@ export const updateAppointmentStatus = catchAsync(async (req, res) => {
   const { appointmentId } = req.params;
   const { status } = req.body;
   const counselorId = req.user.id;
+  const actualCounselorId = await getActualCounselorId(counselorId);
 
   const appointment = await Appointment.findOneAndUpdate(
     {
       _id: appointmentId,
-      counselor: counselorId
+      counselor: actualCounselorId
     },
     { status },
     { new: true }
@@ -485,7 +555,23 @@ export const getCounselorProfile = catchAsync(async (req, res) => {
         return res.status(200).json({
           status: 'success',
           data: {
-            counselor
+            counselor: {
+              _id: counselor._id,
+              name: counselor.name,
+              email: counselor.email,
+              phone: counselor.phone,
+              profileImage: counselor.profileImage,
+              specialization: counselor.specialization,
+              languages: counselor.languages,
+              experience: counselor.experience,
+              education: counselor.education,
+              bio: counselor.bio,
+              rating: counselor.rating,
+              totalRatings: counselor.totalRatings,
+              appointmentType: counselor.appointmentType,
+              availability: counselor.availability,
+              isActive: counselor.isActive
+            }
           }
         });
       }
@@ -511,7 +597,10 @@ export const getCounselorProfile = catchAsync(async (req, res) => {
           },
           bio: "Experienced counselor helping students with mental health challenges.",
           rating: 4.5,
-          totalRatings: 20
+          totalRatings: 20,
+          appointmentType: "both",
+          availability: {},
+          isActive: true
         }
       }
     });
@@ -523,7 +612,23 @@ export const getCounselorProfile = catchAsync(async (req, res) => {
     return res.status(200).json({
       status: 'success',
       data: {
-        counselor
+        counselor: {
+          _id: counselor._id,
+          name: counselor.name,
+          email: counselor.email,
+          phone: counselor.phone,
+          profileImage: counselor.profileImage,
+          specialization: counselor.specialization,
+          languages: counselor.languages,
+          experience: counselor.experience,
+          education: counselor.education,
+          bio: counselor.bio,
+          rating: counselor.rating,
+          totalRatings: counselor.totalRatings,
+          appointmentType: counselor.appointmentType,
+          availability: counselor.availability,
+          isActive: counselor.isActive
+        }
       }
     });
   }
@@ -564,6 +669,120 @@ export const updateCounselorProfile = catchAsync(async (req, res) => {
     status: 'success',
     data: {
       counselor
+    }
+  });
+});
+
+// Get counselor analytics
+export const getCounselorAnalytics = catchAsync(async (req, res) => {
+  const counselorId = req.user.id;
+  const { period = 'month' } = req.query;
+  const actualCounselorId = await getActualCounselorId(counselorId);
+
+  // Calculate date range
+  const endDate = new Date();
+  const startDate = new Date();
+  
+  if (period === 'week') {
+    startDate.setDate(startDate.getDate() - 7);
+  } else if (period === 'month') {
+    startDate.setMonth(startDate.getMonth() - 1);
+  } else if (period === 'year') {
+    startDate.setFullYear(startDate.getFullYear() - 1);
+  }
+
+  // Get appointments in date range
+  const appointments = await Appointment.find({
+    counselor: actualCounselorId,
+    date: { $gte: startDate, $lte: endDate }
+  }).populate('student', 'firstName lastName');
+
+  // Calculate analytics
+  const analytics = {
+    totalSessions: appointments.length,
+    completedSessions: appointments.filter(a => a.status === 'completed').length,
+    cancelledSessions: appointments.filter(a => a.status === 'cancelled').length,
+    pendingSessions: appointments.filter(a => a.status === 'pending').length,
+    uniqueStudents: new Set(appointments.map(a => a.student._id.toString())).size,
+    averageSessionDuration: appointments
+      .filter(a => a.status === 'completed')
+      .reduce((sum, a) => sum + (a.sessionDuration || 60), 0) / 
+      Math.max(appointments.filter(a => a.status === 'completed').length, 1),
+    completionRate: appointments.length > 0 ? 
+      (appointments.filter(a => a.status === 'completed').length / appointments.length) * 100 : 0
+  };
+
+  // Get monthly trends
+  const monthlyTrends = await Appointment.aggregate([
+    {
+      $match: {
+        counselor: mongoose.Types.ObjectId(actualCounselorId),
+        date: { $gte: startDate, $lte: endDate }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          year: { $year: '$date' },
+          month: { $month: '$date' }
+        },
+        sessions: { $sum: 1 },
+        completed: {
+          $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
+        }
+      }
+    },
+    {
+      $sort: { '_id.year': 1, '_id.month': 1 }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      analytics,
+      monthlyTrends,
+      period
+    }
+  });
+});
+
+// Get counselor notifications
+export const getCounselorNotifications = catchAsync(async (req, res) => {
+  const counselorId = req.user.id;
+  const { page = 1, limit = 20, unreadOnly = false } = req.query;
+  const actualCounselorId = await getActualCounselorId(counselorId);
+
+  // Get unread messages
+  const unreadMessages = await Message.countDocuments({
+    recipient: actualCounselorId,
+    recipientModel: 'Counselor',
+    isRead: false
+  });
+
+  // Get pending appointments
+  const pendingAppointments = await Appointment.countDocuments({
+    counselor: actualCounselorId,
+    status: 'pending'
+  });
+
+  // Get crisis alerts assigned to this counselor
+  const crisisAlerts = await CrisisAlert.countDocuments({
+    assignedCounselor: actualCounselorId,
+    status: { $in: ['pending', 'in_progress'] }
+  });
+
+  const notifications = {
+    unreadMessages,
+    pendingAppointments,
+    crisisAlerts,
+    total: unreadMessages + pendingAppointments + crisisAlerts
+  };
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      notifications
     }
   });
 });
