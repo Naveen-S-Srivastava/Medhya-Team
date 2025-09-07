@@ -118,14 +118,31 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         completedFieldsInCurrentStep = academicFields.filter(field => formData[field] && String(formData[field]).trim() !== '').length;
         break;
       case 2:
-        requiredFieldsInCurrentStep = 3;
-        const securityFields = ['password', 'confirmPassword', 'securityQuestion', 'securityAnswer'];
-        completedFieldsInCurrentStep = securityFields.filter(field => formData[field] && String(formData[field]).trim() !== '').length;
-        // Password validation counts as one completion point for both fields if they match
-        if (formData.password && formData.password === formData.confirmPassword) {
-            completedFieldsInCurrentStep = Math.min(completedFieldsInCurrentStep, 3);
-        } else if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
-            completedFieldsInCurrentStep = completedFieldsInCurrentStep -1;
+        const isProfileCompletion = location.state?.fromUserSignup && localStorage.getItem('token')
+        const securityFields = ['securityQuestion', 'securityAnswer'];
+        
+        if (isProfileCompletion) {
+          // For profile completion, password is optional
+          requiredFieldsInCurrentStep = 2; // Only security question and answer are required
+          completedFieldsInCurrentStep = securityFields.filter(field => formData[field] && String(formData[field]).trim() !== '').length;
+          
+          // Add points for password if provided and valid
+          if (formData.password && formData.confirmPassword && formData.password === formData.confirmPassword) {
+            completedFieldsInCurrentStep += 1;
+            requiredFieldsInCurrentStep = 3; // Include password as a bonus field
+          }
+        } else {
+          // For new registration, password is required
+          requiredFieldsInCurrentStep = 4;
+          const allSecurityFields = ['password', 'confirmPassword', ...securityFields];
+          completedFieldsInCurrentStep = allSecurityFields.filter(field => formData[field] && String(formData[field]).trim() !== '').length;
+          
+          // Password validation counts as one completion point for both fields if they match
+          if (formData.password && formData.password === formData.confirmPassword) {
+              completedFieldsInCurrentStep = Math.min(completedFieldsInCurrentStep, 4);
+          } else if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+              completedFieldsInCurrentStep = completedFieldsInCurrentStep -1;
+          }
         }
         break;
       case 3:
@@ -195,16 +212,28 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         if (!formData.studentId) newErrors.studentId = "Student ID is required"
         if (!formData.course) newErrors.course = "Course is required"
         if (!formData.year) newErrors.year = "Academic year is required"
-        if (!formData.gender) newErrors.gender = "Gender is required"
         break
       case 2:
-        if (!formData.password) {
-          newErrors.password = "Password is required"
-        } else if (formData.password.length < 8) {
-          newErrors.password = "Password must be at least 8 characters"
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-          newErrors.password = "Password must contain uppercase, lowercase, and number"
+        // Password is optional for profile completion, required for new registration
+        const isProfileCompletion = location.state?.fromUserSignup && localStorage.getItem('token')
+        
+        if (!isProfileCompletion) {
+          if (!formData.password) {
+            newErrors.password = "Password is required"
+          } else if (formData.password.length < 8) {
+            newErrors.password = "Password must be at least 8 characters"
+          } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+            newErrors.password = "Password must contain uppercase, lowercase, and number"
+          }
+        } else if (formData.password) {
+          // If password is provided during profile completion, validate it
+          if (formData.password.length < 8) {
+            newErrors.password = "Password must be at least 8 characters"
+          } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+            newErrors.password = "Password must contain uppercase, lowercase, and number"
+          }
         }
+        
         if (formData.password !== formData.confirmPassword) {
           newErrors.confirmPassword = "Passwords do not match"
         }
@@ -310,48 +339,41 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         if (!token) {
           throw new Error('No authentication token found. Please log in again.');
         }
-        // Validate required fields
-        const requiredFields = [
-          'firstName', 'lastName', 'phone', 'dateOfBirth', 'gender',
-          'institutionId', 'studentId', 'course', 'year',
-          'securityQuestion', 'securityAnswer',
-          'emergencyContact', 'emergencyPhone'
-        ];
-        
-        const missingFields = requiredFields.filter(field => !formData[field] || String(formData[field]).trim() === '');
-        if (missingFields.length > 0) {
-          throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
-        }
-        
-        if (!formData.privacyConsent || !formData.dataProcessingConsent || !formData.mentalHealthConsent) {
-          throw new Error('Please accept all required consents');
-        }
-
         const userDetailsData = {
-          firstName: formData.firstName?.trim(),
-          lastName: formData.lastName?.trim(),
-          username: `${(formData.firstName || "").toLowerCase().substring(0, 10)}${(formData.lastName || "").toLowerCase().substring(0, 10)}${Date.now().toString().slice(-6)}`,
-          phone: formData.phone?.trim(),
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          username: `${(formData.firstName || "").toLowerCase()}${(formData.lastName || "").toLowerCase()}${Date.now()}`,
+          phone: formData.phone,
           dateOfBirth: formData.dateOfBirth,
           gender: formData.gender,
           institutionId: formData.institutionId,
-          studentId: formData.studentId?.trim(),
+          studentId: formData.studentId,
           course: formData.course,
           year: formData.year,
-          department: formData.department?.trim() || undefined,
+          department: formData.department,
           securityQuestion: formData.securityQuestion,
-          securityAnswer: formData.securityAnswer?.trim(),
-          privacyConsent: Boolean(formData.privacyConsent),
-          dataProcessingConsent: Boolean(formData.dataProcessingConsent),
-          emergencyContact: formData.emergencyContact?.trim(),
-          emergencyPhone: formData.emergencyPhone?.trim(),
-          mentalHealthConsent: Boolean(formData.mentalHealthConsent),
-          communicationConsent: Boolean(formData.communicationConsent),
+          securityAnswer: formData.securityAnswer,
+          privacyConsent: formData.privacyConsent,
+          dataProcessingConsent: formData.dataProcessingConsent,
+          emergencyContact: formData.emergencyContact,
+          emergencyPhone: formData.emergencyPhone,
+          mentalHealthConsent: formData.mentalHealthConsent,
+          communicationConsent: formData.communicationConsent,
         };
+
+        // Add password fields if provided
+        if (formData.password && formData.password.trim() !== '' && formData.confirmPassword && formData.confirmPassword.trim() !== '') {
+          userDetailsData.password = formData.password.trim();
+          userDetailsData.passwordConfirm = formData.confirmPassword.trim();
+        }
         if (!user || !user._id) {
           throw new Error('User not found. Please log in again.');
         }
         const userId = user._id;
+
+        console.log('📤 Sending user details data:', userDetailsData);
+        console.log('📤 Password included:', 'password' in userDetailsData);
+        console.log('📤 Password value:', userDetailsData.password || 'not provided');
 
         const detailsResponse = await fetch(`${API_BASE_URL}/user-details/${userId}`, {
           method: "POST",
@@ -535,29 +557,14 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
                 {errors.year && <p className="text-sm text-red-600">{errors.year}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="gender">Gender *</Label>
-                <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
-                  <SelectTrigger className={errors.gender ? "border-red-500" : ""}>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.gender && <p className="text-sm text-red-600">{errors.gender}</p>}
+                <Label htmlFor="department">Department</Label>
+                <Input
+                  id="department"
+                  value={formData.department}
+                  onChange={(e) => handleInputChange("department", e.target.value)}
+                  placeholder="e.g., Computer Science"
+                />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Input
-                id="department"
-                value={formData.department}
-                onChange={(e) => handleInputChange("department", e.target.value)}
-                placeholder="e.g., Computer Science"
-              />
             </div>
           </div>
         )
@@ -565,14 +572,16 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
+              <Label htmlFor="password">
+                Password {location.state?.fromUserSignup && localStorage.getItem('token') ? "(Optional)" : "*"}
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) => handleInputChange("password", e.target.value)}
-                  placeholder="Create a strong password"
+                  placeholder={location.state?.fromUserSignup && localStorage.getItem('token') ? "Enter new password (optional)" : "Create a strong password"}
                   className={errors.password ? "border-red-500 pr-10" : "pr-10"}
                 />
                 <Button
@@ -586,12 +595,16 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
                 </Button>
               </div>
               {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
-              <p className="text-xs text-muted-foreground">
-                Password must be 8+ characters with uppercase, lowercase, and number
-              </p>
+              {formData.password && (
+                <p className="text-xs text-muted-foreground">
+                  Password must be 8+ characters with uppercase, lowercase, and number
+                </p>
+              )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password *</Label>
+              <Label htmlFor="confirmPassword">
+                Confirm Password {formData.password ? "*" : "(Optional)"}
+              </Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -819,7 +832,11 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
               </CardTitle>
               <CardDescription className="mt-2">
                 {currentStep === 1 && "Tell us about your academic background"}
-                {currentStep === 2 && "Secure your account with a strong password"}
+                {currentStep === 2 && (
+                  location.state?.fromUserSignup && localStorage.getItem('token')
+                    ? "Set up security questions and optionally update your password"
+                    : "Secure your account with a strong password"
+                )}
                 {currentStep === 3 && "Review and accept our privacy agreements"}
               </CardDescription>
             </div>

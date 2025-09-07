@@ -42,7 +42,7 @@ async function createDemoCounselor() {
       mentalHealthConsent: true,
       communicationConsent: true,
       role: 'counselor',
-      isEmailVerified: true,
+      // isEmailVerified: true,
       isVerified: true
     });
 

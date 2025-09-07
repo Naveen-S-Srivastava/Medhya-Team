@@ -7,7 +7,7 @@ import CounselorStats from '../models/counselorStatsModel.js';
 import Payment from '../models/paymentModel.js';
 import User from '../models/usermodel.js';
 import Counselor from '../models/counselorModel.js';
-import Assessment from '../models/assessmentModel.js';
+import {Assessment} from '../models/assessmentModel.js';
 import CrisisAlert from '../models/crisisAlertModel.js';
 import mongoose from 'mongoose';
 

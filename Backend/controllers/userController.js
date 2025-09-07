@@ -30,15 +30,25 @@ const sendTokenResponse = (user, statusCode, res) => {
   user.lastLogin = new Date();
   user.save({ validateBeforeSave: false });
 
-  // Remove password from output
-  user.password = undefined;
+  // Create user object for response without password
+  const userResponse = {
+    _id: user._id,
+    email: user.email,
+    role: user.role,
+    isVerified: user.isVerified,
+    isProfileComplete: user.isProfileComplete,
+    googleId: user.googleId,
+    profilePicture: user.profilePicture,
+    lastLogin: user.lastLogin,
+    createdAt: user.createdAt
+  };
 
   res.status(statusCode).json({
     status: 'success',
     token,
     refreshToken,
     data: {
-      user
+      user: userResponse
     }
   });
 };
@@ -68,8 +78,7 @@ export const registerUser = catchAsync(async (req, res, next) => {
     mentalHealthConsent,
     communicationConsent,
     googleId,
-    profilePicture,
-    isEmailVerified = false
+    profilePicture
   } = req.body;
 
   // Check if user already exists
@@ -83,16 +92,69 @@ export const registerUser = catchAsync(async (req, res, next) => {
     return next(new AppError('User with this email already exists', 400));
   }
 
-  // Create basic user first
-  const user = await User.create({
+  // Validate password for non-Google registration
+  if (!googleId) {
+    console.log('🔐 Regular registration - validating password');
+    console.log('🔐 Password provided:', !!password);
+    console.log('🔐 PasswordConfirm provided:', !!passwordConfirm);
+    console.log('🔐 Password length:', password ? password.length : 0);
+    
+    if (!password) {
+      return next(new AppError('Password is required for registration', 400));
+    }
+    if (!passwordConfirm) {
+      return next(new AppError('Password confirmation is required', 400));
+    }
+    
+    // Trim passwords to remove whitespace
+    const trimmedPassword = password.trim();
+    const trimmedPasswordConfirm = passwordConfirm.trim();
+    
+    if (trimmedPassword !== password || trimmedPasswordConfirm !== passwordConfirm) {
+      console.log('🔐 Password had whitespace, trimmed');
+    }
+    
+    if (trimmedPassword !== trimmedPasswordConfirm) {
+      return next(new AppError('Passwords do not match', 400));
+    }
+    if (trimmedPassword.length < 8) {
+      return next(new AppError('Password must be at least 8 characters long', 400));
+    }
+    
+    console.log('🔐 Password validation passed');
+  }
+
+  console.log('🔐 Creating user with data:', {
     email,
-    password,
-    passwordConfirm,
+    hasPassword: !!password,
+    hasGoogleId: !!googleId,
+    passwordLength: password ? password.trim().length : 0
+  });
+
+  // Prepare user data
+  const userData = {
+    email,
     googleId,
     profilePicture,
-    isEmailVerified,
+    isVerified: !googleId, // Set to true for regular registration, false for Google OAuth
     isProfileComplete: true, // Profile will be complete after creating details
     role: "student"
+  };
+
+  // Only include password if provided (for non-Google registration)
+  if (password) {
+    userData.password = password.trim();
+  }
+
+  // Create basic user first
+  const user = await User.create(userData);
+
+  console.log('🔐 User created successfully:', {
+    userId: user._id,
+    email: user.email,
+    hasPassword: !!user.password,
+    passwordLength: user.password ? user.password.length : 0,
+    isPasswordHashed: user.password ? user.password.startsWith('$2') : false
   });
 
   // Create user details
@@ -234,7 +296,7 @@ export const googleAuth = catchAsync(async (req, res, next) => {
         googleId,
         email,
         role: loginType || 'student',
-        isEmailVerified: true, // Google OAuth users are pre-verified
+        isVerified: true, // Google OAuth users are pre-verified
         isProfileComplete: false, // Profile is not complete yet
         lastLogin: new Date()
       };
@@ -356,7 +418,7 @@ export const completeGoogleProfile = catchAsync(async (req, res, next) => {
     user._id,
     {
       ...profileData,
-      isEmailVerified: true
+      isVerified: true
     },
     {
       new: true,

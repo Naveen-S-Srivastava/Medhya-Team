@@ -105,6 +105,15 @@ export const authAPI = {
     body: JSON.stringify(profileData),
   }),
   
+  verifyAccount: (otp) => apiCall('/users/verify-account', {
+    method: 'POST',
+    body: JSON.stringify({ otp }),
+  }),
+  
+  resendOTP: () => apiCall('/users/resend-otp', {
+    method: 'POST',
+  }),
+  
   completeGoogleProfile: (profileData) => apiCall('/users/complete-profile', {
     method: 'PUT',
     body: JSON.stringify(profileData),
@@ -187,13 +196,6 @@ export const appointmentAPI = {
   getAvailableSlots: (counselorId, date) => apiCall(`/appointments/available-slots?counselorId=${counselorId}&date=${date}`),
 };
 
-// Admin API
-export const adminAPI = {
-  getDashboardStats: () => apiCall('/admin/dashboard-stats'),
-  
-  getTest: () => apiCall('/admin/test'),
-};
-
 // Crisis API
 export const crisisAPI = {
   createCrisisAlert: (crisisData) => apiCall('/crisis', {
@@ -237,5 +239,4 @@ export default {
   assessmentAPI,
   appointmentAPI,
   crisisAPI,
-  adminAPI,
 };

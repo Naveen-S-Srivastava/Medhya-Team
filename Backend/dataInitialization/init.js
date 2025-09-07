@@ -3,22 +3,16 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { faker } from "@faker-js/faker";
-import path from "path";
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Import Models
 import User from "../models/usermodel.js"
 import CrisisAlert from "../models/crisisAlertModel.js";
-import assessmentModels from "../models/assessmentModel.js";
+import { Assessment } from "../models/assessmentModel.js";
 import Appointment from "../models/appointmentModel.js";
 import Chat from "../models/aichatModel.js";
-import ActivityLog from "../models/activityLogModel.js";
-import JournalEntry from "../models/journalModel.js";
+import Activity from "../models/activityLogModel.js";
 
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
+dotenv.config({ path: "../.env" });
 
 const MONGO_URI = process.env.MONGO_URI; // change DB name if needed
 
@@ -31,10 +25,10 @@ async function seed() {
     await Promise.all([
       User.deleteMany(),
       CrisisAlert.deleteMany(),
-      assessmentModels.Assessment.deleteMany(),
+      Assessment.deleteMany(),
       Appointment.deleteMany(),
       Chat.deleteMany(),
-      ActivityLog.deleteMany(),
+      Activity.deleteMany(),
     ]);
 
     console.log("Old data cleared 🗑️");
@@ -72,40 +66,10 @@ async function seed() {
     const savedUsers = await User.insertMany(users);
     console.log("Users inserted ✅");
 
-    // Create admin user
-    const adminUser = new User({
-      firstName: 'Admin',
-      lastName: 'User',
-      email: 'admin@mindcare.com',
-      password: 'admin123',
-      phone: '1234567890',
-      institutionId: 'ADMIN001',
-      studentId: 'ADMIN001',
-      course: 'Administration',
-      year: '1',
-      department: 'IT',
-      securityQuestion: 'What is your favorite color?',
-      securityAnswer: 'Blue',
-      privacyConsent: true,
-      dataProcessingConsent: true,
-      emergencyContact: 'Emergency Contact',
-      emergencyPhone: '1234567890',
-      mentalHealthConsent: true,
-      communicationConsent: true,
-      role: 'admin',
-      isEmailVerified: true,
-      isVerified: true
-    });
-
-    await adminUser.save();
-    console.log("Admin user created ✅");
-    console.log("Email: admin@mindcare.com");
-    console.log("Password: admin123");
-
     // ---------------- ASSESSMENTS ----------------
     const assessments = [];
     for (let u of savedUsers) {
-      const assessment = new assessmentModels.Assessment({
+      const assessment = new Assessment({
         user: u._id,
         type: faker.helpers.arrayElement(["PHQ-9", "GAD-7"]),
         score: faker.number.int({ min: 0, max: 27 }),
@@ -114,10 +78,8 @@ async function seed() {
         ),
       });
       assessments.push(assessment);
-      // u.assessments.push(assessment._id); // link back to user - removed as field not in model
-      // await u.save();
     }
-    await assessmentModels.Assessment.insertMany(assessments);
+    await Assessment.insertMany(assessments);
     console.log("Assessments inserted ✅");
 
     // ---------------- CRISIS ALERTS ----------------
@@ -127,7 +89,7 @@ async function seed() {
           alertId: faker.string.uuid(),
           severity: faker.helpers.arrayElement(["critical", "high", "medium"]),
           type: "suicidal_thoughts",
-          studentId: u.studentId || 'TEST123',
+          studentId: u._id.toString(),
           source: faker.helpers.arrayElement([
             "ai_chat",
             "forum_post",
@@ -159,8 +121,6 @@ async function seed() {
         reason: faker.lorem.sentence(),
       });
       appointments.push(appointment);
-      // u.appointments.push(appointment._id); // link back
-      // await u.save();
     }
     await Appointment.insertMany(appointments);
     console.log("Appointments inserted ✅");
@@ -192,45 +152,15 @@ async function seed() {
     // ---------------- ACTIVITY LOGS ----------------
     const activities = [];
     for (let u of savedUsers) {
-      const activity = new ActivityLog({
+      const activity = new Activity({
         user: u._id,
         action: "login",
         metadata: { ip: faker.internet.ip() },
       });
       activities.push(activity);
-      // u.activityLogs.push(activity._id); // link back
-      // await u.save();
     }
-    await ActivityLog.insertMany(activities);
+    await Activity.insertMany(activities);
     console.log("Activities inserted ✅");
-
-    // ---------------- JOURNAL ENTRIES ----------------
-    const journalEntries = [];
-    for (let u of savedUsers.filter(u => u.role === 'student')) {
-      // Create 3-5 journal entries per student
-      const numEntries = faker.number.int({ min: 3, max: 5 });
-      for (let i = 0; i < numEntries; i++) {
-        const entry = new JournalEntry({
-          user: u._id,
-          content: faker.lorem.paragraphs(2),
-          mood: faker.helpers.arrayElement(['happy', 'neutral', 'sad', 'anxious', 'stressed']),
-          moodScore: faker.number.int({ min: 1, max: 10 }),
-          tags: faker.helpers.arrayElements(['productive', 'grateful', 'exercise', 'social', 'academic', 'stress'], { min: 1, max: 3 }),
-          wellnessScore: faker.number.int({ min: 50, max: 100 }),
-          sleepHours: faker.number.float({ min: 4, max: 12, precision: 0.5 }),
-          stressLevel: faker.number.int({ min: 1, max: 10 }),
-          activities: faker.helpers.arrayElements(['studying', 'exercise', 'socializing', 'reading', 'meditation'], { min: 1, max: 3 }),
-          gratitude: faker.helpers.arrayElements(['Good health', 'Supportive friends', 'Academic progress', 'Family'], { min: 1, max: 3 }),
-          goals: faker.helpers.arrayElements(['Complete project', 'Exercise regularly', 'Study more', 'Sleep better'], { min: 1, max: 3 }),
-          challenges: faker.helpers.arrayElements(['Time management', 'Stress', 'Procrastination'], { min: 0, max: 2 }),
-          achievements: faker.helpers.arrayElements(['Finished assignment', 'Went for a run', 'Helped a friend'], { min: 0, max: 2 }),
-          createdAt: faker.date.recent({ days: 30 })
-        });
-        journalEntries.push(entry);
-      }
-    }
-    await JournalEntry.insertMany(journalEntries);
-    console.log("Journal entries inserted ✅");
 
     console.log("Seeding completed 🎉");
     process.exit();

@@ -28,7 +28,7 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
     gender: '',
   });
 
-  const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'dateOfBirth', 'gender'];
+  const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'dateOfBirth'];
 
   // Handle Google OAuth flow and pre-fill form
   useEffect(() => {

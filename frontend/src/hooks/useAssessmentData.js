@@ -133,8 +133,7 @@ export const useWeeklyPatternsData = (patternsData) => {
       name: day.day,
       'PHQ-9': day.phq9 || 0,
       'GAD-7': day.gad7 || 0,
-      'GHQ-12': day.ghq12 || 0,
-      total: (day.phq9 || 0) + (day.gad7 || 0) + (day.ghq12 || 0)
+      total: (day.phq9 || 0) + (day.gad7 || 0) 
     }));
 
     return transformedData;

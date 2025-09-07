@@ -39,6 +39,58 @@ export const createOrUpdateUserDetails = catchAsync(async (req, res, next) => {
 
   console.log('✅ User found:', { userId: user._id, currentProfileStatus: user.isProfileComplete });
 
+  // Handle password update if provided
+  if (userDetailsData.password && userDetailsData.passwordConfirm && 
+      userDetailsData.password.trim() !== '' && userDetailsData.passwordConfirm.trim() !== '') {
+    console.log('🔐 Password update detected');
+    console.log('🔐 Password provided:', !!userDetailsData.password);
+    console.log('🔐 PasswordConfirm provided:', !!userDetailsData.passwordConfirm);
+    console.log('🔐 Password length:', userDetailsData.password ? userDetailsData.password.length : 0);
+    
+    const password = userDetailsData.password.trim();
+    const passwordConfirm = userDetailsData.passwordConfirm.trim();
+    
+    if (password !== passwordConfirm) {
+      console.log('❌ Passwords do not match');
+      return next(new AppError('Passwords do not match', 400));
+    }
+    
+    if (password.length < 8) {
+      console.log('❌ Password too short');
+      return next(new AppError('Password must be at least 8 characters long', 400));
+    }
+    
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      console.log('❌ Password does not meet complexity requirements');
+      return next(new AppError('Password must contain uppercase, lowercase, and number', 400));
+    }
+    
+    // Update user password
+    user.password = password;
+    user.markModified('password');
+    
+    // Ensure passwordConfirm is not set to avoid validation issues
+    user.passwordConfirm = undefined;
+    
+    await user.save({ validateBeforeSave: false });
+    
+    // Remove password fields from userDetailsData to avoid saving them in userDetails
+    delete userDetailsData.password;
+    delete userDetailsData.passwordConfirm;
+    
+    console.log('✅ Password updated for user:', userId);
+  } else {
+    console.log('ℹ️ No password update requested');
+    console.log('ℹ️ Password field present:', 'password' in userDetailsData);
+    console.log('ℹ️ PasswordConfirm field present:', 'passwordConfirm' in userDetailsData);
+    if (userDetailsData.password) {
+      console.log('ℹ️ Password value:', userDetailsData.password);
+    }
+    if (userDetailsData.passwordConfirm) {
+      console.log('ℹ️ PasswordConfirm value:', userDetailsData.passwordConfirm);
+    }
+  }
+
   // Check if user details already exist
   let userDetails = await UserDetails.findOne({ user: userId });
 

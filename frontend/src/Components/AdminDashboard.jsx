@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import useAdminAnalytics from '../hooks/useAdminAnalytics';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -17,8 +16,13 @@ const AdminDashboard = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
   const [selectedMetric, setSelectedMetric] = useState('all');
 
-  // Fetch analytics from backend
-  const analytics = useAdminAnalytics();
+  const analytics = {
+    totalUsers: 1247,
+    chatSessions: 156,
+    appointments: 89,
+    forumPosts: 234,
+    criticalAlerts: 3
+  };
 
   const usageData = [
     { name: 'Mon', chatSessions: 24, appointments: 8, forumPosts: 15 },
@@ -99,9 +103,7 @@ const AdminDashboard = () => {
               <Users className="h-6 w-6 text-indigo-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">
-                {analytics.loading ? '...' : analytics.totalUsers}
-              </div>
+              <div className="text-4xl font-bold text-gray-900">{analytics.totalUsers}</div>
               <p className="text-xs text-gray-500 mt-1">Registered students</p>
             </CardContent>
           </Card>
@@ -114,9 +116,7 @@ const AdminDashboard = () => {
               <MessageCircle className="h-6 w-6 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">
-                {analytics.loading ? '...' : analytics.chatSessions}
-              </div>
+              <div className="text-4xl font-bold text-gray-900">{analytics.chatSessions}</div>
               <p className="text-xs text-gray-500 mt-1">This week</p>
             </CardContent>
           </Card>
@@ -127,9 +127,7 @@ const AdminDashboard = () => {
               <Calendar className="h-6 w-6 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">
-                {analytics.loading ? '...' : analytics.appointments}
-              </div>
+              <div className="text-4xl font-bold text-gray-900">{analytics.appointments}</div>
               <p className="text-xs text-gray-500 mt-1">This week</p>
             </CardContent>
           </Card>
@@ -140,9 +138,7 @@ const AdminDashboard = () => {
               <Users className="h-6 w-6 text-pink-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-gray-900">
-                {analytics.loading ? '...' : analytics.forumPosts}
-              </div>
+              <div className="text-4xl font-bold text-gray-900">{analytics.forumPosts}</div>
               <p className="text-xs text-gray-500 mt-1">This week</p>
             </CardContent>
           </Card>
@@ -153,9 +149,7 @@ const AdminDashboard = () => {
               <AlertTriangle className="h-6 w-6 text-red-600 animate-pulse" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-red-600">
-                {analytics.loading ? '...' : analytics.criticalAlerts}
-              </div>
+              <div className="text-4xl font-bold text-red-600">{analytics.criticalAlerts}</div>
               <p className="text-xs text-gray-500 mt-1">Needs attention</p>
             </CardContent>
           </Card>

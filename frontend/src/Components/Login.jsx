@@ -173,7 +173,7 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
   const demoCredentials = {
     student: { email: "student@university.edu", password: "demo123456" },
     counselor: { email: "counselor@institution.edu", password: "counselor123456" },
-    admin: { email: "admin@mindcare.com", password: "admin123" },
+    admin: { email: "admin@institution.edu", password: "admin123456" },
   };
 
   const fillDemoCredentials = () => {
