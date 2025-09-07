@@ -321,12 +321,13 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
             </CardHeader>
 
             <CardContent className="space-y-6 p-6">
+              
               <Button
                 type="button"
                 variant="outline"
                 className="w-full h-12 border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 rounded-2xl shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-medium"
                 onClick={handleGoogleLogin}
-                disabled={loading}
+                disabled={loading || loginType === "admin" || loginType === "counselor"}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path
