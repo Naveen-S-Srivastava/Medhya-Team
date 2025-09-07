@@ -63,42 +63,6 @@ const corsOptions = {
 
     // Combine hardcoded origins with environment-based origins
     const allowedOrigins = [
-      // Local development
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://localhost:5174',
-      'http://localhost:5175',
-
-      // Vercel deployments
-      'https://mindcare-frontend.vercel.app',
-      'https://mindcare.vercel.app',
-      'https://mindcare-frontend-git-main-sarafkushagra.vercel.app',
-      'https://mindcare-git-auth-sarafkushagra.vercel.app',
-
-      // Netlify deployments
-      'https://mindcare-frontend.netlify.app',
-      'https://mindcare.netlify.app',
-      'https://mindcare.netlify.com',
-
-      // Render deployments (common patterns)
-      'https://mindcare.onrender.com',
-      'https://mindcare-backend.onrender.com',
-      'https://mindcare-api.onrender.com',
-      'https://mindcare-17y9.onrender.com',
-
-      // Railway deployments
-      'https://mindcare.up.railway.app',
-      'https://mindcare-production.up.railway.app',
-
-      // Heroku deployments
-      'https://mindcare.herokuapp.com',
-      'https://mindcare-backend.herokuapp.com',
-
-      // Custom domains
-      'https://mindcare.app',
-      'https://www.mindcare.app',
-      'https://api.mindcare.app',
-
       // Environment-based origins
       ...allowedOriginsFromEnv,
       frontendUrl
@@ -112,22 +76,6 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    // Allow if origin matches common deployment patterns
-    const deploymentPatterns = [
-      /^https:\/\/mindcare.*\.vercel\.app$/,
-      /^https:\/\/mindcare.*\.netlify\.app$/,
-      /^https:\/\/mindcare.*\.onrender\.com$/,
-      /^https:\/\/mindcare-17y9\.onrender\.com$/,
-      /^https:\/\/mindcare.*\.up\.railway\.app$/,
-      /^https:\/\/mindcare.*\.herokuapp\.com$/,
-      /^https:\/\/.*\.mindcare\.app$/
-    ];
-
-    const isAllowedPattern = deploymentPatterns.some(pattern => pattern.test(origin));
-    if (isAllowedPattern) {
-      console.log('✅ CORS allowed origin (pattern match):', origin);
-      return callback(null, true);
-    }
 
     // If origin is not allowed, reject with error
     console.log('❌ CORS blocked origin:', origin);
