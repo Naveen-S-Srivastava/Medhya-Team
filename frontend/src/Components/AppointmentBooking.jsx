@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -14,6 +14,7 @@ import { appointmentAPI } from '../services/api';
 import { useApi, useOptimisticUpdate } from '../hooks/useApi';
 import { useCounselors } from '../hooks/useCounselors';
 import ProfileCompletionCheck from './ProfileCompletionCheck';
+import { UserContext } from '../App';
 
 const AppointmentBooking = () => {
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -25,8 +26,21 @@ const AppointmentBooking = () => {
     const [showSuccess, setShowSuccess] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Student ID - in a real app this would come from a user context
-    const studentId = 'demo-student-123';
+    // Get the actual logged-in user from context
+    const { user } = useContext(UserContext);
+    const studentId = user?._id;
+
+    // Check if user is logged in
+    if (!user || !studentId) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Please Log In</h2>
+                    <p className="text-gray-600">You need to be logged in to book appointments.</p>
+                </div>
+            </div>
+        );
+    }
 
     // Fetch existing appointments for the student
     const { data: existingAppointments, loading: appointmentsLoading, refetch: refetchAppointments } = useApi(
