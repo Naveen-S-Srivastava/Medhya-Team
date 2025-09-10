@@ -13,8 +13,6 @@ import { Users, MessageCircle, Heart, Reply, Flag, Shield, Plus, Search, Trendin
 import { useCommunity } from '../hooks/useCommunity.js';
 import { useAuth } from '../hooks/useAuth.js';
 
-import ProfileCompletionCheck from './ProfileCompletionCheck';
-
 const PeerSupport = () => {
   const { user } = useAuth();
   const { 
@@ -198,7 +196,6 @@ const PeerSupport = () => {
 
   return (
     
-    <ProfileCompletionCheck requireComplete={true}>
     <div className="space-y-6">
       <Card>
         <CardHeader>
@@ -668,7 +665,6 @@ const PeerSupport = () => {
       </button>
     </div>
     
-    </ProfileCompletionCheck>
   );
 };
 

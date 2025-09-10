@@ -59,13 +59,13 @@ const UserProfile = () => {
     currentPassword: false
   });
 
-  // Fetch user details on component mount
+  // Fetch user details on component mount - only once
   useEffect(() => {
     if (user?._id) {
       fetchUserDetails();
       checkPasswordStatus();
     }
-  }, [user]);
+  }, []); // Removed [user] dependency to prevent excessive calls
 
   const fetchUserDetails = async () => {
     try {

@@ -16,8 +16,6 @@ import { useAssessment } from '../hooks/useAssessment.js'
 import { calculateWellnessScore, getWellnessLevel } from '../utils/wellnessCalculator.js'
 import StressAssessment from './StressAssessment.jsx'
 
-import ProfileCompletionCheck from './ProfileCompletionCheck';
-
 export default function Wellness() {
   const { user } = useAuth();
   const {
@@ -177,8 +175,6 @@ export default function Wellness() {
   }
 
   return (
-    
-    <ProfileCompletionCheck requireComplete={true}>
     <div className="space-y-6">
       {/* Main Wellness Card */}
       <Card>
@@ -741,6 +737,5 @@ export default function Wellness() {
       )}
     </div>
     
-    </ProfileCompletionCheck>
   )
 }

@@ -12,7 +12,7 @@ import communityLogo from "../assets/logo3.jpg";
 
 const choices = [
   {
-    id: "consultant",
+    id: "appointments",
     title: "Professional Consultant",
     description: "Connect with licensed mental health professionals for expert guidance and therapy.",
     kind: "image",
@@ -23,7 +23,7 @@ const choices = [
     hoverGradient: "from-sky-500 to-blue-600",
   },
   {
-    id: "peer",
+    id: "community",
     title: "Peer Support",
     description: "Talk to trained peer supporters who understand your experiences and challenges.",
     kind: "image",
@@ -34,7 +34,7 @@ const choices = [
     hoverGradient: "from-mint-500 to-emerald-600",
   },
   {
-    id: "mitra",
+    id: "chat",
     title: "Medhya Mittra",
     description: "Connect with our dedicated volunteers for immediate support and community care.",
     kind: "image",
@@ -52,7 +52,7 @@ export default function ContactChoice() {
 
   const handleSelect = (id) => {
     console.log('🔍 User selected:', id, '- redirecting to student dashboard');
-    navigate('/dashboard');
+    navigate(`/${id}`);
   };
 
   return (

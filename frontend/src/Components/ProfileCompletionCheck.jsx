@@ -10,17 +10,21 @@ const ProfileCompletionCheck = ({ children, requireComplete = false }) => {
   const { user, loading, checkProfileCompletion } = useAuth();
   const navigate = useNavigate();
   const [profileStatus, setProfileStatus] = useState(null);
-  const [checkingProfile, setCheckingProfile] = useState(true);
+  const [checkingProfile, setCheckingProfile] = useState(false);
   const [dismissedWarning, setDismissedWarning] = useState(false);
+  const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
 
+  // Only check profile completion once on first load
   useEffect(() => {
     const checkProfileStatus = async () => {
-      if (!user || loading) return;
+      if (!user || loading || hasCheckedProfile) return;
 
       try {
+        setCheckingProfile(true);
         const status = await checkProfileCompletion();
         if (status) {
           setProfileStatus(status);
+          setHasCheckedProfile(true);
         }
       } catch (error) {
         console.error('Error checking profile status:', error);
@@ -30,14 +34,31 @@ const ProfileCompletionCheck = ({ children, requireComplete = false }) => {
     };
 
     checkProfileStatus();
-  }, [user, loading, checkProfileCompletion]);
+  }, [hasCheckedProfile]); // Only depend on hasCheckedProfile to prevent re-runs
+
+  const handleCheckStatus = async () => {
+    if (!user) return;
+
+    try {
+      setCheckingProfile(true);
+      const status = await checkProfileCompletion();
+      if (status) {
+        setProfileStatus(status);
+        setHasCheckedProfile(true);
+      }
+    } catch (error) {
+      console.error('Error checking profile status:', error);
+    } finally {
+      setCheckingProfile(false);
+    }
+  };
 
   const handleDismissWarning = () => {
     setDismissedWarning(true);
   };
 
-  // Show loading while checking
-  if (loading || checkingProfile) {
+  // Show loading while checking (only on first load)
+  if (loading || (checkingProfile && !hasCheckedProfile)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -70,13 +91,24 @@ const ProfileCompletionCheck = ({ children, requireComplete = false }) => {
                   <p className="text-sm text-yellow-700 mb-3">
                     Complete your profile to access all features and get personalized support.
                   </p>
-                  <Button 
-                    size="sm"
-                    onClick={() => navigate('/complete-profile')}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                  >
-                    Complete Now
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm"
+                      onClick={() => navigate('/complete-profile')}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                    >
+                      Complete Now
+                    </Button>
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCheckStatus}
+                      disabled={checkingProfile}
+                      className="border-yellow-600 text-yellow-700 hover:bg-yellow-100"
+                    >
+                      {checkingProfile ? 'Checking...' : 'Check Status'}
+                    </Button>
+                  </div>
                 </div>
                 <button
                   onClick={handleDismissWarning}

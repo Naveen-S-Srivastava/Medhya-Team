@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { BookOpen, Play, Headphones, Bookmark, Search, Filter, Star, Clock, Eye, Loader2, X, ExternalLink, BookmarkCheck } from 'lucide-react';
 import { useResources } from '../hooks/useResources';
 import { useUserLibrary } from '../hooks/useUserLibrary';
-import ProfileCompletionCheck from './ProfileCompletionCheck';
 
 const ResourceHub = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -277,7 +276,7 @@ const ResourceHub = () => {
   };
 
   return (
-    <ProfileCompletionCheck requireComplete={true}>
+    
       <div className="min-h-screen p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-sky-50 via-white to-lavender-50 text-slate-800 transition-colors duration-500 font-['Poppins',sans-serif]">
       
       <Card className="shadow-lg rounded-2xl mb-8 transform transition-transform duration-500 hover:scale-[1.005] border border-slate-200">
@@ -665,7 +664,6 @@ const ResourceHub = () => {
       />
     )}
     </div>
-    </ProfileCompletionCheck>
   );
 };
 

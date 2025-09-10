@@ -62,18 +62,18 @@ const CounselorDashboard = () => {
   const [students, setStudents] = useState([]);
   const [payments, setPayments] = useState([]);
 
-  // Load initial data
+  // Load initial data - only once on mount
   useEffect(() => {
     loadDashboardData();
     loadProfile();
-    
-    // Check if password change is required
+  }, []);
+
+  // Check if password change is required when user data is available
+  useEffect(() => {
     if (user?.requiresPasswordChange) {
       setShowPasswordChangeModal(true);
     }
-  }, [user]);
-
-  // Load data when view changes
+  }, [user?.requiresPasswordChange]);  // Load data when view changes
   useEffect(() => {
     switch (activeView) {
       case 'sessions':

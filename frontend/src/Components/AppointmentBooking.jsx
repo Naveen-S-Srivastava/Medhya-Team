@@ -13,7 +13,6 @@ import { Calendar as CalendarIcon, Clock, User, MapPin, Phone, Video, Shield, Lo
 import { appointmentAPI } from '../services/api';
 import { useApi, useOptimisticUpdate } from '../hooks/useApi';
 import { useCounselors } from '../hooks/useCounselors';
-import ProfileCompletionCheck from './ProfileCompletionCheck';
 import { UserContext } from '../App';
 
 const AppointmentBooking = () => {
@@ -158,8 +157,6 @@ const AppointmentBooking = () => {
     };
 
     return (
-        
-    <ProfileCompletionCheck requireComplete={true}>
         <div className="space-y-6">
             <Card>
                 <CardHeader>
@@ -532,7 +529,6 @@ const AppointmentBooking = () => {
             </Card>
         </div>
         
-    </ProfileCompletionCheck>
     );
 };
 

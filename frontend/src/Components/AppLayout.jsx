@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import Navbar from './Navbar.jsx';
 import Footer from './Footer.jsx';
-
 const studentNavItems = [
   { path: '/dashboard', label: 'Dashboard', icon: BarChart3 },
   { path: '/chat', label: 'Medhya Support', icon: MessageCircle },
@@ -57,9 +56,7 @@ const AppLayout = ({ userRole, user, onLogout, systemStats }) => {
             })}
           </TabsList>
           
-          {/* The Outlet will render the matched route component (e.g., StudentDashboard, AIChat, etc.) */}
-          <Outlet />
-
+            <Outlet />
         </Tabs>
       </main>
 
