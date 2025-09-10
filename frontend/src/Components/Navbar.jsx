@@ -10,7 +10,7 @@ import {
   Building2, GraduationCap, ChevronDown, RefreshCw, CheckCircle, AlertCircle
 } from 'lucide-react';
 import { authAPI } from '../services/api.js';
-import medha from '../assets/logo1.jpg';
+import medha from '../assets/logo.png';
 import ChangePasswordModal from './ChangePasswordModal';
 
 const Navbar = ({ userRole, user, onLogout, systemStats }) => {
@@ -258,7 +258,7 @@ const Navbar = ({ userRole, user, onLogout, systemStats }) => {
             <div className="flex items-center gap-8">
               <Link to="/" className="flex items-center gap-2.5">
                 <div >
-                  <img className="flex-shrink-0 flex items-center justify-center h-10 w-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg shadow-md" src={medha} />
+                  <img className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg shadow-md" src={medha} />
                 </div>
                 <div>
                   <h1 className="hidden sm:block text-xl font-bold text-slate-800">MEDHYA </h1>

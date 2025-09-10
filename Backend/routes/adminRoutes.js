@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAdminDashboardStats } from '../controllers/adminDashboardController.js';
+import { getAdminDashboardStats, getAllUsers, getAllCounselors, verifyAdminPassword, createCounselor } from '../controllers/adminDashboardController.js';
 import { protect, restrictTo } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -10,6 +10,18 @@ router.use(restrictTo('admin'));
 
 // GET /api/admin/dashboard-stats
 router.get('/dashboard-stats', getAdminDashboardStats);
+
+// GET /api/admin/users
+router.get('/users', getAllUsers);
+
+// GET /api/admin/counselors
+router.get('/counselors', getAllCounselors);
+
+// POST /api/admin/verify-password
+router.post('/verify-password', verifyAdminPassword);
+
+// POST /api/admin/create-counselor
+router.post('/create-counselor', createCounselor);
 
 // Test endpoint to verify admin routes are working
 router.get('/test', (req, res) => {

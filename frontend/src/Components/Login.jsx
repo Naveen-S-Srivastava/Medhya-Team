@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -31,7 +32,7 @@ import {
 import { useAuth } from "../hooks/useAuth.js";
 import { validateGoogleOAuthConfig, getOAuthErrorMessage } from "../utils/googleOAuthConfig.js";
 
-import LP from "../assets/logo1.jpg";
+import LP from "../assets/logo.png";
 import Footer from "./Footer.jsx";
 
 const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
@@ -47,6 +48,17 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
   });
   const [errors, setErrors] = useState({});
   const [googleOAuthError, setGoogleOAuthError] = useState(null);
+  
+  // Password change state
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [passwordChangeUser, setPasswordChangeUser] = useState(null);
+  const [passwordChangeData, setPasswordChangeData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [passwordChangeErrors, setPasswordChangeErrors] = useState({});
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const institutions = [
     { id: "iit-delhi", name: "Indian Institute of Technology, Delhi" },
@@ -80,25 +92,49 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-
-    setGoogleOAuthError(null);
-
+    
+    // Validate password change form
+    const newErrors = {};
+    if (!passwordChangeData.newPassword) {
+      newErrors.newPassword = "New password is required";
+    } else if (passwordChangeData.newPassword.length < 8) {
+      newErrors.newPassword = "Password must be at least 8 characters";
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(passwordChangeData.newPassword)) {
+      newErrors.newPassword = "Password must contain uppercase, lowercase, and number";
+    }
+    
+    if (passwordChangeData.newPassword !== passwordChangeData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+    
+    setPasswordChangeErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+    
+    setChangingPassword(true);
+    
     try {
-      const user = await login(formData.email, formData.password);
+      // For password change, we need to use the dummy password as current password
+      const user = await login(passwordChangeUser.email, 'TempPass123!');
+      
+      // Reset password change state
+      setShowPasswordChange(false);
+      setPasswordChangeUser(null);
+      setPasswordChangeData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+      
+      // Proceed with login
       if (onLogin) {
         onLogin(user.role, user);
       }
     } catch (err) {
-      if (err.message.includes('Google login')) {
-        setGoogleOAuthError('This account was created using Google login. Please use the "Continue with Google" button to sign in.');
-        return;
-      }
-      if (onLoginError) {
-        onLoginError(loginType, err.message);
-      }
+      setPasswordChangeErrors({ general: err.message });
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -199,6 +235,32 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
     }));
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      const user = await login(formData.email, formData.password, loginType);
+      
+      // Check if password change is required (for new counselors)
+      if (user.requiresPasswordChange) {
+        setPasswordChangeUser(user);
+        setShowPasswordChange(true);
+        return;
+      }
+      
+      if (onLogin) {
+        onLogin(user.role, user);
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      // Error is handled by the useAuth hook
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-lavender-50 flex flex-col items-center justify-center p-4 font-['Poppins',sans-serif]">
       <div className="w-full flex flex-col md:flex-row items-center justify-center space-y-8 md:space-y-0 md:space-x-12 p-4 max-w-7xl mx-auto">
@@ -211,7 +273,7 @@ const Login = ({ onLogin, onShowUserSignup, onLoginError }) => {
                   <img
                     src={LP}
                     alt="MEDHYA Logo"
-                    className="w-28 h-28 sm:w-36 sm:h-36 bg-gradient-to-br from-blue-500 via-sky-500 to-blue-600 rounded-3xl shadow-xl transition-all duration-300 transform group-hover:scale-105 group-hover:shadow-2xl border-4 border-white"
+                    className="w-28 h-28 sm:w-36 sm:h-36  rounded-3xl shadow-xl transition-all duration-300 transform group-hover:scale-105 group-hover:shadow-2xl border-4 border-white"
                   />
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-sky-400/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>

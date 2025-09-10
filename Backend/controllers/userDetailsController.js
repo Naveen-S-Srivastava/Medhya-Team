@@ -104,6 +104,10 @@ export const createOrUpdateUserDetails = catchAsync(async (req, res, next) => {
       user: userId,
       ...userDetailsData
     });
+    
+    // Update the user's userDetails reference
+    user.userDetails = userDetails._id;
+    await user.save({ validateBeforeSave: false });
   }
 
   // Check if all required fields are filled to determine profile completion

@@ -1,3 +1,4 @@
+
 import User from "../models/usermodel.js";
 import UserDetails from "../models/userDetailsModel.js";
 import ActivityLog from "../models/activityLogModel.js";
@@ -182,6 +183,10 @@ export const registerUser = catchAsync(async (req, res, next) => {
     isProfileComplete: true,
     profileCompletedAt: new Date()
   });
+
+  // Update user's userDetails reference
+  user.userDetails = userDetails._id;
+  await user.save({ validateBeforeSave: false });
 
   // Log activity
   try {
@@ -592,6 +597,7 @@ export const changePassword = catchAsync(async (req, res, next) => {
   // Update password
   user.password = newPassword;
   user.passwordConfirm = newPasswordConfirm;
+  user.requiresPasswordChange = false; // Reset password change requirement
   
   try {
     await user.save();

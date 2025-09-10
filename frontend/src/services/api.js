@@ -186,6 +186,10 @@ export const adminAPI = {
   getDashboardStats: () => apiCall('/admin/dashboard-stats'),
   
   getTest: () => apiCall('/admin/test'),
+  
+  getUsers: () => apiCall('/admin/users'),
+  
+  getCounselors: () => apiCall('/admin/counselors'),
 };
 // Appointment API
 export const appointmentAPI = {

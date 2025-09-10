@@ -1,3 +1,4 @@
+
 import User from "../models/usermodel.js";
 import AppError from "../utils/appError.js";
 import catchAsync from "../utils/catchAsync.js";
@@ -244,8 +245,64 @@ export const login = catchAsync(async (req, res, next) => {
     return next(new AppError("Incorrect Email or Password", 401));
   }
 
+  // Check if user requires password change (for newly created counselors)
+  if (user.requiresPasswordChange) {
+    return res.status(200).json({
+      status: "success",
+      message: "Password change required",
+      requiresPasswordChange: true,
+      token: signToken(user._id),
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role
+        }
+      }
+    });
+  }
+
   // if all things is correct means password and user and email
   createSendToken(user, 200, res, "Login Successfull");
+});
+
+export const changePassword = catchAsync(async (req, res, next) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  // Get user from the request (set by protect middleware)
+  const user = await User.findById(req.user._id).select('+password');
+
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  // Verify current password
+  if (!(await user.correctPassword(currentPassword, user.password))) {
+    return next(new AppError('Current password is incorrect', 401));
+  }
+
+  // Validate new password
+  if (newPassword !== confirmPassword) {
+    return next(new AppError('New passwords do not match', 400));
+  }
+
+  if (newPassword.length < 8) {
+    return next(new AppError('Password must be at least 8 characters long', 400));
+  }
+
+  if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+    return next(new AppError('Password must contain uppercase, lowercase, and number', 400));
+  }
+
+  // Update password
+  user.password = newPassword;
+  user.requiresPasswordChange = false;
+  await user.save();
+
+  // Create new token
+  createSendToken(user, 200, res, "Password changed successfully");
 });
 
 export const logout = catchAsync(async (req, res, next) => {

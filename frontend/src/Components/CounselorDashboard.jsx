@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -6,10 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/Avatar';
 import {
   LayoutDashboard, Calendar, MessageSquare, Users, DollarSign, User, TrendingUp,
   RefreshCw, LogOut, Bell, ChevronDown, Eye, Send, Phone,
-  CheckCircle, Shield, Globe, Smartphone, AlertCircle
+  CheckCircle, Shield, Globe, Smartphone, AlertCircle, Lock, Key, X
   
 } from 'lucide-react';
 import { useCounselorDashboard } from '../hooks/useCounselorDashboard';
+import { useAuth } from '../hooks/useAuth';
 
 // Main Dashboard Component
 const CounselorDashboard = () => {
@@ -31,12 +33,27 @@ const CounselorDashboard = () => {
     clearError
   } = useCounselorDashboard();
   
+  const { user, changePassword } = useAuth();
+  
   // Local state
   const [activeView, setActiveView] = useState('dashboard');
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [messageContent, setMessageContent] = useState('');
+  const [selectedChatStudent, setSelectedChatStudent] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+
+  // Password change modal state
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // Data states
   const [profile, setProfile] = useState(null);
@@ -49,7 +66,12 @@ const CounselorDashboard = () => {
   useEffect(() => {
     loadDashboardData();
     loadProfile();
-  }, []);
+    
+    // Check if password change is required
+    if (user?.requiresPasswordChange) {
+      setShowPasswordChangeModal(true);
+    }
+  }, [user]);
 
   // Load data when view changes
   useEffect(() => {
@@ -100,6 +122,50 @@ const CounselorDashboard = () => {
       setProfile(response.counselor);
     } catch (err) {
       console.error('Failed to load profile:', err);
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    
+    // Validate password
+    const errors = {};
+    if (!passwordData.newPassword) {
+      errors.newPassword = 'New password is required';
+    } else if (passwordData.newPassword.length < 8) {
+      errors.newPassword = 'Password must be at least 8 characters';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(passwordData.newPassword)) {
+      errors.newPassword = 'Password must contain uppercase, lowercase, and number';
+    }
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+    
+    setPasswordErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+    
+    setChangingPassword(true);
+    
+    try {
+      await changePassword(
+        passwordData.currentPassword || 'TempPass123!', // Use dummy password if no current password
+        passwordData.newPassword,
+        passwordData.confirmPassword
+      );
+      
+      setShowPasswordChangeModal(false);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      
+      alert('Password changed successfully!');
+    } catch (err) {
+      setPasswordErrors({ general: err.message });
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -164,6 +230,98 @@ const CounselorDashboard = () => {
     } catch (err) {
       console.error('Failed to mark message as read:', err);
     }
+  };
+
+  // Handle individual chat with a student
+  const handleStartChat = (student) => {
+    setSelectedChatStudent(student);
+    // Filter messages for this specific student
+    const studentMessages = messages.filter(msg => {
+      if (msg.senderModel === 'User' && msg.sender._id === student._id) return true;
+      if (msg.recipientModel === 'User' && msg.recipient._id === student._id) return true;
+      return false;
+    });
+    setChatMessages(studentMessages);
+  };
+
+  // Send message in individual chat
+  const handleSendChatMessage = async () => {
+    if (!newMessage.trim() || !selectedChatStudent) return;
+    
+    try {
+      const messageData = {
+        recipient: selectedChatStudent._id,
+        content: newMessage.trim()
+      };
+      
+      await sendMessage(messageData);
+      setNewMessage('');
+      
+      // Refresh messages
+      loadMessages();
+      loadDashboardData();
+      
+      // Update chat messages
+      const studentMessages = messages.filter(msg => {
+        if (msg.senderModel === 'User' && msg.sender._id === selectedChatStudent._id) return true;
+        if (msg.recipientModel === 'User' && msg.recipient._id === selectedChatStudent._id) return true;
+        return false;
+      });
+      setChatMessages(studentMessages);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  // Get unique students from messages
+  const getUniqueStudents = () => {
+    const studentMap = new Map();
+    messages.forEach(message => {
+      // Students can be either sender or recipient depending on who sent the message
+      let student = null;
+      if (message.senderModel === 'User') {
+        student = message.sender;
+      } else if (message.recipientModel === 'User') {
+        student = message.recipient;
+      }
+      
+      if (student && !studentMap.has(student._id)) {
+        studentMap.set(student._id, {
+          ...student,
+          lastMessage: message,
+          unreadCount: messages.filter(m => {
+            if (m.senderModel === 'User' && m.sender._id === student._id) return !m.isRead;
+            if (m.recipientModel === 'User' && m.recipient._id === student._id) return !m.isRead;
+            return false;
+          }).length
+        });
+      }
+    });
+    return Array.from(studentMap.values());
+  };
+
+  // Get all students for the message modal (including those without messages)
+  const getAllStudents = () => {
+    const messageStudents = getUniqueStudents();
+    const allStudents = [...messageStudents];
+    
+    // Add any students from appointments who might not have messages yet
+    sessions.forEach(session => {
+      if (session.student && !allStudents.find(s => s._id === session.student._id)) {
+        allStudents.push(session.student);
+      }
+    });
+    
+    // Debug: Log student data
+    console.log('All Students for Message Modal:', allStudents.map(s => ({
+      id: s._id,
+      firstName: s.firstName,
+      lastName: s.lastName,
+      email: s.email,
+      hasName: !!(s.firstName && s.lastName)
+    })));
+    
+    return allStudents;
   };
 
   const handleSendMessage = async () => {
@@ -610,62 +768,181 @@ const CounselorDashboard = () => {
             </Card>
           )}
           {activeView === 'messages' && (
-            <Card className="bg-white shadow-lg rounded-xl border border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gray-800 text-xl font-bold">
-                  <MessageSquare className="w-6 h-6 text-green-600" />All Messages
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-10">
-                    <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
-                    <p className="text-gray-500">Loading messages...</p>
+            <div className="h-[calc(100vh-200px)] flex flex-col">
+              {!selectedChatStudent ? (
+                // Chat List View (WhatsApp-style)
+                <div className="flex-1 flex flex-col">
+                  {/* Header */}
+                  <div className="bg-white border-b border-gray-200 p-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-semibold text-gray-800">Messages</h2>
+                      <Button 
+                        onClick={() => setShowMessageModal(true)}
+                        disabled={getAllStudents().length === 0}
+                        className="bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      >
+                        <Send className="w-4 h-4 mr-2" />
+                        New Chat
+                      </Button>
+                    </div>
                   </div>
-                ) : messages.length === 0 ? (
-                  <div className="text-center py-10">
-                    <p className="text-gray-500">No messages</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div key={message._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-green-50 hover:to-green-100 transition-all duration-300">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="w-12 h-12 ring-2 ring-green-100">
-                            <AvatarImage src={message.sender?.profileImage} />
-                            <AvatarFallback className="bg-gradient-to-br from-green-100 to-emerald-100 text-green-700 font-semibold">
-                              {message.sender?.firstName?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-semibold text-gray-800">
-                              {message.sender?.firstName} {message.sender?.lastName}
-                            </p>
-                            <p className="text-sm text-gray-600 font-medium">{message.content}</p>
-                            <p className="text-xs text-gray-500 mt-1 font-medium">
-                              {formatDate(message.createdAt)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {!message.isRead && (
-                            <Badge className="bg-green-500 text-white shadow-sm font-medium">Unread</Badge>
-                          )}
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="border-green-300 hover:border-green-600 hover:bg-green-50 transition-all duration-300"
-                            onClick={() => handleMarkMessageAsRead(message._id)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </div>
+
+                  {/* Chat List */}
+                  <div className="flex-1 overflow-y-auto">
+                    {loading ? (
+                      <div className="flex items-center justify-center h-full">
+                        <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
                       </div>
-                    ))}
+                    ) : getUniqueStudents().length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                        <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">No conversations yet</h3>
+                        <p className="text-gray-500 mb-4">Start chatting with your students</p>
+                        <Button 
+                          onClick={() => setShowMessageModal(true)}
+                          disabled={getAllStudents().length === 0}
+                          className="bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                          <Send className="w-4 h-4 mr-2" />
+                          {getAllStudents().length === 0 ? 'No Students Available' : 'Start First Chat'}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-100">
+                        {getUniqueStudents().map((student) => (
+                          <div
+                            key={student._id}
+                            className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                            onClick={() => handleStartChat(student)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="relative">
+                                <Avatar className="w-12 h-12">
+                                  <AvatarImage src={student.profileImage} />
+                                  <AvatarFallback className="bg-green-100 text-green-700">
+                                    {student.firstName?.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                {student.unreadCount > 0 && (
+                                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
+                                    {student.unreadCount}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                  <h3 className="font-semibold text-gray-900 truncate">
+                                    {student.firstName} {student.lastName}
+                                  </h3>
+                                  <span className="text-xs text-gray-500">
+                                    {formatDate(student.lastMessage?.createdAt)}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-600 truncate">
+                                  {student.lastMessage?.content}
+                                </p>
+                              </div>
+                              
+                              {student.unreadCount > 0 && (
+                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              ) : (
+                // Individual Chat View
+                <div className="flex-1 flex flex-col">
+                  {/* Chat Header */}
+                  <div className="bg-white border-b border-gray-200 p-4">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedChatStudent(null)}
+                        className="text-gray-600 hover:text-gray-800"
+                      >
+                        ←
+                      </Button>
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={selectedChatStudent.profileImage} />
+                        <AvatarFallback className="bg-green-100 text-green-700">
+                          {selectedChatStudent.firstName?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">
+                          {selectedChatStudent.firstName} {selectedChatStudent.lastName}
+                        </h3>
+                        <p className="text-sm text-gray-500">Student</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                    {chatMessages.length === 0 ? (
+                      <div className="text-center text-gray-500 py-8">
+                        <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                        <p>No messages yet. Start the conversation!</p>
+                      </div>
+                    ) : (
+                      chatMessages.map((message) => {
+                        const isStudentMessage = (message.senderModel === 'User' && message.sender._id === selectedChatStudent._id);
+                        return (
+                          <div
+                            key={message._id}
+                            className={`flex ${isStudentMessage ? 'justify-start' : 'justify-end'}`}
+                          >
+                            <div
+                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                                isStudentMessage
+                                  ? 'bg-white border border-gray-200'
+                                  : 'bg-green-600 text-white'
+                              }`}
+                            >
+                              <p className="text-sm">{message.content}</p>
+                              <p className={`text-xs mt-1 ${
+                                isStudentMessage
+                                  ? 'text-gray-500'
+                                  : 'text-green-100'
+                              }`}>
+                                {formatDate(message.createdAt)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Message Input */}
+                  <div className="bg-white border-t border-gray-200 p-4">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type a message..."
+                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
+                      />
+                      <Button
+                        onClick={handleSendChatMessage}
+                        disabled={!newMessage.trim()}
+                        className="bg-green-600 hover:bg-green-700 text-white px-6"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           {activeView === 'students' && (
             <Card className="bg-white shadow-lg rounded-xl border border-gray-200">
@@ -854,43 +1131,238 @@ const CounselorDashboard = () => {
       </main>
 
       {showMessageModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md animate-in fade-in-50 zoom-in-95">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Send Message</h3>
-              {selectedStudent && (
-                <div className="mb-4 p-2 bg-blue-50 rounded-md border border-blue-200 text-blue-700 text-sm">
-                  To: {selectedStudent.firstName} {selectedStudent.lastName}
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-in fade-in-50 zoom-in-95">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <Send className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">Send Message</h3>
+                  <p className="text-sm text-gray-600">Communicate with your students</p>
+                </div>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => { 
+                  setShowMessageModal(false); 
+                  setSelectedStudent(null); 
+                  setMessageContent(''); 
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </Button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Recipient Selection */}
+              {selectedStudent ? (
+                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={selectedStudent.profileImage} />
+                    <AvatarFallback className="bg-blue-100 text-blue-700">
+                      {selectedStudent.firstName?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium text-blue-900">
+                      {selectedStudent.firstName} {selectedStudent.lastName}
+                    </p>
+                    <p className="text-sm text-blue-700">{selectedStudent.email}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Select Student</label>
+                  {getAllStudents().length === 0 ? (
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
+                      <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600 text-sm">No students available yet</p>
+                      <p className="text-gray-500 text-xs">Students will appear here after booking appointments</p>
+                    </div>
+                  ) : (
+                    <select 
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      onChange={(e) => {
+                        const student = getAllStudents().find(s => s._id === e.target.value);
+                        setSelectedStudent(student);
+                      }}
+                    >
+                      <option value="">Choose a student...</option>
+                      {getAllStudents().map((student) => (
+                        <option key={student._id} value={student._id}>
+                          {student.firstName && student.lastName 
+                            ? `${student.firstName} ${student.lastName} (${student.email})`
+                            : student.email
+                          }
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               )}
-              <textarea 
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" 
-                rows="4" 
-                placeholder="Type your message..." 
-                value={messageContent} 
-                onChange={(e) => setMessageContent(e.target.value)} 
-              />
-                <div className="flex justify-end gap-3 mt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => { 
-                    setShowMessageModal(false); 
-                    setSelectedStudent(null); 
-                    setMessageContent(''); 
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleSendMessage} 
-                  disabled={!messageContent.trim() || loading}
-                >
-                  {loading ? 'Sending...' : 'Send'}
-                </Button>
+
+              {/* Message Content */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Message</label>
+                <textarea 
+                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none" 
+                  rows="6" 
+                  placeholder="Type your message here..." 
+                  value={messageContent} 
+                  onChange={(e) => setMessageContent(e.target.value)}
+                  maxLength={500}
+                />
+                <div className="flex justify-between items-center text-xs text-gray-500">
+                  <span>Keep your message professional and supportive</span>
+                  <span>{messageContent.length}/500</span>
+                </div>
+              </div>
+
+              {/* Quick Message Templates */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Quick Templates</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    "Thank you for reaching out. I'm here to help.",
+                    "Let's schedule a follow-up session.",
+                    "How are you feeling today?",
+                    "I'm proud of your progress."
+                  ].map((template, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      size="sm"
+                      className="text-left justify-start text-xs h-auto p-2 border-gray-200 hover:border-green-300 hover:bg-green-50"
+                      onClick={() => setMessageContent(template)}
+                    >
+                      {template}
+                    </Button>
+                  ))}
                 </div>
               </div>
             </div>
+
+            {/* Modal Footer */}
+            <div className="flex flex-col sm:flex-row gap-3 p-6 border-t border-gray-200 bg-gray-50">
+              <Button 
+                variant="outline" 
+                className="flex-1 sm:flex-none"
+                onClick={() => { 
+                  setShowMessageModal(false); 
+                  setSelectedStudent(null); 
+                  setMessageContent(''); 
+                }}
+              >
+                Cancel
+              </Button>
+                <Button 
+                  onClick={() => {
+                    handleSendMessage();
+                    // After sending, start chat with the student
+                    if (selectedStudent) {
+                      setSelectedChatStudent(selectedStudent);
+                      setShowMessageModal(false);
+                    }
+                  }}
+                  disabled={!messageContent.trim() || !selectedStudent || loading}
+                  className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {loading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Send & Start Chat
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
+      )}
+
+      {/* Password Change Modal */}
+      {showPasswordChangeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Change Password</h3>
+              <button
+                onClick={() => setShowPasswordChangeModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handlePasswordChange}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Enter new password"
+                  />
+                  {passwordErrors.newPassword && (
+                    <p className="text-red-500 text-sm mt-1">{passwordErrors.newPassword}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Confirm new password"
+                  />
+                  {passwordErrors.confirmPassword && (
+                    <p className="text-red-500 text-sm mt-1">{passwordErrors.confirmPassword}</p>
+                  )}
+                </div>
+                
+                {passwordErrors.general && (
+                  <p className="text-red-500 text-sm">{passwordErrors.general}</p>
+                )}
+              </div>
+              
+              <div className="flex gap-3 mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowPasswordChangeModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                >
+                  {changingPassword ? 'Changing...' : 'Change Password'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

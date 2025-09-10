@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -28,7 +29,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { API_BASE_URL } from "../config/environment.js"
 import { useAuth } from "../hooks/useAuth.js"
 
-import LP from "../assets/logo1.jpg";
+import LP from "../assets/logo.png";
 import Footer from "./Footer.jsx"
 
 const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
@@ -779,7 +780,7 @@ const Signup = ({ onLogin, onShowLogin, userData, onBackToUserSignup }) => {
           <div className="flex items-center justify-center">
             <Link to="/">
               <div >
-                <img src={LP} alt="MindCare Logo" className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg" />
+                <img src={LP} alt="MindCare Logo" className="flex items-center justify-center w-16 h-16  rounded-2xl shadow-lg" />
               </div>
             </Link>
           </div>

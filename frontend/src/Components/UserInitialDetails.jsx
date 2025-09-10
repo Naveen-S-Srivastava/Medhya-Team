@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -9,7 +10,7 @@ import {
   Shield, UserPlus, ArrowRight, ArrowLeft,
 } from 'lucide-react';
 
-import LP from "../assets/logo1.jpg";
+import LP from "../assets/logo.png";
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Footer from './Footer';
 
@@ -109,7 +110,7 @@ const UserSignup = ({ onNext, onShowLogin, onBack }) => {
           <div className="flex items-center justify-center">
             <Link to="/">
               <div>
-                <img className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg" src={LP} alt="MEDHYA Logo" />
+                <img className="flex items-center justify-center w-16 h-16  rounded-2xl shadow-lg" src={LP} alt="MEDHYA Logo" />
               </div>
             </Link>
           </div>

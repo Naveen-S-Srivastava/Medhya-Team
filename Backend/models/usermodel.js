@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import validator from "validator";
@@ -65,6 +66,13 @@ const userSchema = new mongoose.Schema({
     ref: 'Counselor',
     default: null
   },
+
+  // Reference to user details (for student users)
+  userDetails: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserDetails',
+    default: null
+  },
   
   // isEmailVerified: {
   //   type: Boolean,
@@ -78,6 +86,12 @@ const userSchema = new mongoose.Schema({
 
   // Profile completion status
   isProfileComplete: {
+    type: Boolean,
+    default: false
+  },
+
+  // Password change requirement
+  requiresPasswordChange: {
     type: Boolean,
     default: false
   },
@@ -117,7 +131,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  strictPopulate: false // Allow population of paths not explicitly defined in schema
+});
 
 userSchema.pre("save", async function (next) {
   console.log('🔐 Pre-save hook triggered for user:', this._id);

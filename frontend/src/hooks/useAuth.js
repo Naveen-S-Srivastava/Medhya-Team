@@ -66,6 +66,21 @@ export const useAuth = () => {
     try {
       const data = await authAPI.login({ email, password, role });
 
+      // Check if password change is required
+      if (data.requiresPasswordChange) {
+        // Store token temporarily for password change
+        localStorage.setItem('tempToken', data.token);
+        
+        // Return special object indicating password change is required
+        const passwordChangeUser = {
+          ...data.data.user,
+          requiresPasswordChange: true
+        };
+        
+        setUser(passwordChangeUser);
+        return passwordChangeUser;
+      }
+
       // Store tokens
       localStorage.setItem('token', data.token);
       localStorage.setItem('refreshToken', data.refreshToken);
@@ -158,7 +173,49 @@ export const useAuth = () => {
       // Clear tokens and user state
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('tempToken');
       setUser(null);
+    }
+  };
+
+  const changePassword = async (currentPassword, newPassword, confirmPassword) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Use temp token if available (for password change requirement)
+      const tempToken = localStorage.getItem('tempToken');
+      const tokenToUse = tempToken || localStorage.getItem('token');
+      
+      const data = await authAPI.changePassword({
+        currentPassword,
+        newPassword,
+        newPasswordConfirm: confirmPassword
+      }, tokenToUse);
+
+      // Clear temp token and set proper token
+      localStorage.removeItem('tempToken');
+      localStorage.setItem('token', data.token);
+      if (data.refreshToken) {
+        localStorage.setItem('refreshToken', data.refreshToken);
+      }
+
+      // Update user state
+      const userWithMetadata = {
+        ...data.data.user,
+        isProfileComplete: Boolean(data.data.user.isProfileComplete),
+        isNewUser: !data.data.user.isProfileComplete,
+        isGoogleUser: Boolean(data.data.user.googleId),
+        requiresPasswordChange: false
+      };
+      
+      setUser(userWithMetadata);
+      return userWithMetadata;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -306,6 +363,7 @@ export const useAuth = () => {
     googleAuth,
     logout,
     refreshToken,
+    changePassword,
     updateProfile,
     checkAuth,
     checkProfileCompletion,

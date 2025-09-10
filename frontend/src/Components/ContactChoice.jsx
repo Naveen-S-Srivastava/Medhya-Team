@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -5,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "../App";
 import { Heart, Users, Shield, ArrowRight } from "lucide-react";
-import medhyaLogo from "../assets/logo1.jpg";
+import medhyaLogo from "../assets/logo1.png";
 import peerLogo from "../assets/logo2.jpg";
 import communityLogo from "../assets/logo3.jpg";
 
