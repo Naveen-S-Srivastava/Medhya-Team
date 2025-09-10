@@ -6,10 +6,11 @@ export const createAppointment = async (req, res) => {
   try {
     const appointmentData = { ...req.body };
     
-    // For demo purposes, if student is not a valid ObjectId, create a temporary user reference
+    // Validate that student ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(appointmentData.student)) {
-      // Create a temporary user ID for demo purposes
-      appointmentData.student = new mongoose.Types.ObjectId();
+      return res.status(400).json({ 
+        error: 'Invalid student ID. Please ensure you are logged in properly.' 
+      });
     }
     
     const appointment = new Appointment(appointmentData);
