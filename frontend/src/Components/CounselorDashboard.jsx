@@ -6,12 +6,14 @@ import { Badge } from '../ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/Avatar';
 import {
   LayoutDashboard, Calendar, MessageSquare, Users, DollarSign, User, TrendingUp,
-  RefreshCw, LogOut, Bell, ChevronDown, Eye, Send, Phone,
+  RefreshCw, LogOut, Bell, ChevronDown, Eye, Send, Phone, Video,
   CheckCircle, Shield, Globe, Smartphone, AlertCircle, Lock, Key, X
-  
+
 } from 'lucide-react';
 import { useCounselorDashboard } from '../hooks/useCounselorDashboard';
 import { useAuth } from '../hooks/useAuth';
+import { v4 as uuidv4 } from 'uuid';
+import { useNavigate } from 'react-router-dom';
 
 // Main Dashboard Component
 const CounselorDashboard = () => {
@@ -32,9 +34,9 @@ const CounselorDashboard = () => {
     updateCounselorProfile,
     clearError
   } = useCounselorDashboard();
-  
+
   const { user, changePassword } = useAuth();
-  
+
   // Local state
   const [activeView, setActiveView] = useState('dashboard');
   const [isDropdownOpen, setDropdownOpen] = useState(false);
@@ -61,6 +63,9 @@ const CounselorDashboard = () => {
   const [messages, setMessages] = useState([]);
   const [students, setStudents] = useState([]);
   const [payments, setPayments] = useState([]);
+
+  const navigate = useNavigate();
+  const myUuid = uuidv4();
 
   // Load initial data - only once on mount
   useEffect(() => {
@@ -127,7 +132,7 @@ const CounselorDashboard = () => {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    
+
     // Validate password
     const errors = {};
     if (!passwordData.newPassword) {
@@ -137,30 +142,30 @@ const CounselorDashboard = () => {
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(passwordData.newPassword)) {
       errors.newPassword = 'Password must contain uppercase, lowercase, and number';
     }
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match';
     }
-    
+
     setPasswordErrors(errors);
     if (Object.keys(errors).length > 0) return;
-    
+
     setChangingPassword(true);
-    
+
     try {
       await changePassword(
         passwordData.currentPassword || 'TempPass123!', // Use dummy password if no current password
         passwordData.newPassword,
         passwordData.confirmPassword
       );
-      
+
       setShowPasswordChangeModal(false);
       setPasswordData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       });
-      
+
       alert('Password changed successfully!');
     } catch (err) {
       setPasswordErrors({ general: err.message });
@@ -247,20 +252,20 @@ const CounselorDashboard = () => {
   // Send message in individual chat
   const handleSendChatMessage = async () => {
     if (!newMessage.trim() || !selectedChatStudent) return;
-    
+
     try {
       const messageData = {
         recipient: selectedChatStudent._id,
         content: newMessage.trim()
       };
-      
+
       await sendMessage(messageData);
       setNewMessage('');
-      
+
       // Refresh messages
       loadMessages();
       loadDashboardData();
-      
+
       // Update chat messages
       const studentMessages = messages.filter(msg => {
         if (msg.senderModel === 'User' && msg.sender._id === selectedChatStudent._id) return true;
@@ -284,7 +289,7 @@ const CounselorDashboard = () => {
       } else if (message.recipientModel === 'User') {
         student = message.recipient;
       }
-      
+
       if (student && !studentMap.has(student._id)) {
         studentMap.set(student._id, {
           ...student,
@@ -304,14 +309,14 @@ const CounselorDashboard = () => {
   const getAllStudents = () => {
     const messageStudents = getUniqueStudents();
     const allStudents = [...messageStudents];
-    
+
     // Add any students from appointments who might not have messages yet
     sessions.forEach(session => {
       if (session.student && !allStudents.find(s => s._id === session.student._id)) {
         allStudents.push(session.student);
       }
     });
-    
+
     // Debug: Log student data
     console.log('All Students for Message Modal:', allStudents.map(s => ({
       id: s._id,
@@ -320,24 +325,24 @@ const CounselorDashboard = () => {
       email: s.email,
       hasName: !!(s.firstName && s.lastName)
     })));
-    
+
     return allStudents;
   };
 
   const handleSendMessage = async () => {
     if (!selectedStudent || !messageContent.trim()) return;
-    
+
     try {
       await sendMessage({
         recipientId: selectedStudent._id,
         content: messageContent.trim(),
         messageType: 'text'
       });
-      
+
       setShowMessageModal(false);
       setMessageContent('');
       setSelectedStudent(null);
-      
+
       // Reload messages after sending
       loadMessages();
       loadDashboardData();
@@ -345,7 +350,7 @@ const CounselorDashboard = () => {
       console.error('Failed to send message:', err);
     }
   };
-  
+
   const formatDate = (date) => new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   const formatTime = (time) => time;
 
@@ -386,7 +391,7 @@ const CounselorDashboard = () => {
 
   return (
     <div className="min-h-screen text-gray-800 bg-gradient-to-br from-sky-100 via-white to-blue-100 transition-colors duration-300 font-['Inter'] antialiased">
-       <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+      <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         {/* Top Bar: Logo, System Status, User Menu */}
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-3">
@@ -421,26 +426,26 @@ const CounselorDashboard = () => {
                     <p className="text-sm font-semibold text-gray-800">{profile?.name || 'Counselor'}</p>
                     <p className="text-xs text-gray-500">{profile?.email || 'counselor@example.com'}</p>
                   </div>
-                  <button 
-                    onClick={() => { setActiveView('profile'); setDropdownOpen(false); }} 
+                  <button
+                    onClick={() => { setActiveView('profile'); setDropdownOpen(false); }}
                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                   >
-                    <User className="h-4 w-4" /> 
+                    <User className="h-4 w-4" />
                     My Profile
                   </button>
-                  <button 
-                    onClick={() => { setActiveView('dashboard'); setDropdownOpen(false); }} 
+                  <button
+                    onClick={() => { setActiveView('dashboard'); setDropdownOpen(false); }}
                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                   >
-                    <LayoutDashboard className="h-4 w-4" /> 
+                    <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                   </button>
                   <div className="my-1 h-px bg-gray-200" />
-                  <button 
-                    onClick={handleLogout} 
+                  <button
+                    onClick={handleLogout}
                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
                   >
-                    <LogOut className="h-4 w-4" /> 
+                    <LogOut className="h-4 w-4" />
                     Sign Out
                   </button>
                 </div>
@@ -450,16 +455,15 @@ const CounselorDashboard = () => {
         </div>
         {/* Second, SEPARATE Bar: Navigation Links */}
         <div className="h-14 bg-white/90 backdrop-blur-sm border-b border-gray-200">
-            <nav className="max-w-7xl mx-auto h-full flex items-center gap-8 px-6">
-                {navItems.map((item) => (
-                <button key={item.id} onClick={() => setActiveView(item.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                    activeView === item.id ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-800 shadow-md border border-indigo-200' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
-                    }`}>
-                    <item.icon className="h-4 w-4" />{item.label}
-                </button>
-                ))}
-            </nav>
+          <nav className="max-w-7xl mx-auto h-full flex items-center gap-8 px-6">
+            {navItems.map((item) => (
+              <button key={item.id} onClick={() => setActiveView(item.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105 ${activeView === item.id ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-800 shadow-md border border-indigo-200' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                  }`}>
+                <item.icon className="h-4 w-4" />{item.label}
+              </button>
+            ))}
+          </nav>
         </div>
       </header>
 
@@ -469,17 +473,17 @@ const CounselorDashboard = () => {
             <h1 className="text-4xl font-extrabold text-gray-800 capitalize">{activeView === 'dashboard' ? 'Counselor Dashboard' : activeView}</h1>
             <p className="text-gray-600 mt-2 text-lg">Monitor your students and manage appointments with modern insights.</p>
           </div>
-          <Button 
-            onClick={loadDashboardData} 
-            disabled={loading} 
-            variant="outline" 
+          <Button
+            onClick={loadDashboardData}
+            disabled={loading}
+            variant="outline"
             className="bg-white shadow-lg border-indigo-300 hover:border-indigo-600 hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> 
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
         </div>
-        
+
         <div className="space-y-6">
           {activeView === 'dashboard' && (
             <>
@@ -508,7 +512,7 @@ const CounselorDashboard = () => {
                     <p className="text-xs text-green-700 font-medium">Requires attention</p>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg rounded-xl transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-purple-800">Active Students</CardTitle>
@@ -521,7 +525,7 @@ const CounselorDashboard = () => {
                     <p className="text-xs text-purple-700 font-medium">Total active students</p>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg rounded-xl transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-orange-800">Monthly Sessions</CardTitle>
@@ -699,7 +703,7 @@ const CounselorDashboard = () => {
             </>
           )}
 
-          {activeView === 'sessions' && (
+          {/* {activeView === 'sessions' && (
             <Card className="bg-white shadow-lg rounded-xl border border-gray-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-gray-800 text-xl font-bold">
@@ -766,7 +770,89 @@ const CounselorDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          )} */}
+
+          {activeView === 'sessions' && (
+            <Card className="bg-white shadow-lg rounded-xl border border-gray-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-gray-800 text-xl font-bold">
+                  <Calendar className="w-6 h-6 text-blue-600" />All Sessions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-10">
+                    <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
+                    <p className="text-gray-500">Loading sessions...</p>
+                  </div>
+                ) : sessions.length === 0 ? (
+                  <div className="text-center py-10">
+                    <p className="text-gray-500">No upcoming sessions</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {sessions.map((session) => (
+                      <div
+                        key={session._id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-blue-50 hover:to-blue-100 transition-all duration-300 cursor-pointer"
+                        onClick={() => {
+                          handleStartChat(session.student);
+                          setActiveView("messages");
+                        }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <Avatar className="w-12 h-12 ring-2 ring-blue-100">
+                            <AvatarImage src={session.student?.profileImage} />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-semibold">
+                              {session.student?.firstName?.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold text-gray-800">
+                              {session.student?.firstName} {session.student?.lastName}
+                            </p>
+                            <p className="text-sm text-gray-600 font-medium">
+                              {formatDate(session.date)} at {formatTime(session.timeSlot)}
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          className="flex items-center gap-3"
+                          onClick={(e) => e.stopPropagation()} // ✅ stop bubbling
+                        >
+                          <Badge className={`${getStatusColor(session.status)} shadow-sm font-medium`}>
+                            {session.status}
+                          </Badge>
+                          {session.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                onClick={() => handleUpdateAppointmentStatus(session._id, 'confirmed')}
+                              >
+                                Confirm
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-300 text-red-600 hover:bg-red-50"
+                                onClick={() => handleUpdateAppointmentStatus(session._id, 'cancelled')}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
+
+
+
           {activeView === 'messages' && (
             <div className="h-[calc(100vh-200px)] flex flex-col">
               {!selectedChatStudent ? (
@@ -776,7 +862,7 @@ const CounselorDashboard = () => {
                   <div className="bg-white border-b border-gray-200 p-4">
                     <div className="flex items-center justify-between">
                       <h2 className="text-xl font-semibold text-gray-800">Messages</h2>
-                      <Button 
+                      <Button
                         onClick={() => setShowMessageModal(true)}
                         disabled={getAllStudents().length === 0}
                         className="bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -798,7 +884,7 @@ const CounselorDashboard = () => {
                         <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
                         <h3 className="text-lg font-semibold text-gray-700 mb-2">No conversations yet</h3>
                         <p className="text-gray-500 mb-4">Start chatting with your students</p>
-                        <Button 
+                        <Button
                           onClick={() => setShowMessageModal(true)}
                           disabled={getAllStudents().length === 0}
                           className="bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -829,7 +915,7 @@ const CounselorDashboard = () => {
                                   </div>
                                 )}
                               </div>
-                              
+
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-1">
                                   <h3 className="font-semibold text-gray-900 truncate">
@@ -843,7 +929,7 @@ const CounselorDashboard = () => {
                                   {student.lastMessage?.content}
                                 </p>
                               </div>
-                              
+
                               {student.unreadCount > 0 && (
                                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                               )}
@@ -858,7 +944,7 @@ const CounselorDashboard = () => {
                 // Individual Chat View
                 <div className="flex-1 flex flex-col">
                   {/* Chat Header */}
-                  <div className="bg-white border-b border-gray-200 p-4">
+                  <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       <Button
                         variant="ghost"
@@ -881,6 +967,10 @@ const CounselorDashboard = () => {
                         <p className="text-sm text-gray-500">Student</p>
                       </div>
                     </div>
+
+                    <div className="flex items-center pr-4" onClick={() => navigate(`/room/${myUuid}`)}>
+                      <Video size={35}/>
+                    </div>
                   </div>
 
                   {/* Messages */}
@@ -899,18 +989,16 @@ const CounselorDashboard = () => {
                             className={`flex ${isStudentMessage ? 'justify-start' : 'justify-end'}`}
                           >
                             <div
-                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                                isStudentMessage
+                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${isStudentMessage
                                   ? 'bg-white border border-gray-200'
                                   : 'bg-green-600 text-white'
-                              }`}
+                                }`}
                             >
                               <p className="text-sm">{message.content}</p>
-                              <p className={`text-xs mt-1 ${
-                                isStudentMessage
+                              <p className={`text-xs mt-1 ${isStudentMessage
                                   ? 'text-gray-500'
                                   : 'text-green-100'
-                              }`}>
+                                }`}>
                                 {formatDate(message.createdAt)}
                               </p>
                             </div>
@@ -979,9 +1067,9 @@ const CounselorDashboard = () => {
                             <p className="text-sm text-gray-600 font-medium">{student.email}</p>
                           </div>
                         </div>
-                        <Button 
-                          size="sm" 
-                          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg transition-all duration-300 transform hover:scale-105" 
+                        <Button
+                          size="sm"
+                          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg transition-all duration-300 transform hover:scale-105"
                           onClick={() => { setSelectedStudent(student); setShowMessageModal(true); }}
                         >
                           <MessageSquare className="w-4 h-4 mr-2" />Send Message
@@ -1071,7 +1159,7 @@ const CounselorDashboard = () => {
                         <p className="text-gray-600">{profile.email}</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-3">
                         <h4 className="font-semibold">Contact Information</h4>
@@ -1082,7 +1170,7 @@ const CounselorDashboard = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="space-y-3">
                         <h4 className="font-semibold">Specializations</h4>
                         <div className="flex flex-wrap gap-2">
@@ -1091,7 +1179,7 @@ const CounselorDashboard = () => {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="space-y-3">
                         <h4 className="font-semibold">Languages</h4>
                         <div className="flex flex-wrap gap-2">
@@ -1102,7 +1190,7 @@ const CounselorDashboard = () => {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="space-y-3">
                         <h4 className="font-semibold">Experience</h4>
                         <div>
@@ -1113,7 +1201,7 @@ const CounselorDashboard = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-3">
                       <h4 className="font-semibold">Bio</h4>
                       <p className="text-sm text-gray-700 leading-relaxed">{profile.bio}</p>
@@ -1144,13 +1232,13 @@ const CounselorDashboard = () => {
                   <p className="text-sm text-gray-600">Communicate with your students</p>
                 </div>
               </div>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
-                onClick={() => { 
-                  setShowMessageModal(false); 
-                  setSelectedStudent(null); 
-                  setMessageContent(''); 
+                onClick={() => {
+                  setShowMessageModal(false);
+                  setSelectedStudent(null);
+                  setMessageContent('');
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -1186,7 +1274,7 @@ const CounselorDashboard = () => {
                       <p className="text-gray-500 text-xs">Students will appear here after booking appointments</p>
                     </div>
                   ) : (
-                    <select 
+                    <select
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       onChange={(e) => {
                         const student = getAllStudents().find(s => s._id === e.target.value);
@@ -1196,7 +1284,7 @@ const CounselorDashboard = () => {
                       <option value="">Choose a student...</option>
                       {getAllStudents().map((student) => (
                         <option key={student._id} value={student._id}>
-                          {student.firstName && student.lastName 
+                          {student.firstName && student.lastName
                             ? `${student.firstName} ${student.lastName} (${student.email})`
                             : student.email
                           }
@@ -1210,11 +1298,11 @@ const CounselorDashboard = () => {
               {/* Message Content */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Message</label>
-                <textarea 
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none" 
-                  rows="6" 
-                  placeholder="Type your message here..." 
-                  value={messageContent} 
+                <textarea
+                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  rows="6"
+                  placeholder="Type your message here..."
+                  value={messageContent}
                   onChange={(e) => setMessageContent(e.target.value)}
                   maxLength={500}
                 />
@@ -1250,44 +1338,44 @@ const CounselorDashboard = () => {
 
             {/* Modal Footer */}
             <div className="flex flex-col sm:flex-row gap-3 p-6 border-t border-gray-200 bg-gray-50">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex-1 sm:flex-none"
-                onClick={() => { 
-                  setShowMessageModal(false); 
-                  setSelectedStudent(null); 
-                  setMessageContent(''); 
+                onClick={() => {
+                  setShowMessageModal(false);
+                  setSelectedStudent(null);
+                  setMessageContent('');
                 }}
               >
                 Cancel
               </Button>
-                <Button 
-                  onClick={() => {
-                    handleSendMessage();
-                    // After sending, start chat with the student
-                    if (selectedStudent) {
-                      setSelectedChatStudent(selectedStudent);
-                      setShowMessageModal(false);
-                    }
-                  }}
-                  disabled={!messageContent.trim() || !selectedStudent || loading}
-                  className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
-                >
-                  {loading ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Send & Start Chat
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Button
+                onClick={() => {
+                  handleSendMessage();
+                  // After sending, start chat with the student
+                  if (selectedStudent) {
+                    setSelectedChatStudent(selectedStudent);
+                    setShowMessageModal(false);
+                  }
+                }}
+                disabled={!messageContent.trim() || !selectedStudent || loading}
+                className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Send & Start Chat
+                  </>
+                )}
+              </Button>
             </div>
           </div>
+        </div>
       )}
 
       {/* Password Change Modal */}
@@ -1303,7 +1391,7 @@ const CounselorDashboard = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handlePasswordChange}>
               <div className="space-y-4">
                 <div>
@@ -1313,7 +1401,7 @@ const CounselorDashboard = () => {
                   <input
                     type="password"
                     value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="Enter new password"
                   />
@@ -1321,7 +1409,7 @@ const CounselorDashboard = () => {
                     <p className="text-red-500 text-sm mt-1">{passwordErrors.newPassword}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Confirm Password
@@ -1329,7 +1417,7 @@ const CounselorDashboard = () => {
                   <input
                     type="password"
                     value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="Confirm new password"
                   />
@@ -1337,12 +1425,12 @@ const CounselorDashboard = () => {
                     <p className="text-red-500 text-sm mt-1">{passwordErrors.confirmPassword}</p>
                   )}
                 </div>
-                
+
                 {passwordErrors.general && (
                   <p className="text-red-500 text-sm">{passwordErrors.general}</p>
                 )}
               </div>
-              
+
               <div className="flex gap-3 mt-6">
                 <Button
                   type="button"
