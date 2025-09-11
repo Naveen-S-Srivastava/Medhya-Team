@@ -63,9 +63,9 @@ const CounselorDashboard = () => {
   const [messages, setMessages] = useState([]);
   const [students, setStudents] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
 
   const navigate = useNavigate();
-  const myUuid = uuidv4();
 
   // Load initial data - only once on mount
   useEffect(() => {
@@ -238,8 +238,10 @@ const CounselorDashboard = () => {
   };
 
   // Handle individual chat with a student
-  const handleStartChat = (student) => {
+  const handleStartChat = (sessionId,student) => {
+    console.log(sessionId,student)
     setSelectedChatStudent(student);
+    setSelectedSessionId(sessionId); 
     // Filter messages for this specific student
     const studentMessages = messages.filter(msg => {
       if (msg.senderModel === 'User' && msg.sender._id === student._id) return true;
@@ -250,33 +252,70 @@ const CounselorDashboard = () => {
   };
 
   // Send message in individual chat
+  // const handleSendChatMessage = async () => {
+  //   if (!newMessage.trim() || !selectedChatStudent) return;
+  //   console.log(selectedChatStudent.id);
+
+  //   try {
+  //     const messageData = {
+  //       recipient: selectedChatStudent.id,
+  //       content: newMessage.trim()
+  //     };
+  //     console.log(messageData)
+  //     await sendMessage(messageData);
+      
+  //     setNewMessage('');
+
+  //     // Refresh messages
+  //     loadMessages();
+  //     loadDashboardData();
+
+  //     // Update chat messages
+  //     const studentMessages = messages.filter(msg => {
+  //       if (msg.senderModel === 'User' && msg.sender._id === selectedChatStudent._id) return true;
+  //       if (msg.recipientModel === 'User' && msg.recipient._id === selectedChatStudent._id) return true;
+  //       return false;
+  //     });
+  //     setChatMessages(studentMessages);
+  //   } catch (error) {
+  //     console.error('Error sending message:', error);
+  //   }
+  // };
+
   const handleSendChatMessage = async () => {
-    if (!newMessage.trim() || !selectedChatStudent) return;
+  if (!newMessage.trim() || !selectedChatStudent?.id) return;
+  console.log(selectedSessionId)
 
-    try {
-      const messageData = {
-        recipient: selectedChatStudent._id,
-        content: newMessage.trim()
-      };
+  try {
+    const messageData = {
+      recipientId: selectedChatStudent.id,   // ✅ FIX: correct key
+      content: newMessage.trim(),
+      messageType: "text",                    // ✅ default type
+      appointmentId: selectedSessionId,     // ✅ pass if you have it in state
+      priority: "normal"                      // optional
+    };
 
-      await sendMessage(messageData);
-      setNewMessage('');
+    await sendMessage(messageData);
 
-      // Refresh messages
-      loadMessages();
-      loadDashboardData();
+    setNewMessage('');
 
-      // Update chat messages
-      const studentMessages = messages.filter(msg => {
-        if (msg.senderModel === 'User' && msg.sender._id === selectedChatStudent._id) return true;
-        if (msg.recipientModel === 'User' && msg.recipient._id === selectedChatStudent._id) return true;
-        return false;
-      });
-      setChatMessages(studentMessages);
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
+    // Reload data after sending
+    await loadMessages();
+    await loadDashboardData();
+
+    // Update local chat thread
+    const studentMessages = messages.filter(msg => {
+      if (msg.senderModel === 'User' && msg.sender._id === selectedChatStudent._id) return true;
+      if (msg.recipientModel === 'User' && msg.recipient._id === selectedChatStudent._id) return true;
+      return false;
+    });
+
+    setChatMessages(studentMessages);
+  } catch (error) {
+    console.error('Error sending message:', error);
+  }
+};
+
 
   // Get unique students from messages
   const getUniqueStudents = () => {
@@ -796,7 +835,7 @@ const CounselorDashboard = () => {
                         key={session._id}
                         className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-blue-50 hover:to-blue-100 transition-all duration-300 cursor-pointer"
                         onClick={() => {
-                          handleStartChat(session.student);
+                          handleStartChat(session._id,session.student);
                           setActiveView("messages");
                         }}
                       >
@@ -899,7 +938,7 @@ const CounselorDashboard = () => {
                           <div
                             key={student._id}
                             className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                            onClick={() => handleStartChat(student)}
+                            onClick={() => handleStartChat(selectedSessionId,student)}
                           >
                             <div className="flex items-center gap-3">
                               <div className="relative">
@@ -963,14 +1002,24 @@ const CounselorDashboard = () => {
                       <div>
                         <h3 className="font-semibold text-gray-900">
                           {selectedChatStudent.firstName} {selectedChatStudent.lastName}
+                          
                         </h3>
                         <p className="text-sm text-gray-500">Student</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center pr-4" onClick={() => navigate(`/room/${myUuid}`)}>
-                      <Video size={35}/>
-                    </div>
+                    <div className="flex items-center pr-4" onClick={() => {
+                          setSelectedChatStudent(selectedChatStudent._id); // ✅ update state
+                          console.log(selectedChatStudent._id);
+                          navigate(`/room/${selectedChatStudent._id}`); // or appointment.roomId
+                        }}
+                      >
+                        <Video size={35} />
+                      </div>
+
+
+                    {/* {setSelectedChatStudent(selectedChatStudent._id)}
+                    {console.log(selectedChatStudent._id)} */}
                   </div>
 
                   {/* Messages */}
