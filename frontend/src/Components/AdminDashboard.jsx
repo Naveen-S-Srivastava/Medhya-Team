@@ -15,7 +15,6 @@ import { runAssessmentTests } from '../utils/testAssessmentData';
 import { adminAPI, apiCall } from '../services/api';
 
 const AdminDashboard = () => {
-  const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
   const [selectedMetric, setSelectedMetric] = useState('all');
   const [users, setUsers] = useState([]);
   const [counselors, setCounselors] = useState([]);
@@ -27,7 +26,7 @@ const AdminDashboard = () => {
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loadingPassword, setLoadingPassword] = useState(false);
-  
+
   // Create Counselor Modal State
   const [showCreateCounselorModal, setShowCreateCounselorModal] = useState(false);
   const [counselorForm, setCounselorForm] = useState({
@@ -154,11 +153,11 @@ const AdminDashboard = () => {
   // Handle create counselor
   const handleCreateCounselor = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
-    if (!counselorForm.firstName.trim() || !counselorForm.lastName.trim() || 
-        !counselorForm.email.trim() || !counselorForm.phone.trim() || 
-        !counselorForm.specialization.trim()) {
+    if (!counselorForm.firstName.trim() || !counselorForm.lastName.trim() ||
+      !counselorForm.email.trim() || !counselorForm.phone.trim() ||
+      !counselorForm.specialization.trim()) {
       setCounselorFormError('Please fill in all required fields');
       return;
     }
@@ -184,13 +183,13 @@ const AdminDashboard = () => {
         licenseNumber: '',
         bio: ''
       });
-      
+
       setShowCreateCounselorModal(false);
-      
+
       // Refresh data
       fetchUsers();
       fetchCounselors();
-      
+
       alert('Counselor created successfully! They will receive login credentials via email.');
     } catch (error) {
       console.error('Create counselor error:', error);
@@ -218,33 +217,15 @@ const AdminDashboard = () => {
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center my-8 gap-4">
           <div className="flex flex-wrap gap-3">
-            <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
-              <SelectTrigger className="w-full md:w-[150px] border-indigo-300 bg-white shadow-lg transition-all duration-300 hover:border-indigo-600 hover:shadow-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-2xl rounded-lg">
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 3 months</SelectItem>
-                <SelectItem value="1y">Last year</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" className="flex items-center gap-2 text-indigo-600 border-indigo-600 hover:bg-indigo-50 transition-colors duration-300 transform hover:scale-105" onClick={runAssessmentTests}>
-              <TrendingUp className="w-4 h-4" />
-              Test Assessment Data
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50 transition-colors duration-300 transform hover:scale-105" 
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50 transition-colors duration-300 transform hover:scale-105"
               onClick={() => setShowCreateCounselorModal(true)}
             >
               <UserCheck className="w-4 h-4" />
               Create Counselor
             </Button>
-            <Button className="flex items-center gap-2 bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <Download className="w-4 h-4" />
-              Export Report
-            </Button>
+
           </div>
           <Badge variant="outline" className="flex items-center gap-1 text-green-600 border-green-600 px-3 py-1 text-sm rounded-full animate-pulse transition-colors duration-300">
             <Shield className="w-3 h-3" />
@@ -262,7 +243,7 @@ const AdminDashboard = () => {
             <CardContent>
               <div className="text-4xl font-bold text-gray-900">
                 {analytics.loading ? '...' : analytics.totalUsers}
-              </div> 
+              </div>
               <p className="text-xs text-gray-500 mt-1">Registered students</p>
             </CardContent>
           </Card>
@@ -275,7 +256,7 @@ const AdminDashboard = () => {
             <CardContent>
               <div className="text-4xl font-bold text-gray-900">
                 {loadingCounselors ? '...' : counselors.length}
-              </div> 
+              </div>
               <p className="text-xs text-gray-500 mt-1">Active counselors</p>
             </CardContent>
           </Card>
@@ -288,10 +269,10 @@ const AdminDashboard = () => {
               <MessageCircle className="h-6 w-6 text-green-500" />
             </CardHeader>
             <CardContent>
-             <div className="text-4xl font-bold text-gray-900">
+              <div className="text-4xl font-bold text-gray-900">
                 {analytics.loading ? '...' : analytics.chatSessions}
               </div>
-               <p className="text-xs text-gray-500 mt-1">This week</p>
+              <p className="text-xs text-gray-500 mt-1">This week</p>
             </CardContent>
           </Card>
 
@@ -307,7 +288,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
- <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
+          <Card className="shadow-lg rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-md font-medium text-gray-500">Forum Posts</CardTitle>
               <Users className="h-6 w-6 text-pink-500" />
@@ -320,7 +301,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-         
+
         </div>
 
         <Tabs defaultValue="usage" className="my-8">
@@ -526,7 +507,7 @@ const AdminDashboard = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-4 justify-center">
-              <Button 
+              <Button
                 onClick={fetchUsers}
                 disabled={loadingUsers}
                 className="bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
@@ -534,7 +515,7 @@ const AdminDashboard = () => {
                 <Users className="w-4 h-4 mr-2" />
                 Refresh Students
               </Button>
-              <Button 
+              <Button
                 onClick={fetchCounselors}
                 disabled={loadingCounselors}
                 className="bg-green-600 text-white hover:bg-green-700 transition-colors"
@@ -1208,7 +1189,7 @@ const AdminDashboard = () => {
                     type="text"
                     required
                     value={counselorForm.firstName}
-                    onChange={(e) => setCounselorForm({...counselorForm, firstName: e.target.value})}
+                    onChange={(e) => setCounselorForm({ ...counselorForm, firstName: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="Enter first name"
                   />
@@ -1219,7 +1200,7 @@ const AdminDashboard = () => {
                     type="text"
                     required
                     value={counselorForm.lastName}
-                    onChange={(e) => setCounselorForm({...counselorForm, lastName: e.target.value})}
+                    onChange={(e) => setCounselorForm({ ...counselorForm, lastName: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="Enter last name"
                   />
@@ -1230,7 +1211,7 @@ const AdminDashboard = () => {
                     type="email"
                     required
                     value={counselorForm.email}
-                    onChange={(e) => setCounselorForm({...counselorForm, email: e.target.value})}
+                    onChange={(e) => setCounselorForm({ ...counselorForm, email: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="counselor@example.com"
                   />
@@ -1241,7 +1222,7 @@ const AdminDashboard = () => {
                     type="tel"
                     required
                     value={counselorForm.phone}
-                    onChange={(e) => setCounselorForm({...counselorForm, phone: e.target.value})}
+                    onChange={(e) => setCounselorForm({ ...counselorForm, phone: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="+1 (555) 123-4567"
                   />
@@ -1255,7 +1236,7 @@ const AdminDashboard = () => {
                   <select
                     required
                     value={counselorForm.specialization}
-                    onChange={(e) => setCounselorForm({...counselorForm, specialization: e.target.value})}
+                    onChange={(e) => setCounselorForm({ ...counselorForm, specialization: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
                     <option value="">Select a specialization</option>
@@ -1289,7 +1270,7 @@ const AdminDashboard = () => {
                       type="number"
                       min="0"
                       value={counselorForm.experience}
-                      onChange={(e) => setCounselorForm({...counselorForm, experience: e.target.value})}
+                      onChange={(e) => setCounselorForm({ ...counselorForm, experience: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="5"
                     />
@@ -1299,7 +1280,7 @@ const AdminDashboard = () => {
                     <input
                       type="text"
                       value={counselorForm.licenseNumber}
-                      onChange={(e) => setCounselorForm({...counselorForm, licenseNumber: e.target.value})}
+                      onChange={(e) => setCounselorForm({ ...counselorForm, licenseNumber: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="License number"
                     />
@@ -1310,7 +1291,7 @@ const AdminDashboard = () => {
                   <input
                     type="text"
                     value={counselorForm.qualifications}
-                    onChange={(e) => setCounselorForm({...counselorForm, qualifications: e.target.value})}
+                    onChange={(e) => setCounselorForm({ ...counselorForm, qualifications: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="e.g., PhD, Licensed Professional Counselor"
                   />
@@ -1320,7 +1301,7 @@ const AdminDashboard = () => {
                   <textarea
                     rows="3"
                     value={counselorForm.bio}
-                    onChange={(e) => setCounselorForm({...counselorForm, bio: e.target.value})}
+                    onChange={(e) => setCounselorForm({ ...counselorForm, bio: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="Brief professional biography..."
                   />

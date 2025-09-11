@@ -27,25 +27,15 @@ export const createOrUpdateUserDetails = catchAsync(async (req, res, next) => {
   const { userId } = req.params;
   const userDetailsData = req.body;
 
-  console.log('🔍 createOrUpdateUserDetails called for user:', userId);
-  console.log('🔍 User details data:', userDetailsData);
-
   // Check if user exists
   const user = await User.findById(userId);
   if (!user) {
-    console.log('❌ User not found:', userId);
     return next(new AppError('User not found', 404));
   }
-
-  console.log('✅ User found:', { userId: user._id, currentProfileStatus: user.isProfileComplete });
 
   // Handle password update if provided
   if (userDetailsData.password && userDetailsData.passwordConfirm && 
       userDetailsData.password.trim() !== '' && userDetailsData.passwordConfirm.trim() !== '') {
-    console.log('🔐 Password update detected');
-    console.log('🔐 Password provided:', !!userDetailsData.password);
-    console.log('🔐 PasswordConfirm provided:', !!userDetailsData.passwordConfirm);
-    console.log('🔐 Password length:', userDetailsData.password ? userDetailsData.password.length : 0);
     
     const password = userDetailsData.password.trim();
     const passwordConfirm = userDetailsData.passwordConfirm.trim();
@@ -119,41 +109,40 @@ export const createOrUpdateUserDetails = catchAsync(async (req, res, next) => {
     'emergencyPhone', 'mentalHealthConsent'
   ];
 
-  const allFieldsComplete = requiredFields.every(field => userDetails[field]);
-  
-  console.log('🔍 Profile completion check:', {
-    requiredFields,
-    allFieldsComplete,
-    userDetailsFields: Object.keys(userDetails._doc).filter(key => !key.startsWith('_')),
-    fieldValues: requiredFields.reduce((acc, field) => {
-      acc[field] = userDetails[field];
-      return acc;
-    }, {})
+  const allFieldsComplete = requiredFields.every(field => {
+    const value = userDetails[field];
+    // For boolean fields, just check if they exist and are true
+    if (typeof value === 'boolean') {
+      return value === true;
+    }
+    // For other fields, check if they exist and are not empty strings
+    return value !== undefined && value !== null && value.toString().trim() !== '';
   });
   
   // Update user profile completion status based on field completion
   if (allFieldsComplete && !user.isProfileComplete) {
-    console.log('✅ All fields complete, updating user profile completion status to true');
     user.isProfileComplete = true;
     await user.save({ validateBeforeSave: false });
     userDetails.isProfileComplete = true;
+    await userDetails.save();
   } else if (!allFieldsComplete && user.isProfileComplete) {
-    console.log('❌ Not all fields complete, updating user profile completion status to false');
     user.isProfileComplete = false;
     await user.save({ validateBeforeSave: false });
     userDetails.isProfileComplete = false;
-  } else {
-    console.log('ℹ️ Profile completion status unchanged:', {
-      allFieldsComplete,
-      userIsProfileComplete: user.isProfileComplete
-    });
+    await userDetails.save();
   }
 
   const responseData = {
     status: 'success',
     message: 'User details updated successfully',
     data: {
-      userDetails
+      userDetails,
+      user: {
+        _id: user._id,
+        email: user.email,
+        role: user.role,
+        isProfileComplete: user.isProfileComplete
+      }
     }
   };
   
@@ -203,7 +192,15 @@ export const markProfileComplete = catchAsync(async (req, res, next) => {
     'emergencyPhone', 'mentalHealthConsent'
   ];
 
-  const missingFields = requiredFields.filter(field => !userDetails[field]);
+  const missingFields = requiredFields.filter(field => {
+    const value = userDetails[field];
+    // For boolean fields, check if they are true
+    if (typeof value === 'boolean') {
+      return value !== true;
+    }
+    // For other fields, check if they are empty or undefined
+    return value === undefined || value === null || value.toString().trim() === '';
+  });
   
   console.log('🔍 Field validation:', {
     requiredFields,
@@ -319,8 +316,9 @@ export const deleteUserDetails = catchAsync(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
   }
 
-  res.status(204).json({
+  res.status(200).json({
     status: 'success',
+    message: 'Profile completion status updated successfully',
     data: null
   });
 });

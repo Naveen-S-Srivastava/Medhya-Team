@@ -295,6 +295,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import communityRoutes from "./routes/communityRoutes.js";
 import journalRoutes from "./routes/journalRoutes.js";
 import counselorDashboardRoutes from "./routes/counselorDashboardRoutes.js";
+import moodTrackingRoutes from "./routes/moodTrackingRoutes.js";
 
 dotenv.config();
 
@@ -453,6 +454,7 @@ app.use("/api/community", communityRoutes);
 app.use("/api/journal", journalRoutes);
 app.use("/api/counselor-dashboard", counselorDashboardRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/mood", moodTrackingRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

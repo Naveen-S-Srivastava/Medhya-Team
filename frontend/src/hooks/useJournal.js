@@ -152,15 +152,31 @@ export const useJournal = () => {
     setLoading(true);
     setError(null);
     try {
-      await apiClient.delete(`/journal/${entryId}`);
+      console.log('Deleting journal entry with ID:', entryId);
+      const response = await apiClient.delete(`/journal/${entryId}`);
+      console.log('Delete response:', response);
+
+      // Check if the response indicates success
+      if (response && (response.status === 'success' || response.message)) {
+        console.log('Journal entry deleted successfully');
+      }
+
       // Refresh today's entry and weekly progress
       await Promise.all([
         getTodayEntry(),
         getWeeklyProgress()
       ]);
+
+      return response;
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete journal entry');
-      throw err;
+      console.error('Delete journal entry error:', err);
+      console.error('Error response:', err.response);
+      console.error('Error status:', err.response?.status);
+      console.error('Error data:', err.response?.data);
+
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to delete journal entry';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -13,7 +13,7 @@ import StudentDashboard from './Components/StudentDashboard.jsx';
 import AdminDashboard from './Components/AdminDashboard.jsx';
 import AIChat from './Components/AIChat.jsx';
 import AppointmentBooking from './Components/AppointmentBooking.jsx';
-import ResourceHub from './Components/ResourceHub.jsx';
+// import ResourceHub from './Components/ResourceHub.jsx';
 import PeerSupport from './Components/PeerSupport.jsx';
 import CrisisManagement from './Components/CrisisManagement.jsx';
 import InnovationShowcase from './Components/InnovationShowcase.jsx';
@@ -72,11 +72,17 @@ export default function App() {
   const { user, loading, logout: authLogout } = useAuth();
   const [userRole, setUserRole] = useState('guest');
   const [userData, setUserData] = useState(null);
+  const [refreshMoodData, setRefreshMoodData] = useState(0);
   const navigate = useNavigate();
 
   const systemStats = {
     totalInstitutions: 127,
     activeUsers: "3000+",
+  };
+
+  // Function to refresh mood data in navbar
+  const handleRefreshMoodData = () => {
+    setRefreshMoodData(prev => prev + 1);
   };
 
   // Update userRole when user changes
@@ -105,6 +111,13 @@ export default function App() {
       // Student login flow - ALWAYS redirect to contact-choice first
       console.log('🚀 Redirecting student to contact-choice (first option choice)');
       navigate('/contact-choice');
+    }
+
+    // Refresh mood data after login for students
+    if (role === 'student') {
+      setTimeout(() => {
+        handleRefreshMoodData();
+      }, 1000); // Small delay to ensure user state is updated
     }
   };
 
@@ -206,7 +219,7 @@ export default function App() {
         <Route
           element={
             <ProtectedRoute userRole={userRole} isLoading={loading}>
-              <AppLayout userRole={userRole} user={user} onLogout={handleLogout} systemStats={systemStats} />
+              <AppLayout userRole={userRole} user={user} onLogout={handleLogout} systemStats={systemStats} onRefreshMoodData={refreshMoodData} />
             </ProtectedRoute>
           }
         >
@@ -216,7 +229,7 @@ export default function App() {
           <Route path="/chat" element={<ProfileProtectedRoute userRole={userRole} user={user} isLoading={loading}><AIChat /></ProfileProtectedRoute>} />
           <Route path="/ai" element={<ProfileProtectedRoute userRole={userRole} user={user} isLoading={loading}><AIChat /></ProfileProtectedRoute>} />
           <Route path="/appointments" element={<ProfileProtectedRoute userRole={userRole} user={user} isLoading={loading}><AppointmentBooking /></ProfileProtectedRoute>} />
-          <Route path="/resources" element={<ProtectedRoute userRole={userRole} requiredRole="student" isLoading={loading}><ResourceHub /></ProtectedRoute>} />
+          {/* <Route path="/resources" element={<ProtectedRoute userRole={userRole} requiredRole="student" isLoading={loading}><ResourceHub /></ProtectedRoute>} /> */}
           <Route path="/community" element={<ProfileProtectedRoute userRole={userRole} user={user} isLoading={loading}><PeerSupport /></ProfileProtectedRoute>} />
           <Route path="/wellness" element={<ProfileProtectedRoute userRole={userRole} user={user} isLoading={loading}><Wellness /></ProfileProtectedRoute>} />
 

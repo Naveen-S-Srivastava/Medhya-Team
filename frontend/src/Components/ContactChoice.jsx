@@ -19,7 +19,7 @@ const choices = [
     symbol: communityLogo,
     icon: Shield,
     color: "sky",
-    gradient: "from-sky-400 to-blue-500",
+    gradient: "from-blue-400 to-blue-500",
     hoverGradient: "from-sky-500 to-blue-600",
   },
   {
@@ -30,7 +30,7 @@ const choices = [
     symbol: peerLogo,
     icon: Heart,
     color: "mint",
-    gradient: "from-mint-400 to-emerald-500",
+    gradient: "from-emerald-400 to-emerald-500",
     hoverGradient: "from-mint-500 to-emerald-600",
   },
   {
@@ -41,7 +41,7 @@ const choices = [
     symbol: medhyaLogo,
     icon: Users,
     color: "lavender",
-    gradient: "from-lavender-400 to-purple-500",
+    gradient: "from-purple-400 to-purple-500",
     hoverGradient: "from-lavender-500 to-purple-600",
   },
 ];
@@ -118,11 +118,7 @@ export default function ContactChoice() {
               })}
             </div>
             
-            <div className="text-center mt-12 p-6 bg-slate-50 rounded-2xl border border-slate-200">
-              <p className="text-slate-600 font-medium">
-                Your selection personalizes recommendations across the platform.
-              </p>
-            </div>
+           
           </CardContent>
         </Card>
       </div>

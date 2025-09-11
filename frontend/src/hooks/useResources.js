@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { API_BASE_URL } from '../config/environment.js';
+import { getApiBaseUrl } from '../config/environment.js';
 
 export const useResources = () => {
   const [resources, setResources] = useState([]);
@@ -28,7 +28,7 @@ export const useResources = () => {
         ...filters
       });
 
-      const response = await fetch(`${API_BASE_URL}/resources?${params}`, {
+      const response = await fetch(`${getApiBaseUrl()}/resources?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -64,23 +64,31 @@ export const useResources = () => {
   const getFeaturedResources = async (limit = 6) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const token = getToken();
+      console.log('🔧 useResources: Token available:', !!token);
+
       if (!token) {
         throw new Error('Authentication required. Please log in to access featured resources.');
       }
 
-      const response = await fetch(`${API_BASE_URL}/resources/featured?limit=${limit}`, {
+      const apiUrl = `${getApiBaseUrl()}/resources/featured?limit=${limit}`;
+      console.log('🔧 useResources: Fetching from:', apiUrl);
+
+      const response = await fetch(apiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
+      console.log('🔧 useResources: Response status:', response.status);
+
       if (!response.ok) {
         if (response.status === 403) {
           const errorData = await response.json();
+          console.log('🔧 useResources: 403 Error data:', errorData);
           if (errorData.code === 'PROFILE_INCOMPLETE') {
             throw new Error('Please complete your profile to access resources.');
           }
@@ -93,10 +101,12 @@ export const useResources = () => {
       }
 
       const data = await response.json();
+      console.log('✅ useResources: Response data:', data);
+      setResources(data.data || []);
       return data.data || [];
     } catch (err) {
+      console.error('❌ useResources: Error in getFeaturedResources:', err);
       setError(err.message);
-      console.error('Error fetching featured resources:', err);
       throw err;
     } finally {
       setLoading(false);
@@ -105,7 +115,7 @@ export const useResources = () => {
 
   const saveResource = async (resourceId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/resources/${resourceId}/save`, {
+      const response = await fetch(`${getApiBaseUrl()}/resources/${resourceId}/save`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
@@ -127,7 +137,7 @@ export const useResources = () => {
 
   const removeFromLibrary = async (resourceId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/resources/${resourceId}/remove`, {
+      const response = await fetch(`${getApiBaseUrl()}/resources/${resourceId}/remove`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${getToken()}`,

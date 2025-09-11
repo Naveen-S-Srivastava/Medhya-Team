@@ -127,6 +127,22 @@ const userSchema = new mongoose.Schema({
     default: null
   },
 
+  // Streak tracking
+  currentStreak: {
+    type: Number,
+    default: 0
+  },
+
+  longestStreak: {
+    type: Number,
+    default: 0
+  },
+
+  lastStreakDate: {
+    type: Date,
+    default: null
+  },
+
   createdAt: {
     type: Date,
     default: Date.now,
@@ -207,6 +223,49 @@ userSchema.methods.hasCompleteProfile = function() {
     return this.counselorProfile && this.firstName && this.lastName;
   }
   return this.firstName && this.lastName;
+};
+
+// Method to update login streak
+userSchema.methods.updateLoginStreak = function() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const lastStreakDate = this.lastStreakDate ? new Date(this.lastStreakDate.getFullYear(), this.lastStreakDate.getMonth(), this.lastStreakDate.getDate()) : null;
+
+  console.log(`🔥 updateLoginStreak called for user ${this._id}`);
+  console.log(`🔥 Current values: currentStreak=${this.currentStreak}, longestStreak=${this.longestStreak}, lastStreakDate=${this.lastStreakDate}`);
+
+  if (!lastStreakDate) {
+    // First login
+    this.currentStreak = 1;
+    this.longestStreak = Math.max(this.longestStreak || 0, 1);
+    this.lastStreakDate = today;
+    console.log(`🔥 First login: setting currentStreak=1, longestStreak=${this.longestStreak}`);
+  } else {
+    const daysDifference = Math.floor((today - lastStreakDate) / (1000 * 60 * 60 * 24));
+    console.log(`🔥 Days difference: ${daysDifference}`);
+
+    if (daysDifference === 1) {
+      // Consecutive day
+      this.currentStreak = (this.currentStreak || 0) + 1;
+      this.longestStreak = Math.max(this.longestStreak || 0, this.currentStreak);
+      this.lastStreakDate = today;
+      console.log(`🔥 Consecutive day: currentStreak=${this.currentStreak}, longestStreak=${this.longestStreak}`);
+    } else if (daysDifference > 1) {
+      // Streak broken
+      this.currentStreak = 1;
+      this.longestStreak = Math.max(this.longestStreak || 0, 1);
+      this.lastStreakDate = today;
+      console.log(`🔥 Streak broken: resetting to currentStreak=1, longestStreak=${this.longestStreak}`);
+    } else if (daysDifference === 0) {
+      console.log(`🔥 Same day login: no streak update needed`);
+    } else {
+      console.log(`🔥 Unexpected days difference: ${daysDifference}`);
+    }
+  }
+
+  this.lastLogin = now;
+  console.log(`🔥 Final values: currentStreak=${this.currentStreak}, longestStreak=${this.longestStreak}, lastStreakDate=${this.lastStreakDate}`);
+  return this.save();
 };
 
 // Ensure virtual fields are serialized

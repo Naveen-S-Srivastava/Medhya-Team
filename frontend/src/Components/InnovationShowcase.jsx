@@ -5,7 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { 
+import {
   Brain, Zap, Globe, Smartphone, Database, Lock, TrendingUp, Eye,
   MessageCircle, Heart, Activity, Target, Cpu, Cloud, Shield, Award,
   CheckCircle, ArrowRight, Star, Users, BarChart3, Bot, Map, Languages
@@ -204,35 +204,6 @@ const InnovationShowcase = () => {
             </Card>
           </div>
 
-          {/* AI Capabilities Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Capability Assessment</CardTitle>
-              <CardDescription>Detailed breakdown of our AI's mental health support capabilities</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {aiCapabilities.map((capability, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">{capability.name}</div>
-                      <div className="text-sm text-muted-foreground">{capability.description}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-lg">{capability.score}%</div>
-                    </div>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${capability.color}`}
-                      style={{ width: `${capability.score}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
           {/* Real-time AI Demo */}
           <Card>
             <CardHeader>
@@ -259,6 +230,36 @@ const InnovationShowcase = () => {
               </div>
             </CardContent>
           </Card>
+          {/* AI Capabilities Breakdown */}
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Capability Assessment</CardTitle>
+              <CardDescription>Detailed breakdown of our AI's mental health support capabilities</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {aiCapabilities.map((capability, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-medium">{capability.name}</div>
+                      <div className="text-sm text-muted-foreground">{capability.description}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-lg">{capability.score}%</div>
+                    </div>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full ${capability.color}`}
+                      style={{ width: `${capability.score}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+
         </TabsContent>
 
         <TabsContent value="predictive" className="space-y-6">

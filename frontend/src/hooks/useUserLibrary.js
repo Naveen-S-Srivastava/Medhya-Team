@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { API_BASE_URL } from '../config/environment.js';
+import { getApiBaseUrl } from '../config/environment.js';
 
 export const useUserLibrary = () => {
   const [userLibrary, setUserLibrary] = useState([]);
@@ -22,7 +22,7 @@ export const useUserLibrary = () => {
         limit: limit.toString()
       });
 
-      const response = await fetch(`${API_BASE_URL}/resources/library/user?${params}`, {
+      const response = await fetch(`${getApiBaseUrl()}/resources/library/user?${params}`, {
         headers: {
           'Authorization': `Bearer ${getToken()}`,
           'Content-Type': 'application/json'

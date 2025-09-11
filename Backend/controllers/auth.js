@@ -35,6 +35,8 @@ const createSendToken = (user, statusCode, res, message) => {
   delete userResponse.passwordConfirm;
   delete userResponse.otp;
 
+  console.log(`🔥 Login response streak data for user ${user._id}: currentStreak=${userResponse.currentStreak}, longestStreak=${userResponse.longestStreak}, lastStreakDate=${userResponse.lastStreakDate}`);
+
   res.status(statusCode).json({
     status: "success",
     message,
@@ -262,6 +264,18 @@ export const login = catchAsync(async (req, res, next) => {
         }
       }
     });
+  }
+
+  // Update login streak for students
+  if (user.role === 'student') {
+    try {
+      console.log(`🔥 Before streak update - User ${user._id}: currentStreak=${user.currentStreak}, longestStreak=${user.longestStreak}, lastStreakDate=${user.lastStreakDate}`);
+      await user.updateLoginStreak();
+      console.log(`🔥 After streak update - User ${user._id}: currentStreak=${user.currentStreak}, longestStreak=${user.longestStreak}, lastStreakDate=${user.lastStreakDate}`);
+    } catch (streakError) {
+      console.error('❌ Error updating login streak:', streakError);
+      // Don't fail login if streak update fails
+    }
   }
 
   // if all things is correct means password and user and email

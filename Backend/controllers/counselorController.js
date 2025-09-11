@@ -94,8 +94,9 @@ export const deleteCounselor = catchAsync(async (req, res, next) => {
     return next(new AppError('No counselor found with that ID', 404));
   }
 
-  res.status(204).json({
+  res.status(200).json({
     status: 'success',
+    message: 'Counselor deleted successfully',
     data: null
   });
 });

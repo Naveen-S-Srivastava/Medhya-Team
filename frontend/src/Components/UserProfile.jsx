@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { apiCall } from '../services/api.js';
+import { apiCall, userDetailsAPI } from '../services/api.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card.jsx';
 import { Button } from '../ui/Button.jsx';
 import { Input } from '../ui/Input.jsx';
@@ -29,7 +29,8 @@ import {
   Heart,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  RefreshCw
 } from 'lucide-react';
 
 const UserProfile = () => {
@@ -59,27 +60,54 @@ const UserProfile = () => {
     currentPassword: false
   });
 
-  // Fetch user details on component mount - only once
+  const [lastFetchTime, setLastFetchTime] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Fetch user details on component mount or when user changes
   useEffect(() => {
     if (user?._id) {
       fetchUserDetails();
       checkPasswordStatus();
     }
-  }, []); // Removed [user] dependency to prevent excessive calls
+  }, [user?._id]); // Add user._id dependency to refetch when user changes
 
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = async (forceRefresh = false) => {
+    if (!user?._id) return;
+
+    // Prevent multiple simultaneous requests
+    if (isLoading && !forceRefresh) return;
+
+    // Cache check - don't refetch if data is fresh (less than 30 seconds old) unless forced
+    const now = Date.now();
+    if (!forceRefresh && lastFetchTime && (now - lastFetchTime) < 30000 && userDetails) {
+      console.log('📋 Using cached profile data');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
     try {
-      console.log('🔍 Fetching user details for user:', user);
-      const response = await apiCall(`/user-details/${user._id}`, {
+      console.log('🔍 Fetching user details for user:', user._id);
+      const timestamp = Date.now(); // Cache buster
+      const response = await apiCall(`/user-details/${user._id}?t=${timestamp}`, {
         method: 'GET'
       });
-      console.log('✅ User details response:', response);
-      
+
       if (response.data && response.data.userDetails) {
         setUserDetails(response.data.userDetails);
         setEditedDetails(response.data.userDetails);
+        setLastFetchTime(Date.now());
+        setIsInitialLoad(false);
+        console.log('✅ User details loaded successfully');
+        
+        // Show success message only if this was a manual refresh
+        if (!isInitialLoad && forceRefresh) {
+          setSuccess('Profile data refreshed successfully!');
+          setTimeout(() => setSuccess(''), 2000);
+        }
       } else {
-        console.warn('⚠️ No user details found in response:', response);
+        console.warn('⚠️ No user details found in response');
         setUserDetails(null);
         setEditedDetails({});
       }
@@ -90,8 +118,14 @@ const UserProfile = () => {
         setUserDetails(null);
         setEditedDetails({});
       } else {
-        setError('Failed to load profile details: ' + err.message);
+        setError('Failed to load profile details. Please try again.');
+        // Retry after 2 seconds for network errors
+        if (!err.message.includes('404')) {
+          setTimeout(() => fetchUserDetails(), 2000);
+        }
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -123,24 +157,52 @@ const UserProfile = () => {
 
     try {
       // Update user details
-      await apiCall(`/user-details/${user._id}`, {
+      const response = await apiCall(`/user-details/${user._id}`, {
         method: 'PUT',
         body: JSON.stringify(editedDetails)
       });
 
-      // Update local state
-      setUserDetails(editedDetails);
+      // Update local state with response data
+      if (response.data && response.data.userDetails) {
+        setUserDetails(response.data.userDetails);
+        setEditedDetails(response.data.userDetails);
+      } else {
+        setUserDetails(editedDetails);
+      }
+      
       setIsEditing(false);
       setSuccess('Profile updated successfully!');
 
-      // Update user context if profile completion status changed
-      if (editedDetails.isProfileComplete !== userDetails?.isProfileComplete) {
-        updateUser({ ...user, isProfileComplete: editedDetails.isProfileComplete });
+      // Update user context with data from backend response
+      if (response.data && response.data.user) {
+        updateUser(response.data.user);
       }
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.message || 'Failed to update profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMarkProfileComplete = async () => {
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await userDetailsAPI.markProfileComplete(user._id);
+      
+      // Update user context with the response
+      if (response.data && response.data.user) {
+        updateUser(response.data.user);
+      }
+      
+      setSuccess('Profile marked as complete successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.message || 'Failed to mark profile as complete');
     } finally {
       setIsLoading(false);
     }
@@ -312,6 +374,16 @@ const UserProfile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your profile...</p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -328,10 +400,21 @@ const UserProfile = () => {
           </div>
           
           {!isEditing && (
-            <Button onClick={handleEdit} className="bg-gradient-to-r from-blue-600 to-purple-600">
-              <Edit3 className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => fetchUserDetails(true)} 
+                disabled={isLoading}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button onClick={handleEdit} className="bg-gradient-to-r from-blue-600 to-purple-600">
+                <Edit3 className="h-4 w-4 mr-2" />
+                Edit Profile
+              </Button>
+            </div>
           )}
         </div>
 
@@ -354,9 +437,21 @@ const UserProfile = () => {
               <Progress value={profileCompletion} className="h-3 bg-blue-200" />
               
               {profileCompletion === 100 ? (
-                <div className="flex items-center gap-2 text-green-700">
-                  <CheckCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Profile Complete! You have access to all features.</span>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Profile Complete! You have access to all features.</span>
+                  </div>
+                  {!user?.isProfileComplete && (
+                    <Button
+                      onClick={handleMarkProfileComplete}
+                      disabled={isLoading}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {isLoading ? 'Marking...' : 'Mark Profile as Complete'}
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-blue-700">

@@ -34,16 +34,39 @@ class ApiClient {
             };
             const retryResponse = await fetch(`${this.baseURL}${endpoint}`, options);
             
-            // Parse the retry response
-            const responseData = await retryResponse.json();
-            
-            if (!retryResponse.ok) {
-              const error = new Error(responseData.message || 'Request failed');
-              error.response = { status: retryResponse.status, data: responseData };
-              throw error;
+            // Handle retry responses without content
+            if (retryResponse.status === 204 || retryResponse.headers.get('content-length') === '0') {
+              if (!retryResponse.ok) {
+                const error = new Error('Request failed');
+                error.response = { status: retryResponse.status, data: null };
+                throw error;
+              }
+              return { status: 'success', data: null };
             }
             
-            return responseData;
+            // Parse the retry response
+            const retryContentType = retryResponse.headers.get('content-type');
+            if (retryContentType && retryContentType.includes('application/json')) {
+              const responseData = await retryResponse.json();
+              
+              if (!retryResponse.ok) {
+                const error = new Error(responseData.message || 'Request failed');
+                error.response = { status: retryResponse.status, data: responseData };
+                throw error;
+              }
+              
+              return responseData;
+            } else {
+              const responseText = await retryResponse.text();
+              
+              if (!retryResponse.ok) {
+                const error = new Error(responseText || 'Request failed');
+                error.response = { status: retryResponse.status, data: responseText };
+                throw error;
+              }
+              
+              return { status: 'success', data: responseText };
+            }
           }
         } catch (refreshErr) {
           console.error('Token refresh failed:', refreshErr);
@@ -54,16 +77,40 @@ class ApiClient {
         }
       }
       
-      // Parse the response
-      const responseData = await response.json();
-      
-      if (!response.ok) {
-        const error = new Error(responseData.message || 'Request failed');
-        error.response = { status: response.status, data: responseData };
-        throw error;
+      // Handle responses without content (204 No Content, etc.)
+      if (response.status === 204 || response.headers.get('content-length') === '0') {
+        if (!response.ok) {
+          const error = new Error('Request failed');
+          error.response = { status: response.status, data: null };
+          throw error;
+        }
+        return { status: 'success', data: null };
       }
       
-      return responseData;
+      // Parse the response as JSON for responses with content
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const responseData = await response.json();
+        
+        if (!response.ok) {
+          const error = new Error(responseData.message || 'Request failed');
+          error.response = { status: response.status, data: responseData };
+          throw error;
+        }
+        
+        return responseData;
+      } else {
+        // Handle non-JSON responses
+        const responseText = await response.text();
+        
+        if (!response.ok) {
+          const error = new Error(responseText || 'Request failed');
+          error.response = { status: response.status, data: responseText };
+          throw error;
+        }
+        
+        return { status: 'success', data: responseText };
+      }
     } catch (error) {
       // Only log non-404 errors to avoid console spam for expected cases
       if (error.response?.status !== 404) {

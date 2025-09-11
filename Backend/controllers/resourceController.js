@@ -180,8 +180,9 @@ export const deleteResource = catchAsync(async (req, res, next) => {
     resourceId: resource._id
   });
 
-  res.status(204).json({
+  res.status(200).json({
     status: "success",
+    message: "Resource deleted successfully",
     data: null
   });
 });

@@ -8,14 +8,6 @@ export { API_BASE_URL };
 export const apiCall = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
   
-  console.log('🔧 API Call:', {
-    url,
-    method: options.method || 'GET',
-    endpoint,
-    API_BASE_URL,
-    hasAuth: !!localStorage.getItem('token')
-  });
-  
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
@@ -39,22 +31,23 @@ export const apiCall = async (endpoint, options = {}) => {
   };
 
   try {
-    console.log('🔧 Making fetch request...');
-    const response = await fetch(url, config);
-    console.log('🔧 Fetch response received:', {
-      status: response.status,
-      ok: response.ok,
-      statusText: response.statusText
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch(url, {
+      ...config,
+      signal: controller.signal
     });
     
+    clearTimeout(timeoutId);
     const data = await response.json();
     console.log('🔧 Response data:', data);
 
     console.log('🔧 API Response:', {
       url,
       status: response.status,
-      ok: response.ok,
-      data: data
+      ok: response.ok
     });
 
     if (!response.ok) {
@@ -74,9 +67,14 @@ export const apiCall = async (endpoint, options = {}) => {
   } catch (error) {
     console.error('❌ API call failed:', {
       url,
-      error: error.message,
-      stack: error.stack
+      error: error.message
     });
+    
+    // Handle timeout errors
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please check your connection and try again.');
+    }
+    
     throw error;
   }
 };
@@ -255,6 +253,25 @@ export const crisisAPI = {
   getCrisisAnalytics: (timeRange = '30d') => apiCall(`/crisis/analytics?timeRange=${timeRange}`),
 };
 
+// Mood Tracking API
+export const moodAPI = {
+  getTodaysMood: () => apiCall('/mood/today'),
+
+  logMood: (moodData) => apiCall('/mood/log', {
+    method: 'POST',
+    body: JSON.stringify(moodData),
+  }),
+
+  updateTodaysMood: (moodData) => apiCall('/mood/today', {
+    method: 'PUT',
+    body: JSON.stringify(moodData),
+  }),
+
+  getMoodHistory: (limit = 30) => apiCall(`/mood/history?limit=${limit}`),
+
+  hasLoggedMoodToday: () => apiCall('/mood/today/status'),
+};
+
 export default {
   API_BASE_URL,
   apiCall,
@@ -262,4 +279,5 @@ export default {
   assessmentAPI,
   appointmentAPI,
   crisisAPI,
+  moodAPI,
 };
