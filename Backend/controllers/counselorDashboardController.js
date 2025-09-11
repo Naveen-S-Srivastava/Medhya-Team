@@ -10,6 +10,7 @@ import Counselor from '../models/counselorModel.js';
 import {Assessment} from '../models/assessmentModel.js';
 import CrisisAlert from '../models/crisisAlertModel.js';
 import mongoose from 'mongoose';
+import { v4 as uuidv4 } from "uuid";
 
 // Helper function to get actual counselor ID
 const getActualCounselorId = async (userId) => {
@@ -513,27 +514,61 @@ export const getStudentList = catchAsync(async (req, res) => {
 });
 
 // Update appointment status
+// export const updateAppointmentStatus = catchAsync(async (req, res) => {
+//   const { appointmentId } = req.params;
+//   const { status } = req.body;
+//   const counselorId = req.user.id;
+//   const actualCounselorId = await getActualCounselorId(counselorId);
+
+//   const appointment = await Appointment.findOneAndUpdate(
+//     {
+//       _id: appointmentId,
+//       counselor: actualCounselorId
+//     },
+//     { status },
+//     { new: true }
+//   ).populate('student', 'firstName lastName email');
+
+//   if (!appointment) {
+//     throw new AppError('Appointment not found', 404);
+//   }
+
+//   res.status(200).json({
+//     status: 'success',
+//     data: {
+//       appointment
+//     }
+//   });
+// });
+
 export const updateAppointmentStatus = catchAsync(async (req, res) => {
   const { appointmentId } = req.params;
   const { status } = req.body;
   const counselorId = req.user.id;
   const actualCounselorId = await getActualCounselorId(counselorId);
 
-  const appointment = await Appointment.findOneAndUpdate(
-    {
-      _id: appointmentId,
-      counselor: actualCounselorId
-    },
-    { status },
-    { new: true }
-  ).populate('student', 'firstName lastName email');
+  // Fetch the appointment first
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    counselor: actualCounselorId
+  }).populate("student", "firstName lastName email");
 
   if (!appointment) {
-    throw new AppError('Appointment not found', 404);
+    throw new AppError("Appointment not found", 404);
   }
 
+  // Update status
+  appointment.status = status;
+
+  // ✅ If confirmed and no roomId yet → generate one
+  if (status === "confirmed" && !appointment.roomId) {
+    appointment.roomId = `room-${appointmentId}-${uuidv4()}`;
+  }
+
+  await appointment.save();
+
   res.status(200).json({
-    status: 'success',
+    status: "success",
     data: {
       appointment
     }
