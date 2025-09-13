@@ -11,6 +11,7 @@ import { appointmentAPI } from '../services/api';
 import { UserContext } from '../App';
 import { useContext } from 'react';
 import logo from '../assets/logo.png';
+import { useSocket } from '../context/SocketProvider';
 
 const UserCounselorChat = () => {
     const { counselorId } = useParams();
@@ -18,16 +19,40 @@ const UserCounselorChat = () => {
     const navigate = useNavigate();
     const { user } = useContext(UserContext);
     const messagesEndRef = useRef(null);
-    
+
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [counselorInfo, setCounselorInfo] = useState(null);
+    const [isCounselorOnline, setIsCounselorOnline] = useState(false);
+
+      console.log(user);
+    //   socket.emit("counselor-online", { counselorID: counselorId });
     
+
     // Get appointment and counselor info from navigation state
     const appointmentId = location.state?.appointmentId;
     const counselorName = location.state?.counselorName || 'Counselor';
     const chatMode = location.state?.chatMode;
+    const socket = useSocket();
+    
+    socket.emit("student-online", user?._id);
+
+
+    useEffect(() => {
+        socket.on("counselor-status", ({ counselorID, isOnline }) => {
+            console.log("Received counselor status:", { counselorID, isOnline });
+            if (counselorId === counselorID) {
+                setIsCounselorOnline(isOnline);
+                console.log(`Counselor ${counselorID} is now ${isOnline ? 'online' : 'offline'}`);
+            }
+        });
+
+        return () => {
+            socket.off("counselor-status");
+        };
+    }, [counselorId, socket]);
+
 
     // Fetch messages for this appointment
     const { data: chatMessages, loading: messagesLoading, refetch: refetchMessages } = useApi(
@@ -85,7 +110,7 @@ const UserCounselorChat = () => {
 
             // Send message via API
             await appointmentAPI.sendMessage(messageData);
-            
+
             // Add message to local state immediately for better UX
             const tempMessage = {
                 ...messageData,
@@ -95,7 +120,7 @@ const UserCounselorChat = () => {
             };
             setMessages(prev => [...prev, tempMessage]);
             setNewMessage('');
-            
+
             // Refresh messages from server with a small delay
             setTimeout(async () => {
                 try {
@@ -107,7 +132,7 @@ const UserCounselorChat = () => {
                     console.error('Error refreshing messages:', error);
                 }
             }, 200);
-            
+
         } catch (error) {
             console.error('Error sending message:', error);
             // Remove the temporary message if sending failed
@@ -151,7 +176,7 @@ const UserCounselorChat = () => {
                     <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200 rounded-full opacity-20 blur-3xl"></div>
                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-200 rounded-full opacity-10 blur-3xl"></div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full">
                     {/* Left Sidebar - Medhya Info */}
                     <div className="lg:col-span-1 space-y-4">
@@ -227,111 +252,109 @@ const UserCounselorChat = () => {
                     <div className="lg:col-span-4">
                         <Card className="bg-white/80 backdrop-blur-sm shadow-2xl rounded-2xl border border-white/20 h-full">
                             <div className="h-full flex flex-col">
-                        {/* Header */}
-                        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 border-b border-blue-300 p-4 flex items-center justify-between rounded-t-2xl">
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => navigate('/appointments')}
-                                    className="text-white hover:text-blue-100 hover:bg-white/20 rounded-full"
-                                >
-                                    <ArrowLeft className="w-4 h-4" />
-                                </Button>
-                                <Avatar className="w-12 h-12 ring-2 ring-white/30">
-                                    <AvatarFallback className="bg-white/20 text-white font-semibold">
-                                        {counselorName.charAt(0)}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <h2 className="font-semibold text-white">{counselorName}</h2>
-                                    <p className="text-sm text-blue-100">Professional Counselor</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                                    <MessageSquare className="w-3 h-3 mr-1" />
-                                    Online
-                                </Badge>
-                            </div>
-                        </div>
-
-                        {/* Messages Area - Dynamic height with scroll */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-blue-50/30 relative" style={{ maxHeight: 'calc(100vh - 250px)' }}>
-                            {/* Subtle pattern overlay */}
-                            <div className="absolute inset-0 opacity-5 pointer-events-none">
-                                <div className="absolute inset-0" style={{
-                                    backgroundImage: `radial-gradient(circle at 25px 25px, #3b82f6 2px, transparent 0)`,
-                                    backgroundSize: '50px 50px'
-                                }}></div>
-                            </div>
-                            {messagesLoading ? (
-                                <div className="flex justify-center items-center h-32">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                </div>
-                            ) : messages.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                                    <p className="text-gray-500">No messages yet. Start the conversation!</p>
-                                </div>
-                            ) : (
-                                messages.map((message) => (
-                                    <div
-                                        key={message._id}
-                                        className={`flex ${message.senderModel === 'User' ? 'justify-end' : 'justify-start'} relative z-10`}
-                                    >
-                                        <div
-                                            className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm ${
-                                                message.senderModel === 'User'
-                                                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                                                    : 'bg-white border border-gray-200 text-gray-800 shadow-md'
-                                            }`}
+                                {/* Header */}
+                                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 border-b border-blue-300 p-4 flex items-center justify-between rounded-t-2xl">
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => navigate('/appointments')}
+                                            className="text-white hover:text-blue-100 hover:bg-white/20 rounded-full"
                                         >
-                                            <p className="text-sm leading-relaxed">{message.content}</p>
-                                            <p
-                                                className={`text-xs mt-2 ${
-                                                    message.senderModel === 'User' ? 'text-blue-100' : 'text-gray-500'
-                                                }`}
-                                            >
-                                                {new Date(message.createdAt).toLocaleTimeString([], {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                })}
-                                            </p>
+                                            <ArrowLeft className="w-4 h-4" />
+                                        </Button>
+                                        <Avatar className="w-12 h-12 ring-2 ring-white/30">
+                                            <AvatarFallback className="bg-white/20 text-white font-semibold">
+                                                {counselorName.charAt(0)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <h2 className="font-semibold text-white">{counselorName}</h2>
+                                            <p className="text-sm text-blue-100">Professional Counselor</p>
                                         </div>
                                     </div>
-                                ))
-                            )}
-                            <div ref={messagesEndRef} />
-                        </div>
-
-                        {/* Message Input */}
-                        <div className="bg-gradient-to-r from-white to-blue-50/50 border-t border-blue-200/50 p-4 rounded-b-2xl">
-                            <div className="flex gap-3">
-                                <div className="flex-1 relative">
-                                    <Input
-                                        value={newMessage}
-                                        onChange={(e) => setNewMessage(e.target.value)}
-                                        onKeyPress={handleKeyPress}
-                                        placeholder="Type your message..."
-                                        disabled={isLoading}
-                                        className="flex-1 border-blue-200 focus:border-blue-400 focus:ring-blue-400 rounded-full px-4 py-3 bg-white/80 backdrop-blur-sm"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                        <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                                            <MessageSquare className="w-3 h-3 mr-1" />
+                                            {isCounselorOnline ? "Online" : "Offline"}
+                                        </Badge>
+                                    </div>
                                 </div>
-                                <Button
-                                    onClick={handleSendMessage}
-                                    disabled={!newMessage.trim() || isLoading}
-                                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full w-12 h-12 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                                >
-                                    {isLoading ? (
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+
+                                {/* Messages Area - Dynamic height with scroll */}
+                                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-blue-50/30 relative" style={{ maxHeight: 'calc(100vh - 250px)' }}>
+                                    {/* Subtle pattern overlay */}
+                                    <div className="absolute inset-0 opacity-5 pointer-events-none">
+                                        <div className="absolute inset-0" style={{
+                                            backgroundImage: `radial-gradient(circle at 25px 25px, #3b82f6 2px, transparent 0)`,
+                                            backgroundSize: '50px 50px'
+                                        }}></div>
+                                    </div>
+                                    {messagesLoading ? (
+                                        <div className="flex justify-center items-center h-32">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                        </div>
+                                    ) : messages.length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                                            <p className="text-gray-500">No messages yet. Start the conversation!</p>
+                                        </div>
                                     ) : (
-                                        <Send className="w-4 h-4" />
+                                        messages.map((message) => (
+                                            <div
+                                                key={message._id}
+                                                className={`flex ${message.senderModel === 'User' ? 'justify-end' : 'justify-start'} relative z-10`}
+                                            >
+                                                <div
+                                                    className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm ${message.senderModel === 'User'
+                                                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                                                            : 'bg-white border border-gray-200 text-gray-800 shadow-md'
+                                                        }`}
+                                                >
+                                                    <p className="text-sm leading-relaxed">{message.content}</p>
+                                                    <p
+                                                        className={`text-xs mt-2 ${message.senderModel === 'User' ? 'text-blue-100' : 'text-gray-500'
+                                                            }`}
+                                                    >
+                                                        {new Date(message.createdAt).toLocaleTimeString([], {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
                                     )}
-                                </Button>
-                            </div>
-                        </div>
+                                    <div ref={messagesEndRef} />
+                                </div>
+
+                                {/* Message Input */}
+                                <div className="bg-gradient-to-r from-white to-blue-50/50 border-t border-blue-200/50 p-4 rounded-b-2xl">
+                                    <div className="flex gap-3">
+                                        <div className="flex-1 relative">
+                                            <Input
+                                                value={newMessage}
+                                                onChange={(e) => setNewMessage(e.target.value)}
+                                                onKeyPress={handleKeyPress}
+                                                placeholder="Type your message..."
+                                                disabled={isLoading}
+                                                className="flex-1 border-blue-200 focus:border-blue-400 focus:ring-blue-400 rounded-full px-4 py-3 bg-white/80 backdrop-blur-sm"
+                                            />
+                                        </div>
+                                        <Button
+                                            onClick={handleSendMessage}
+                                            disabled={!newMessage.trim() || isLoading}
+                                            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full w-12 h-12 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                                        >
+                                            {isLoading ? (
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            ) : (
+                                                <Send className="w-4 h-4" />
+                                            )}
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         </Card>
                     </div>

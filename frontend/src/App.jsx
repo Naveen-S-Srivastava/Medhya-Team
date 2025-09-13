@@ -27,6 +27,7 @@ import CounselorDashboard from './Components/CounselorDashboard.jsx';
 
 import RoomPage from './Components/RoomPage.jsx';
 import UserCounselorChat from './Components/UserCounselorChat.jsx';
+import { useSocket } from './context/SocketProvider.jsx';
 
 // Dummy Institutions component for routing
 const Institutions = () => <div className="p-6 bg-white rounded-lg shadow">Institutions Management Content</div>;
@@ -80,6 +81,20 @@ export default function App() {
     totalInstitutions: 127,
     activeUsers: "3000+",
   };
+
+  const socket = useSocket();
+
+  useEffect(() => {
+    if (socket && user?._id) {
+      socket.emit("student-online", user._id);
+
+      // Optional: clean up on unmount
+      return () => {
+        socket.emit("student-offline", user._id);
+      };
+    }
+  }, [socket, user]);
+
 
   // Function to refresh mood data in navbar
   const handleRefreshMoodData = () => {

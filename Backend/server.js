@@ -314,15 +314,30 @@ const io = new Server(httpServer, {
 
 // Maps to keep track of users (updated to use socket IDs instead of emails)
 const rooms = {}; // { roomId: [ { id } ] }
+// Store online users
+let onlineCounselors = new Map();
+const onlineStudents = new Map();
 
-// Socket.io logic from your previous backend code
+
 io.on("connection", (socket) => {
   console.log("Socket connected:", socket.id);
 
-  // User joins a room
-  socket.on("room:join", (data) => {
-    const { room } = data;
+  // Counselor comes online
+  socket.on("counselor-online", (counselorID) => {
+    onlineCounselors.set(counselorID, socket.id);
+    console.log(`🎯 Counselor ${counselorID} online`);
+    io.emit("counselor-status", { counselorID, isOnline: true });
+  });
 
+  // Student comes online
+  socket.on("student-online", (studentID) => {
+    onlineStudents.set(studentID, socket.id);
+    console.log(`🎓 Student ${studentID} online`);
+    io.emit("student-status", { studentID, isOnline: true });
+  });
+
+  // User joins a room
+  socket.on("room:join", ({ room }) => {
     if (!rooms[room]) rooms[room] = [];
 
     if (rooms[room].length >= 2) {
@@ -338,7 +353,7 @@ io.on("connection", (socket) => {
     socket.to(room).emit("user:joined", { id: socket.id });
   });
 
-  // Handle user calls
+  // Calls
   socket.on("user:call", ({ to, offer }) => {
     io.to(to).emit("incomming:call", { from: socket.id, offer });
   });
@@ -360,10 +375,29 @@ io.on("connection", (socket) => {
     leaveRoom(socket, room);
   });
 
-  // Handle unexpected disconnect
+  // Disconnect handling
   socket.on("disconnect", () => {
+    // Remove counselor if exists
+    for (let [counselorID, sockId] of onlineCounselors.entries()) {
+      if (sockId === socket.id) {
+        onlineCounselors.delete(counselorID);
+        console.log(`❌ Counselor ${counselorID} offline`);
+        io.emit("counselor-status", { counselorID, isOnline: false });
+      }
+    }
+
+    // Remove student if exists
+    for (let [studentID, sockId] of onlineStudents.entries()) {
+      if (sockId === socket.id) {
+        onlineStudents.delete(studentID);
+        console.log(`❌ Student ${studentID} offline`);
+        io.emit("student-status", { studentID, isOnline: false });
+      }
+    }
+
     console.log(`Socket disconnected: ${socket.id}`);
-    // Check all rooms for the disconnected socket and remove it
+
+    // Clean up room membership
     for (const room in rooms) {
       const user = rooms[room].find((u) => u.id === socket.id);
       if (user) {
@@ -372,7 +406,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Helper function to remove user from room
+  // Helper
   function leaveRoom(socket, room) {
     if (rooms[room]) {
       rooms[room] = rooms[room].filter((u) => u.id !== socket.id);
@@ -383,6 +417,7 @@ io.on("connection", (socket) => {
     console.log(`User ${socket.id} left room ${room}`);
   }
 });
+
 
 // Enhanced CORS configuration for production
 const corsOptions = {
