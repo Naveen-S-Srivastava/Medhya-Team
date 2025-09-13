@@ -158,6 +158,24 @@ export const getUpcomingSessions = catchAsync(async (req, res) => {
   });
 });
 
+// Get pending appointments for counselor approval
+export const getPendingAppointments = catchAsync(async (req, res) => {
+  const counselorId = req.user.id;
+  const actualCounselorId = await getActualCounselorId(counselorId);
+
+  const pendingAppointments = await Appointment.find({
+    counselor: actualCounselorId,
+    status: 'pending'
+  })
+    .populate('student', 'firstName lastName email profileImage phone')
+    .sort({ date: 1, timeSlot: 1 });
+
+  res.status(200).json({
+    status: 'success',
+    data: pendingAppointments
+  });
+});
+
 // Get recent messages
 export const getRecentMessages = catchAsync(async (req, res) => {
   const counselorId = req.user.id;

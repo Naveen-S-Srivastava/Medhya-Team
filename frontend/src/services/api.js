@@ -210,11 +210,28 @@ export const appointmentAPI = {
     body: JSON.stringify(data),
   }),
   
-  cancelAppointment: (id) => apiCall(`/appointments/${id}/cancel`, {
-    method: 'POST',
+  cancelAppointment: (appointmentId, studentId) => apiCall(`/appointments/${appointmentId}/cancel`, {
+    method: 'PUT',
+    body: JSON.stringify({ studentId }),
   }),
   
+  checkPendingAppointment: (studentId) => apiCall(`/appointments/student/${studentId}/pending`),
+  
+  approveAppointment: (appointmentId, counselorId) => apiCall(`/appointments/${appointmentId}/approve`, {
+    method: 'PUT',
+    body: JSON.stringify({ counselorId }),
+  }),
+  
+  getCounselorAppointments: (counselorId) => apiCall(`/appointments/counselor/${counselorId}`),
+  
   getAvailableSlots: (counselorId, date) => apiCall(`/appointments/available-slots?counselorId=${counselorId}&date=${date}`),
+  
+  getAppointmentMessages: (appointmentId) => apiCall(`/appointments/${appointmentId}/messages`),
+  
+  sendMessage: (messageData) => apiCall('/messages', {
+    method: 'POST',
+    body: JSON.stringify(messageData),
+  }),
 };
 
 // Crisis API

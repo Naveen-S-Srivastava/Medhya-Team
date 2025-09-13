@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Calendar } from '../ui/Calendar';
 import { Badge } from '../ui/Badge';
 import { Alert, AlertDescription } from '../ui/Alert';
-import { Calendar as CalendarIcon, Clock, User, MapPin, Phone, Video, Shield, Loader2, CheckCircle, Search } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, MapPin, Phone, Video, Shield, Loader2, CheckCircle, Search, MessageSquare } from 'lucide-react';
 import { appointmentAPI } from '../services/api';
 import { useApi, useOptimisticUpdate } from '../hooks/useApi';
 import { useCounselors } from '../hooks/useCounselors';
 import { UserContext } from '../App';
+import { useNavigate } from 'react-router-dom';
 
 const AppointmentBooking = () => {
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -24,10 +25,13 @@ const AppointmentBooking = () => {
     const [urgencyLevel, setUrgencyLevel] = useState('routine');
     const [showSuccess, setShowSuccess] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [statusChangeNotification, setStatusChangeNotification] = useState(null);
 
     // Get the actual logged-in user from context
     const { user } = useContext(UserContext);
     const studentId = user?._id;
+    const navigate = useNavigate();
 
     // Check if user is logged in
     if (!user || !studentId) {
@@ -46,6 +50,20 @@ const AppointmentBooking = () => {
         () => appointmentAPI.getStudentAppointments(studentId),
         []
     );
+
+    // Check for pending appointments
+    const { data: pendingAppointmentData, loading: pendingLoading, refetch: refetchPending } = useApi(
+        () => appointmentAPI.checkPendingAppointment(studentId),
+        []
+    );
+
+    const hasPendingAppointment = pendingAppointmentData?.hasPending || false;
+    const pendingAppointment = pendingAppointmentData?.appointment;
+    
+    // Check if user has any active appointment (pending or confirmed)
+    const hasActiveAppointment = existingAppointments?.some(appointment => 
+        appointment.status === 'pending' || appointment.status === 'confirmed'
+    ) || false;
 
     // Optimistic updates for appointment creation
     const { updateOptimistically } = useOptimisticUpdate(
@@ -70,6 +88,51 @@ const AppointmentBooking = () => {
     useEffect(() => {
         getCounselors();
     }, []);
+
+    // Refresh appointment data when component mounts or user returns to page
+    useEffect(() => {
+        // Refresh appointment data to get latest status updates
+        refetchAppointments();
+        refetchPending();
+    }, []);
+
+    // Set up periodic refresh for appointment status (every 30 seconds)
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            if (!isRefreshing) {
+                setIsRefreshing(true);
+                try {
+                    await Promise.all([
+                        refetchAppointments(),
+                        refetchPending()
+                    ]);
+                } finally {
+                    setIsRefreshing(false);
+                }
+            }
+        }, 30000); // Refresh every 30 seconds
+
+        return () => clearInterval(interval);
+    }, [refetchAppointments, refetchPending, isRefreshing]);
+
+    // Detect appointment status changes and show notifications
+    useEffect(() => {
+        if (existingAppointments && existingAppointments.length > 0) {
+            const confirmedAppointment = existingAppointments.find(apt => apt.status === 'confirmed');
+            if (confirmedAppointment) {
+                setStatusChangeNotification({
+                    type: 'success',
+                    message: `Great! Your appointment with ${confirmedAppointment.counselor?.name || 'your counselor'} has been approved. You can now start chatting!`,
+                    appointmentId: confirmedAppointment._id
+                });
+                
+                // Auto-hide notification after 5 seconds
+                setTimeout(() => {
+                    setStatusChangeNotification(null);
+                }, 5000);
+            }
+        }
+    }, [existingAppointments]);
 
     // Fetch available slots when counselor or date changes
     useEffect(() => {
@@ -134,6 +197,7 @@ const AppointmentBooking = () => {
                 setReason('');
                 setUrgencyLevel('routine');
                 refetchAppointments(); // Refresh the appointments list
+                refetchPending(); // Refresh pending appointment status
             }, 3000);
         } catch (error) {
             console.error('Error booking appointment:', error);
@@ -141,6 +205,29 @@ const AppointmentBooking = () => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleCancelAppointment = async (appointmentId) => {
+        try {
+            await appointmentAPI.cancelAppointment(appointmentId, studentId);
+            refetchAppointments();
+            refetchPending();
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 3000);
+        } catch (error) {
+            console.error('Error cancelling appointment:', error);
+        }
+    };
+
+    const handleOpenChat = (appointment) => {
+        // Navigate to the user-counselor chat interface
+        navigate(`/chat/${appointment.counselor._id}`, { 
+            state: { 
+                appointmentId: appointment._id,
+                counselorId: appointment.counselor._id,
+                counselorName: appointment.counselor.name
+            } 
+        });
     };
 
     const selectedCounselorData = counselors.find(c => c._id === selectedCounselor);
@@ -158,6 +245,16 @@ const AppointmentBooking = () => {
 
     return (
         <div className="space-y-6">
+            {/* Status Change Notification */}
+            {statusChangeNotification && (
+                <Alert className={`border-${statusChangeNotification.type === 'success' ? 'green' : 'blue'}-200 bg-${statusChangeNotification.type === 'success' ? 'green' : 'blue'}-50`}>
+                    <CheckCircle className={`h-4 w-4 text-${statusChangeNotification.type === 'success' ? 'green' : 'blue'}-600`} />
+                    <AlertDescription className={`text-${statusChangeNotification.type === 'success' ? 'green' : 'blue'}-800`}>
+                        {statusChangeNotification.message}
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -180,20 +277,84 @@ const AppointmentBooking = () => {
                 </Alert>
             )}
 
+            {/* Pending Appointment Alert */}
+            {hasPendingAppointment && pendingAppointment && (
+                <Alert className="border-yellow-200 bg-yellow-50">
+                    <Clock className="h-4 w-4 text-yellow-600" />
+                    <AlertDescription className="text-yellow-800">
+                        <div className="space-y-2">
+                            <p className="font-medium">You have a pending appointment:</p>
+                            <div className="text-sm">
+                                <p><strong>Counselor:</strong> {pendingAppointment.counselor?.name}</p>
+                                <p><strong>Date:</strong> {new Date(pendingAppointment.date).toLocaleDateString()}</p>
+                                <p><strong>Time:</strong> {pendingAppointment.timeSlot}</p>
+                                <p><strong>Status:</strong> Waiting for counselor approval</p>
+                            </div>
+                            <div className="flex gap-2 mt-3">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => handleCancelAppointment(pendingAppointment._id)}
+                                    className="text-yellow-700 border-yellow-300 hover:bg-yellow-100"
+                                >
+                                    Cancel Appointment
+                                </Button>
+                            </div>
+                        </div>
+                    </AlertDescription>
+                </Alert>
+            )}
+
             {/* Existing Appointments */}
             {existingAppointments && existingAppointments.length > 0 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <CalendarIcon className="w-5 h-5" />
-                            Your Upcoming Appointments
+                        <CardTitle className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <CalendarIcon className="w-5 h-5" />
+                                Your Upcoming Appointments
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={async () => {
+                                    setIsRefreshing(true);
+                                    try {
+                                        await Promise.all([
+                                            refetchAppointments(),
+                                            refetchPending()
+                                        ]);
+                                    } finally {
+                                        setIsRefreshing(false);
+                                    }
+                                }}
+                                disabled={isRefreshing}
+                                className="text-xs"
+                            >
+                                {isRefreshing ? (
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                ) : (
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                )}
+                                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                            </Button>
                         </CardTitle>
-                        <CardDescription>Manage your scheduled sessions</CardDescription>
+                        <CardDescription>Manage your scheduled sessions and chat with counselors</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-3">
                             {existingAppointments
-                                .filter(appointment => new Date(appointment.date) >= new Date())
+                                .filter(appointment => {
+                                    // Show confirmed appointments regardless of date (for chat access)
+                                    if (appointment.status === 'confirmed') {
+                                        return true;
+                                    }
+                                    // Show pending appointments only if they're in the future
+                                    if (appointment.status === 'pending') {
+                                        return new Date(appointment.date) >= new Date();
+                                    }
+                                    return false;
+                                })
                                 .sort((a, b) => new Date(a.date) - new Date(b.date))
                                 .slice(0, 3)
                                 .map((appointment) => (
@@ -216,13 +377,43 @@ const AppointmentBooking = () => {
                                                 {appointment.urgencyLevel.charAt(0).toUpperCase() + appointment.urgencyLevel.slice(1)}
                                             </Badge>
                                         </div>
-                                        <Badge variant={
-                                            appointment.status === 'confirmed' ? 'default' :
-                                                appointment.status === 'pending' ? 'secondary' :
-                                                    appointment.status === 'cancelled' ? 'destructive' : 'outline'
-                                        }>
-                                            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant={
+                                                appointment.status === 'confirmed' ? 'default' :
+                                                    appointment.status === 'pending' ? 'secondary' :
+                                                        appointment.status === 'cancelled' ? 'destructive' : 'outline'
+                                            }>
+                                                {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                                            </Badge>
+                                            {appointment.status === 'confirmed' && (
+                                                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                                                    <MessageSquare className="w-3 h-3 mr-1" />
+                                                    Chat Available
+                                                </Badge>
+                                            )}
+                                        </div>
+                                            {(appointment.status === 'pending' || appointment.status === 'confirmed') && (
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm"
+                                                    onClick={() => handleCancelAppointment(appointment._id)}
+                                                    className="text-red-600 border-red-300 hover:bg-red-50"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            )}
+                                            {appointment.status === 'confirmed' && (
+                                                <Button 
+                                                    variant="default" 
+                                                    size="sm"
+                                                    onClick={() => handleOpenChat(appointment)}
+                                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                                >
+                                                    Open Chat
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                         </div>
@@ -230,6 +421,22 @@ const AppointmentBooking = () => {
                 </Card>
             )}
 
+            {/* Booking Restriction Message */}
+            {hasActiveAppointment && (
+                <Alert className="border-blue-200 bg-blue-50">
+                    <AlertDescription className="text-blue-800">
+                        <p className="font-medium">Booking Restricted</p>
+                        <p className="text-sm mt-1">
+                            You cannot book a new appointment while you have an active appointment. 
+                            Please wait for your current appointment to be completed or cancelled before booking another one.
+                        </p>
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {/* Hide booking interface when there's an active appointment */}
+            {!hasActiveAppointment && (
+                <>
             <div className="grid gap-6 lg:grid-cols-2">
                 <Card className="shadow-sm border-gray-200">
                     <CardHeader className="pb-4">
@@ -332,7 +539,7 @@ const AppointmentBooking = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="shadow-sm border-gray-200">
+                <Card className={`shadow-sm border-gray-200 ${hasPendingAppointment ? 'opacity-50 pointer-events-none' : ''}`}>
                     <CardHeader className="pb-4">
                         <CardTitle className="text-xl font-semibold text-gray-900">Select Counselor</CardTitle>
                         <CardDescription className="text-gray-600">Choose a counselor based on your needs and preferences</CardDescription>
@@ -487,7 +694,7 @@ const AppointmentBooking = () => {
                         </Alert>
                         <Button
                             onClick={handleBookAppointment}
-                            disabled={!selectedDate || !selectedCounselor || !selectedTime || isSubmitting}
+                            disabled={!selectedDate || !selectedCounselor || !selectedTime || isSubmitting || hasActiveAppointment}
                             className="min-w-[120px]"
                         >
                             {isSubmitting ? (
@@ -495,6 +702,8 @@ const AppointmentBooking = () => {
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                     Booking...
                                 </>
+                            ) : hasActiveAppointment ? (
+                                'Cannot Book - Active Appointment'
                             ) : (
                                 'Book Appointment'
                             )}
@@ -502,6 +711,8 @@ const AppointmentBooking = () => {
                     </div>
                 </CardContent>
             </Card>
+                </>
+            )}
 
             <Card>
                 <CardHeader>
