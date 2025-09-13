@@ -3,6 +3,7 @@ import { protect } from '../middlewares/auth.js';
 import {
   getDashboardOverview,
   getUpcomingSessions,
+  getPendingAppointments,
   getRecentMessages,
   sendMessage,
   markMessageAsRead,
@@ -28,6 +29,7 @@ router.get('/overview', getDashboardOverview);
 
 // Appointments/Sessions
 router.get('/sessions', getUpcomingSessions);
+router.get('/pending-appointments', getPendingAppointments);
 router.patch('/sessions/:appointmentId/status', updateAppointmentStatus);
 
 // Messages

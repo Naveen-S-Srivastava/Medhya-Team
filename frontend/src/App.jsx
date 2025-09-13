@@ -26,6 +26,7 @@ import Wellness from './Components/Wellness.jsx';
 import CounselorDashboard from './Components/CounselorDashboard.jsx';
 
 import RoomPage from './Components/RoomPage.jsx';
+import UserCounselorChat from './Components/UserCounselorChat.jsx';
 
 // Dummy Institutions component for routing
 const Institutions = () => <div className="p-6 bg-white rounded-lg shadow">Institutions Management Content</div>;
@@ -211,6 +212,12 @@ export default function App() {
         <Route path="/room/:roomId" element={
           <ProtectedRoute userRole={userRole} isLoading={loading}>
             <RoomPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/chat/:counselorId" element={
+          <ProtectedRoute userRole={userRole} isLoading={loading}>
+            <UserCounselorChat />
           </ProtectedRoute>
         } />
 

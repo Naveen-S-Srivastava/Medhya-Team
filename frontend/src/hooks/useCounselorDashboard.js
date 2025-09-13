@@ -7,6 +7,7 @@ export const useCounselorDashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     todayAppointments: [],
     upcomingAppointments: [],
+    pendingAppointments: [],
     recentMessages: [],
     unreadCount: 0,
     stats: {},
@@ -42,6 +43,26 @@ export const useCounselorDashboard = () => {
       return response.data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch sessions';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get pending appointments
+  const getPendingAppointments = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.get('/counselor-dashboard/pending-appointments');
+      setDashboardData(prev => ({
+        ...prev,
+        pendingAppointments: response.data || []
+      }));
+      return response.data;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch pending appointments';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -236,6 +257,7 @@ export const useCounselorDashboard = () => {
     dashboardData,
     getDashboardOverview,
     getUpcomingSessions,
+    getPendingAppointments,
     getRecentMessages,
     sendMessage,
     markMessageAsRead,
