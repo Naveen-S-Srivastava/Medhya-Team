@@ -19,6 +19,7 @@ import logo from '../assets/logo.png';
 import { useSocket } from "../context/SocketProvider";
 import apiClient from '../utils/apiClient.js';
 import { Link } from 'react-router-dom';
+import StudentList from './StudentList';
 
 // Main Dashboard Component
 const CounselorDashboard = () => {
@@ -34,7 +35,6 @@ const CounselorDashboard = () => {
     sendMessage,
     markMessageAsRead,
     getPaymentRecords,
-    getStudentList,
     updateAppointmentStatus,
     getCounselorProfile,
     updateCounselorProfile,
@@ -67,7 +67,6 @@ const CounselorDashboard = () => {
   const [profile, setProfile] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [students, setStudents] = useState([]);
   const [payments, setPayments] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
 
@@ -101,9 +100,6 @@ const CounselorDashboard = () => {
         break;
       case 'messages':
         loadMessages();
-        break;
-      case 'students':
-        loadStudents();
         break;
       case 'payments':
         loadPayments();
@@ -234,15 +230,6 @@ const CounselorDashboard = () => {
       setMessages(response.messages || []);
     } catch (err) {
       console.error('Failed to load messages:', err);
-    }
-  };
-
-  const loadStudents = async () => {
-    try {
-      const response = await getStudentList({ limit: 50 });
-      setStudents(response.students || []);
-    } catch (err) {
-      console.error('Failed to load students:', err);
     }
   };
 
@@ -1203,53 +1190,14 @@ const CounselorDashboard = () => {
             </div>
           )}
           {activeView === 'students' && (
-            <Card className="bg-white shadow-lg rounded-xl border border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gray-800 text-xl font-bold">
-                  <Users className="w-6 h-6 text-purple-600" />My Students
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-10">
-                    <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
-                    <p className="text-gray-500">Loading students...</p>
-                  </div>
-                ) : students.length === 0 ? (
-                  <div className="text-center py-10">
-                    <p className="text-gray-500">No students found</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                    {students.map((student) => (
-                      <div key={student._id} className="p-5 border border-gray-200 rounded-xl shadow-lg bg-gradient-to-br from-white to-gray-50 hover:from-purple-50 hover:to-purple-100 transition-all duration-300 transform hover:scale-[1.02]">
-                        <div className="flex items-center gap-4 mb-4">
-                          <Avatar className="w-16 h-16 ring-2 ring-purple-100">
-                            <AvatarImage src={student.profileImage} />
-                            <AvatarFallback className="bg-gradient-to-br from-purple-100 to-indigo-100 text-purple-700 font-semibold text-lg">
-                              {student.firstName?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-semibold text-gray-800 text-lg">
-                              {student.firstName} {student.lastName}
-                            </p>
-                            <p className="text-sm text-gray-600 font-medium">{student.email}</p>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg transition-all duration-300 transform hover:scale-105"
-                          onClick={() => { setSelectedStudent(student); setShowMessageModal(true); }}
-                        >
-                          <MessageSquare className="w-4 h-4 mr-2" />Send Message
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <StudentList
+              loading={loading}
+              onSendMessage={(student) => {
+                setSelectedStudent(student);
+                setShowMessageModal(true);
+              }}
+              onRefresh={loadDashboardData}
+            />
           )}
           {activeView === 'payments' && (
             <Card className="bg-white shadow-lg rounded-xl border border-gray-200">
