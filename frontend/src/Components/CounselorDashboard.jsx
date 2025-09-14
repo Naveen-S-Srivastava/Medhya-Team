@@ -20,6 +20,7 @@ import { useSocket } from "../context/SocketProvider";
 import apiClient from '../utils/apiClient.js';
 import { Link } from 'react-router-dom';
 import StudentList from './StudentList';
+import PaymentsList from './PaymentsList';
 
 // Main Dashboard Component
 const CounselorDashboard = () => {
@@ -551,8 +552,6 @@ const CounselorDashboard = () => {
       default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
-  const getPaymentStatusColor = (status) => { return 'bg-gray-100 text-gray-800 border-gray-300'; };
-
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'sessions', label: 'Sessions', icon: Calendar },
@@ -627,7 +626,7 @@ const CounselorDashboard = () => {
                     My Profile
                   </button>
                   <button
-                    onClick={() => { setActiveView('payment'); setDropdownOpen(false); }}
+                    onClick={() => { setActiveView('payments'); setDropdownOpen(false); }}
                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                   >
                     <LayoutDashboard className="h-4 w-4" />
@@ -1200,55 +1199,10 @@ const CounselorDashboard = () => {
             />
           )}
           {activeView === 'payments' && (
-            <Card className="bg-white shadow-lg rounded-xl border border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gray-800 text-xl font-bold">
-                  <DollarSign className="w-6 h-6 text-orange-600" />Payment Records
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-10">
-                    <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
-                    <p className="text-gray-500">Loading payments...</p>
-                  </div>
-                ) : payments.length === 0 ? (
-                  <div className="text-center py-10">
-                    <p className="text-gray-500">No payment records</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {payments.map((payment) => (
-                      <div key={payment._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-orange-50 hover:to-orange-100 transition-all duration-300">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="w-12 h-12 ring-2 ring-orange-100">
-                            <AvatarImage src={payment.student?.profileImage} />
-                            <AvatarFallback className="bg-gradient-to-br from-orange-100 to-yellow-100 text-orange-700 font-semibold">
-                              {payment.student?.firstName?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-semibold text-gray-800">
-                              {payment.student?.firstName} {payment.student?.lastName}
-                            </p>
-                            <p className="text-sm text-gray-600 font-medium">{payment.description}</p>
-                            <p className="text-xs text-gray-500 font-medium">
-                              {formatDate(payment.createdAt)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-2xl text-gray-800">₹{payment.amount}</p>
-                          <Badge className={`${getPaymentStatusColor(payment.paymentStatus)} shadow-sm font-medium`}>
-                            {payment.paymentStatus}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <PaymentsList
+              payments={payments}
+              loading={loading}
+            />
           )}
           {activeView === 'profile' && (
             <Card className="bg-white shadow-lg rounded-xl border border-gray-200">
