@@ -1,6 +1,7 @@
 import Appointment from "../models/appointmentModel.js";
 import ActivityLog from "../models/activityLogModel.js";
 import mongoose from "mongoose";
+import { v4 as uuidv4 } from 'uuid';
 
 export const createAppointment = async (req, res) => {
   try {
@@ -132,7 +133,8 @@ export const approveAppointment = async (req, res) => {
       { _id: appointmentId, counselor: counselorId, status: 'pending' },
       { 
         status: 'confirmed',
-        confirmedAt: new Date()
+        confirmedAt: new Date(),
+        roomId: `room-${appointmentId}-${uuidv4()}`
       },
       { new: true }
     ).populate('student', 'firstName lastName email')

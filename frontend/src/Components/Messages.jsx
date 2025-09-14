@@ -33,15 +33,15 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
 
     // Filter messages for this specific student and sort them properly for chat display
     const studentMessages = messages.filter(msg => {
-      if (msg.senderModel === 'User' && msg.sender._id === student._id) return true;
-      if (msg.recipientModel === 'User' && msg.recipient._id === student._id) return true;
+      if (msg.senderModel === 'User' && msg.sender?._id === student._id) return true;
+      if (msg.recipientModel === 'User' && msg.recipient?._id === student._id) return true;
       return false;
     }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // Sort oldest first for chat display
     setChatMessages(studentMessages);
 
     // Mark all unread messages from this student as read
     const unreadMessages = studentMessages.filter(msg =>
-      msg.senderModel === 'User' && msg.sender._id === student._id && !msg.isRead
+      msg.senderModel === 'User' && msg.sender?._id === student._id && !msg.isRead
     );
 
     // Mark each unread message as read
@@ -60,20 +60,46 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
 
   // For starting video call (separate from chat)
   const handleStartVideoCall = async (student) => {
-    console.log(student);
-    try {
-      const res = await apiClient.get(
-        `/appointments/find/${student._id}/${user?.counselorProfile}`
-      );
+    console.log("Starting video call for student:", student);
+    console.log("Current user:", user);
+    console.log("Counselor profile ID:", user?.counselorProfile);
 
-      if (res?.roomId) {
-        console.log("Navigating to video room:", res.roomId);
-        navigate(`/room/${res.roomId}`); // Go to video call page
+    if (!user?.counselorProfile) {
+      alert("Counselor profile not found. Please log in again.");
+      return;
+    }
+
+    if (!student?._id) {
+      alert("Student information not available.");
+      return;
+    }
+
+    try {
+      const apiUrl = `/appointments/find/${student._id}/${user.counselorProfile}`;
+      console.log("Making API call to:", apiUrl);
+
+      const res = await apiClient.get(apiUrl);
+
+      console.log("API Response:", res);
+
+      // Handle both response formats: direct object or wrapped in data
+      const appointment = res.data || res;
+      const roomId = appointment?.roomId;
+
+      if (roomId) {
+        console.log("Navigating to video room:", roomId);
+        navigate(`/room/${roomId}`); // Go to video call page
       } else {
-        alert("No active appointment found for this student.");
+        console.log("No roomId found in appointment:", appointment);
+        alert("No active appointment found for this student or room not assigned. Please ensure the appointment is confirmed.");
       }
     } catch (err) {
       console.error("Failed to start video call:", err);
+      if (err.response?.status === 404) {
+        alert("No confirmed appointment found for this student. Please confirm the appointment first.");
+      } else {
+        alert("Failed to start video call. Please try again.");
+      }
     }
   };
 
@@ -106,8 +132,8 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
 
         // Update local chat thread with fresh data
         const studentMessages = updatedMessages.filter(msg => {
-          if (msg.senderModel === 'User' && msg.sender._id === selectedChatStudent._id) return true;
-          if (msg.recipientModel === 'User' && msg.recipient._id === selectedChatStudent._id) return true;
+          if (msg.senderModel === 'User' && msg.sender?._id === selectedChatStudent._id) return true;
+          if (msg.recipientModel === 'User' && msg.recipient?._id === selectedChatStudent._id) return true;
           return false;
         }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // Sort oldest first for chat display
 
