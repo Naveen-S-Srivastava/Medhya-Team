@@ -22,6 +22,7 @@ import { Link } from 'react-router-dom';
 import StudentList from './StudentList';
 import PaymentsList from './PaymentsList';
 import DashboardGraphs from './DashboardGraphs';
+import Messages from './Messages';
 
 // Main Dashboard Component
 const CounselorDashboard = () => {
@@ -50,11 +51,10 @@ const CounselorDashboard = () => {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [messageContent, setMessageContent] = useState('');
+   const [messageContent, setMessageContent] = useState('');
   const [selectedChatStudent, setSelectedChatStudent] = useState(null);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-
+ 
+  
   // Password change modal state
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -70,7 +70,6 @@ const CounselorDashboard = () => {
   const [sessions, setSessions] = useState([]);
   const [messages, setMessages] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
 
   const navigate = useNavigate();
   const socket = useSocket();
@@ -125,35 +124,6 @@ const CounselorDashboard = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isDropdownOpen]);
-
-  // Periodic refresh for active chat to check for new messages from users
-  useEffect(() => {
-    if (!selectedChatStudent) return;
-
-    const interval = setInterval(async () => {
-      try {
-        // Refresh messages and dashboard data
-        await loadMessages();
-        await loadDashboardData();
-
-        // Update chat messages with fresh data
-        const response = await getRecentMessages({ limit: 50 });
-        const updatedMessages = response.messages || [];
-
-        const studentMessages = updatedMessages.filter(msg => {
-          if (msg.senderModel === 'User' && msg.sender?._id === selectedChatStudent._id) return true;
-          if (msg.recipientModel === 'User' && msg?.recipient?._id === selectedChatStudent?._id) return true;
-          return false;
-        }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
-        setChatMessages(studentMessages);
-      } catch (error) {
-        console.error('Error refreshing chat messages:', error);
-      }
-    }, 3000); // Check every 3 seconds
-
-    return () => clearInterval(interval);
-  }, [selectedChatStudent]);
 
   const loadDashboardData = async () => {
     try {
@@ -282,218 +252,6 @@ const CounselorDashboard = () => {
     }
   };
 
-  // Handle individual chat with a student
-  const handleStartChat = async (sessionId, student) => {
-    console.log(sessionId, student)
-    setSelectedChatStudent(student);
-    setSelectedSessionId(sessionId);
-
-    // Filter messages for this specific student and sort them properly for chat display
-    const studentMessages = messages.filter(msg => {
-      if (msg.senderModel === 'User' && msg.sender._id === student._id) return true;
-      if (msg.recipientModel === 'User' && msg.recipient._id === student._id) return true;
-      return false;
-    }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // Sort oldest first for chat display
-    setChatMessages(studentMessages);
-
-    // Mark all unread messages from this student as read
-    const unreadMessages = studentMessages.filter(msg =>
-      msg.senderModel === 'User' && msg.sender._id === student._id && !msg.isRead
-    );
-
-    // Mark each unread message as read
-    for (const message of unreadMessages) {
-      try {
-        await markMessageAsRead(message._id);
-      } catch (error) {
-        console.error('Failed to mark message as read:', error);
-      }
-    }
-
-    // Refresh messages to update unread counts
-    await loadMessages();
-    await loadDashboardData();
-  };
-
-
-  // For starting video call (separate from chat)
-  const handleStartVideoCall = async (student) => {
-    console.log(student);
-    try {
-      const res = await apiClient.get(
-        `/appointments/find/${student._id}/${user?.counselorProfile}`
-      );
-
-      if (res?.roomId) {
-        console.log("Navigating to video room:", res.roomId);
-        navigate(`/room/${res.roomId}`); // Go to video call page
-      } else {
-        alert("No active appointment found for this student.");
-      }
-    } catch (err) {
-      console.error("Failed to start video call:", err);
-    }
-  };
-  // Send message in individual chat
-  // const handleSendChatMessage = async () => {
-  //   if (!newMessage.trim() || !selectedChatStudent) return;
-  //   console.log(selectedChatStudent.id);
-
-  //   try {
-  //     const messageData = {
-  //       recipient: selectedChatStudent.id,
-  //       content: newMessage.trim()
-  //     };
-  //     console.log(messageData)
-  //     await sendMessage(messageData);
-
-  //     setNewMessage('');
-
-  //     // Refresh messages
-  //     loadMessages();
-  //     loadDashboardData();
-
-  //     // Update chat messages
-  //     const studentMessages = messages.filter(msg => {
-  //       if (msg.senderModel === 'User' && msg.sender._id === selectedChatStudent._id) return true;
-  //       if (msg.recipientModel === 'User' && msg.recipient._id === selectedChatStudent._id) return true;
-  //       return false;
-  //     });
-  //     setChatMessages(studentMessages);
-  //   } catch (error) {
-  //     console.error('Error sending message:', error);
-  //   }
-  // };
-
-  const handleSendChatMessage = async () => {
-    if (!newMessage.trim() || !selectedChatStudent?._id) return;
-    console.log(selectedSessionId)
-
-    try {
-      const messageData = {
-        recipientId: selectedChatStudent._id,   // ✅ FIX: correct key for counselor dashboard
-        content: newMessage.trim(),
-        messageType: "text",                    // ✅ default type
-        appointmentId: selectedSessionId,     // ✅ pass if you have it in state
-        priority: "normal"                      // optional
-      };
-
-      await sendMessage(messageData);
-
-      setNewMessage('');
-
-      // Reload data after sending
-      await loadMessages();
-      await loadDashboardData();
-
-      // Wait a moment for the state to update, then refresh chat messages
-      setTimeout(async () => {
-        // Get fresh messages from the updated state
-        const response = await getRecentMessages({ limit: 50 });
-        const updatedMessages = response.messages || [];
-
-        // Update local chat thread with fresh data
-        const studentMessages = updatedMessages.filter(msg => {
-          if (msg.senderModel === 'User' && msg.sender._id === selectedChatStudent._id) return true;
-          if (msg.recipientModel === 'User' && msg.recipient._id === selectedChatStudent._id) return true;
-          return false;
-        }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // Sort oldest first for chat display
-
-        setChatMessages(studentMessages);
-      }, 200); // Small delay to ensure state is updated
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
-
-
-  // Get unique students from messages
-  // const getUniqueStudents = () => {
-  //   const studentMap = new Map();
-  //   messages.forEach(message => {
-  //     // Students can be either sender or recipient depending on who sent the message
-  //     let student = null;
-  //     if (message.senderModel === 'User') {
-  //       student = message.sender;
-  //     } else if (message.recipientModel === 'User') {
-  //       student = message.recipient;
-  //     }
-
-  //     if (student && !studentMap.has(student._id)) {
-  //       studentMap.set(student._id, {
-  //         ...student,
-  //         lastMessage: message,
-  //         unreadCount: messages.filter(m => {
-  //           // Only count unread messages that the counselor received from this student
-  //           return (
-  //             m.senderModel === "User" &&
-  //             m.sender?._id === student._id &&
-  //             !m.isRead
-  //           );
-  //         }).length
-  //       });
-  //     }
-  //   });
-  //   return Array.from(studentMap.values());
-  // };
-
-  const getUniqueStudents = () => {
-    const studentMap = new Map();
-
-    messages.forEach(message => {
-      // Students can be either sender or recipient depending on who sent the message
-      let student = null;
-
-      if (message.senderModel === "User" && message.sender?._id) {
-        student = message.sender;
-      } else if (message.recipientModel === "User" && message.recipient?._id) {
-        student = message.recipient;
-      }
-
-      if (student && !studentMap.has(student._id)) {
-        const unreadCount = messages.filter(m => {
-          return (
-            m.senderModel === "User" &&
-            m.sender?._id === student._id && // ✅ Safe check
-            !m.isRead
-          );
-        }).length;
-
-        studentMap.set(student._id, {
-          ...student,
-          lastMessage: message,
-          unreadCount
-        });
-      }
-    });
-
-    return Array.from(studentMap.values());
-  };
-
-  // Get all students for the message modal (including those without messages)
-  const getAllStudents = () => {
-    const messageStudents = getUniqueStudents();
-    const allStudents = [...messageStudents];
-
-    // Add any students from appointments who might not have messages yet
-    sessions.forEach(session => {
-      if (session.student && !allStudents.find(s => s._id === session.student._id)) {
-        allStudents.push(session.student);
-      }
-    });
-
-    // Debug: Log student data
-    console.log('All Students for Message Modal:', allStudents.map(s => ({
-      id: s._id,
-      firstName: s.firstName,
-      lastName: s.lastName,
-      email: s.email,
-      hasName: !!(s.firstName && s.lastName)
-    })));
-
-    return allStudents;
-  };
-
   // Group sessions by student and get the most recent appointment per student
   const getUniqueSessionsByStudent = () => {
     const studentSessionMap = new Map();
@@ -541,6 +299,7 @@ const CounselorDashboard = () => {
       console.error('Failed to send message:', err);
     }
   };
+
 
 
   const formatDate = (date) => new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -915,283 +674,13 @@ const CounselorDashboard = () => {
             </Card>
           )}
           {activeView === 'messages' && (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-14rem)] overflow-hidden">
-              {/* Left Sidebar - Counselor Tools */}
-              <div className="lg:col-span-1 space-y-4">
-                <Card className="bg-white/90 backdrop-blur-sm shadow-xl rounded-2xl border border-white/20 p-6 h-full">
-                  <div className="flex flex-col h-full">
-                    {/* Counselor Info */}
-                    <div className="text-center mb-6">
-                      <div className="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center shadow-lg overflow-hidden">
-                        <img src={logo} alt="Medhya Logo" className="w-full h-full object-contain" />
-                      </div>
-                      <h2 className="text-xl font-bold text-gray-800 mb-1">Medhya Portal</h2>
-                      <p className="text-sm text-gray-600">Professional Support Tools</p>
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div className="space-y-4 flex-1">
-                      <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-800 text-sm">Quick Actions</h3>
-                        <div className="space-y-2">
-                          <Button size="sm" variant="outline" className="w-full justify-start text-xs">
-                            📋 View All Sessions
-                          </Button>
-                          <Button size="sm" variant="outline" className="w-full justify-start text-xs">
-                            📊 Analytics Dashboard
-                          </Button>
-                          <Button size="sm" variant="outline" className="w-full justify-start text-xs">
-                            📝 Session Notes
-                          </Button>
-                          <Button size="sm" variant="outline" className="w-full justify-start text-xs">
-                            🎯 Treatment Plans
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Session Stats */}
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mt-4">
-                        <h4 className="font-semibold text-gray-800 text-sm mb-2">Today's Stats</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-xs">
-                            <span className="text-gray-600">Active Chats</span>
-                            <span className="font-semibold text-green-600">{getUniqueStudents().length}</span>
-                          </div>
-                          <div className="flex justify-between text-xs">
-                            <span className="text-gray-600">Messages Sent</span>
-                            <span className="font-semibold text-blue-600">{messages.length}</span>
-                          </div>
-                          <div className="flex justify-between text-xs">
-                            <span className="text-gray-600">Pending Approvals</span>
-                            <span className="font-semibold text-orange-600">{dashboardData.pendingAppointments?.length || 0}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Emergency Contact */}
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="text-center">
-                        <p className="text-xs text-gray-500 mb-2">Emergency Protocol</p>
-                        <Button size="sm" className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1 rounded-full">
-                          🚨 Crisis Alert
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-
-              {/* Main Chat Area */}
-              <div className="lg:col-span-3">
-                <Card className="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl border border-white/20 h-full">
-                  <div className="h-full flex flex-col">
-                    {!selectedChatStudent ? (
-                      // Chat List View (WhatsApp-style)
-                      <div className="flex-1 flex flex-col">
-                        {/* Header */}
-                        <div className="bg-gradient-to-r from-green-500 to-emerald-600 border-b border-green-300 p-4 rounded-t-2xl">
-                          <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold text-white">Messages</h2>
-                            <Button
-                              onClick={() => setShowMessageModal(true)}
-                              disabled={getAllStudents().length === 0}
-                              className="bg-white/20 hover:bg-white/30 text-white border-white/30 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                            >
-                              <Send className="w-4 h-4 mr-2" />
-                              New Chat
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Chat List */}
-                        <div className="flex-1 overflow-y-auto max-h-[calc(100vh-20rem)]">
-                          {loading ? (
-                            <div className="flex items-center justify-center h-full">
-                              <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
-                            </div>
-                          ) : getUniqueStudents().length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                              <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
-                              <h3 className="text-lg font-semibold text-gray-700 mb-2">No conversations yet</h3>
-                              <p className="text-gray-500 mb-4">Start chatting with your students</p>
-                              <Button
-                                onClick={() => setShowMessageModal(true)}
-                                disabled={getAllStudents().length === 0}
-                                className="bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
-                              >
-                                <Send className="w-4 h-4 mr-2" />
-                                {getAllStudents().length === 0 ? 'No Students Available' : 'Start First Chat'}
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="divide-y divide-gray-100">
-                              {getUniqueStudents().map((student) => (
-                                <div
-                                  key={student._id}
-                                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                                  onClick={() => {
-                                    // Find the most recent appointment/session for this student
-                                    const studentSession = sessions.find(session =>
-                                      session.student?._id === student?._id
-                                    );
-                                    const sessionId = studentSession ? studentSession?._id : null;
-                                    handleStartChat(sessionId, student);
-                                  }}
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <div className="relative">
-                                      <Avatar className="w-12 h-12">
-                                        <AvatarImage src={student.profileImage} />
-                                        <AvatarFallback className="bg-green-100 text-green-700">
-                                          {student.firstName?.charAt(0)}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      {student.unreadCount > 0 && (
-                                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
-                                          {student.unreadCount}
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center justify-between mb-1">
-                                        <h3 className="font-semibold text-gray-900 truncate">
-                                          {student.firstName} {student.lastName}
-                                        </h3>
-                                        <span className="text-xs text-gray-500">
-                                          {formatDate(student.lastMessage?.createdAt)}
-                                        </span>
-                                      </div>
-                                      <p className="text-sm text-gray-600 truncate">
-                                        {student.lastMessage?.content}
-                                      </p>
-                                    </div>
-
-                                    {student.unreadCount > 0 && (
-                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      // Individual Chat View
-                      <div className="flex-1 flex flex-col">
-                        {/* Chat Header */}
-                        <div className="bg-gradient-to-r from-green-500 to-emerald-600 border-b border-green-300 p-4 flex justify-between items-center rounded-t-2xl">
-                          <div className="flex items-center gap-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSelectedChatStudent(null)}
-                              className="text-white hover:text-green-100 hover:bg-white/20 rounded-full"
-                            >
-                              ←
-                            </Button>
-                            <Avatar className="w-12 h-12 ring-2 ring-white/30">
-                              <AvatarImage src={selectedChatStudent.profileImage} />
-                              <AvatarFallback className="bg-white/20 text-white font-semibold">
-                                {selectedChatStudent.firstName?.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-semibold text-white">
-                                {selectedChatStudent.firstName} {selectedChatStudent.lastName}
-                              </h3>
-                              <p className="text-sm text-green-100">Student</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                            {/* <div className="flex items-center pr-4" onClick={() => {
-                              setSelectedChatStudent(selectedChatStudent._id); // ✅ update state
-                              console.log(selectedChatStudent._id);
-                              navigate(`/room/${selectedChatStudent._id}`); // or appointment.roomId
-                            }}
-                            >
-                              <Video size={35} className="text-white hover:text-green-100 cursor-pointer" />
-                            </div> */}
-                            <div className="flex items-center pr-4" onClick={() => handleStartVideoCall(selectedChatStudent)}>
-                              <Video size={35} />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Messages - Dynamic height with scroll */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-green-50/30 relative" style={{ maxHeight: 'calc(100vh - 400px)' }}>
-                          {/* Subtle pattern overlay */}
-                          <div className="absolute inset-0 opacity-5 pointer-events-none">
-                            <div className="absolute inset-0" style={{
-                              backgroundImage: `radial-gradient(circle at 25px 25px, #10b981 2px, transparent 0)`,
-                              backgroundSize: '50px 50px'
-                            }}></div>
-                          </div>
-                          {chatMessages.length === 0 ? (
-                            <div className="text-center text-gray-500 py-8">
-                              <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                              <p>No messages yet. Start the conversation!</p>
-                            </div>
-                          ) : (
-                            chatMessages.map((message) => {
-                              const isStudentMessage = (message.senderModel === 'User');
-                              return (
-                                <div
-                                  key={message._id}
-                                  className={`flex ${isStudentMessage ? 'justify-start' : 'justify-end'} relative z-10`}
-                                >
-                                  <div
-                                    className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm ${isStudentMessage
-                                      ? 'bg-white border border-gray-200 shadow-md'
-                                      : 'bg-gradient-to-r from-green-500 to-green-600 text-white'
-                                      }`}
-                                  >
-                                    <p className="text-sm leading-relaxed">{message.content}</p>
-                                    <p className={`text-xs mt-2 ${isStudentMessage
-                                      ? 'text-gray-500'
-                                      : 'text-green-100'
-                                      }`}>
-                                      {formatDate(message.createdAt)}
-                                    </p>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-
-                        {/* Message Input */}
-                        <div className="bg-gradient-to-r from-white to-green-50/50 border-t border-green-200/50 p-4 rounded-b-2xl">
-                          <div className="flex gap-3">
-                            <div className="flex-1 relative">
-                              <input
-                                type="text"
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                placeholder="Type a message..."
-                                className="flex-1 border-green-200 focus:border-green-400 focus:ring-green-400 rounded-full px-4 py-3 bg-white/80 backdrop-blur-sm"
-                                onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
-                              />
-                            </div>
-                            <Button
-                              onClick={handleSendChatMessage}
-                              disabled={!newMessage.trim()}
-                              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-full w-12 h-12 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                            >
-                              <Send className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              </div>
-            </div>
+            <Messages
+              sessions={sessions}
+              messages={messages}
+              loadMessages={loadMessages}
+              loadDashboardData={loadDashboardData}
+              loading={loading}
+            />
           )}
           {activeView === 'students' && (
             <StudentList
@@ -1294,8 +783,7 @@ const CounselorDashboard = () => {
           )}
         </div>
       </main>
-
-      {showMessageModal && (
+{showMessageModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-in fade-in-50 zoom-in-95">
             {/* Modal Header */}
@@ -1454,7 +942,6 @@ const CounselorDashboard = () => {
           </div>
         </div>
       )}
-
       {/* Password Change Modal */}
       {showPasswordChangeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
