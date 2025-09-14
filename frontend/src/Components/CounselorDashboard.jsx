@@ -21,6 +21,7 @@ import apiClient from '../utils/apiClient.js';
 import { Link } from 'react-router-dom';
 import StudentList from './StudentList';
 import PaymentsList from './PaymentsList';
+import DashboardGraphs from './DashboardGraphs';
 
 // Main Dashboard Component
 const CounselorDashboard = () => {
@@ -777,7 +778,7 @@ const CounselorDashboard = () => {
                   </CardContent>
                 </Card>
               </div>
-              <div className="grid gap-6 md:grid-cols-2">
+              {/* <div className="grid gap-6 md:grid-cols-2">
                 <Card className="bg-white border border-gray-200 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-gray-800 text-xl font-bold">
@@ -820,6 +821,10 @@ const CounselorDashboard = () => {
                     )}
                   </CardContent>
                 </Card>
+              </div> */}
+
+              <div className="grid gap-6 md:grid-cols-1">
+                <DashboardGraphs />
               </div>
             </>
           )}
