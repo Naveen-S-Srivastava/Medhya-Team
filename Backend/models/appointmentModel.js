@@ -36,7 +36,10 @@ const appointmentSchema = new mongoose.Schema({
     enum: ["pending", "confirmed", "cancelled", "completed"], 
     default: "pending" 
   },
-
+  roomId: { 
+    type: String, 
+    default: null 
+  },
   confirmationEmailSent: { type: Boolean, default: false },
   bookedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
