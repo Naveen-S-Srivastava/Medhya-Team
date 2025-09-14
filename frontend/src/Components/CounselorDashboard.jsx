@@ -7,7 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/Avatar';
 import {
   LayoutDashboard, Calendar, MessageSquare, Users, DollarSign, User, TrendingUp,
   RefreshCw, LogOut, Bell, ChevronDown, Eye, Send, Phone, Video,
-  CheckCircle, Shield, Globe, Smartphone, AlertCircle, Lock, Key, X
+  CheckCircle, Shield, Globe, Smartphone, AlertCircle, Lock, Key, X,
+  MessageCircleIcon,
 
 } from 'lucide-react';
 import { useCounselorDashboard } from '../hooks/useCounselorDashboard';
@@ -17,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import { useSocket } from "../context/SocketProvider";
 import apiClient from '../utils/apiClient.js';
+import { Link } from 'react-router-dom';
 
 // Main Dashboard Component
 const CounselorDashboard = () => {
@@ -596,19 +598,20 @@ const CounselorDashboard = () => {
         {/* Top Bar: Logo, System Status, User Menu */}
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-full shadow-lg overflow-hidden">
+            <button
+              onClick={() => setActiveView('dashboard')}
+              className="flex items-center justify-center h-10 w-10 rounded-full shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
+            >
               <img src={logo} alt="Medhya Logo" className="w-full h-full object-contain" />
-            </div>
+            </button>
             <div>
               <h1 className="text-lg font-bold text-gray-800">MEDHYA</h1>
               <p className="text-xs text-gray-500 font-medium">Counselor Portal</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Badge className="bg-green-100 text-green-700 border border-green-200 font-medium hidden lg:flex items-center shadow-sm">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>System Active
-            </Badge>
             <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full"><Bell className="h-5 w-5" /></Button>
+            <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full" onClick={() => setActiveView('messages')}><MessageCircleIcon className="h-5 w-5" /></Button>
             <div className="relative dropdown-container">
               <button onClick={() => setDropdownOpen(!isDropdownOpen)} className="flex items-center gap-2 text-left">
                 <Avatar className="h-10 w-10 ring-2 ring-indigo-100">
@@ -637,11 +640,18 @@ const CounselorDashboard = () => {
                     My Profile
                   </button>
                   <button
-                    onClick={() => { setActiveView('dashboard'); setDropdownOpen(false); }}
+                    onClick={() => { setActiveView('payment'); setDropdownOpen(false); }}
                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                   >
                     <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
+                    Payments
+                  </button>
+                  <button
+                    onClick={() => { setActiveView('students'); setDropdownOpen(false); }}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    All Students
                   </button>
                   <div className="my-1 h-px bg-gray-200" />
                   <button
@@ -655,18 +665,6 @@ const CounselorDashboard = () => {
               )}
             </div>
           </div>
-        </div>
-        {/* Second, SEPARATE Bar: Navigation Links */}
-        <div className="h-14 bg-white/90 backdrop-blur-sm border-b border-gray-200">
-          <nav className="max-w-7xl mx-auto h-full flex items-center gap-8 px-6">
-            {navItems.map((item) => (
-              <button key={item.id} onClick={() => setActiveView(item.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105 ${activeView === item.id ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-800 shadow-md border border-indigo-200' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
-                  }`}>
-                <item.icon className="h-4 w-4" />{item.label}
-              </button>
-            ))}
-          </nav>
         </div>
       </header>
 
@@ -690,58 +688,6 @@ const CounselorDashboard = () => {
         <div className="space-y-6">
           {activeView === 'dashboard' && (
             <>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg rounded-xl transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-blue-800">Today's Sessions</CardTitle>
-                    <Calendar className="h-5 w-5 text-blue-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-blue-900">
-                      {dashboardData.todayAppointments?.length || 0}
-                    </div>
-                    <p className="text-xs text-blue-700 font-medium">{dashboardData.pendingCount || 0} pending</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg rounded-xl transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-green-800">Unread Messages</CardTitle>
-                    <MessageSquare className="h-5 w-5 text-green-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-green-900">
-                      {dashboardData.unreadCount || 0}
-                    </div>
-                    <p className="text-xs text-green-700 font-medium">Requires attention</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg rounded-xl transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-purple-800">Active Students</CardTitle>
-                    <Users className="h-5 w-5 text-purple-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-purple-900">
-                      {students.length}
-                    </div>
-                    <p className="text-xs text-purple-700 font-medium">Total active students</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg rounded-xl transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-orange-800">Monthly Sessions</CardTitle>
-                    <TrendingUp className="h-5 w-5 text-orange-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-orange-900">
-                      {dashboardData.completedThisMonth || 0}
-                    </div>
-                    <p className="text-xs text-orange-700 font-medium">Completed this month</p>
-                  </CardContent>
-                </Card>
-              </div>
               <div className="grid gap-6 md:grid-cols-2">
                 <Card className="bg-white border border-gray-200 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl">
                   <CardHeader>
@@ -889,155 +835,8 @@ const CounselorDashboard = () => {
                   </CardContent>
                 </Card>
               </div>
-              <div className="grid gap-6 md:grid-cols-3">
-                <Card className="border-blue-200 bg-white shadow-lg rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-gray-800 font-bold text-lg">
-                      <Shield className="w-6 h-6 text-blue-600" /> Privacy & Security
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-gray-600">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>End-to-end encryption</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>HIPAA compliant</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Anonymous mode available</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Local data processing</span>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-purple-200 bg-white shadow-lg rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-gray-800 font-bold text-lg">
-                      <Globe className="w-6 h-6 text-purple-600" /> Cultural Adaptation
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-gray-600">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>15+ Indian languages</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Regional counseling</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Cultural sensitivity</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Family-inclusive care</span>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-green-200 bg-white shadow-lg rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-gray-800 font-bold text-lg">
-                      <Smartphone className="w-6 h-6 text-green-600" /> Mobile-First Design
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-gray-600">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Offline mode support</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Low bandwidth optimized</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Progressive Web App</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Voice interface ready</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
             </>
           )}
-
-          {/* {activeView === 'sessions' && (
-            <Card className="bg-white shadow-lg rounded-xl border border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gray-800 text-xl font-bold">
-                  <Calendar className="w-6 h-6 text-blue-600" />All Sessions
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-10">
-                    <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
-                    <p className="text-gray-500">Loading sessions...</p>
-                  </div>
-                ) : sessions.length === 0 ? (
-                  <div className="text-center py-10">
-                    <p className="text-gray-500">No upcoming sessions</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {sessions.map((session) => (
-                      <div key={session._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-blue-50 hover:to-blue-100 transition-all duration-300">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="w-12 h-12 ring-2 ring-blue-100">
-                            <AvatarImage src={session.student?.profileImage} />
-                            <AvatarFallback className="bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-semibold">
-                              {session.student?.firstName?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-semibold text-gray-800">
-                              {session.student?.firstName} {session.student?.lastName}
-                            </p>
-                            <p className="text-sm text-gray-600 font-medium">
-                              {formatDate(session.date)} at {formatTime(session.timeSlot)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge className={`${getStatusColor(session.status)} shadow-sm font-medium`}>
-                            {session.status}
-                          </Badge>
-                          {session.status === 'pending' && (
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
-                                onClick={() => handleUpdateAppointmentStatus(session._id, 'confirmed')}
-                              >
-                                Confirm
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="border-red-300 text-red-600 hover:bg-red-50"
-                                onClick={() => handleUpdateAppointmentStatus(session._id, 'cancelled')}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )} */}
-
           {activeView === 'sessions' && (
             <Card className="bg-white shadow-lg rounded-xl border border-gray-200">
               <CardHeader>
@@ -1124,9 +923,6 @@ const CounselorDashboard = () => {
               </CardContent>
             </Card>
           )}
-
-
-
           {activeView === 'messages' && (
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-14rem)] overflow-hidden">
               {/* Left Sidebar - Counselor Tools */}
