@@ -63,7 +63,7 @@ const StudentList = ({
             <Users className="w-6 h-6 text-purple-600" />
             My Students ({students.length})
           </CardTitle>
-          {onRefresh && (
+          {/* {onRefresh && (
             <Button
               onClick={() => {
                 loadStudents();
@@ -77,7 +77,7 @@ const StudentList = ({
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-          )}
+          )} */}
         </div>
 
         {/* Search Bar */}

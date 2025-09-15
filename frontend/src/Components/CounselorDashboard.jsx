@@ -347,7 +347,7 @@ const CounselorDashboard = () => {
             </button>
             <div>
               <h1 className="text-lg font-bold text-gray-800">MEDHYA</h1>
-              <p className="text-xs text-gray-500 font-medium">Counselor Portal</p>
+              <p className="text-xs text-gray-500 font-medium">Counsellor Portal</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -363,7 +363,7 @@ const CounselorDashboard = () => {
                 </Avatar>
                 <div>
                   <p className="text-sm font-semibold text-gray-800">{profile?.name || 'Counselor'}</p>
-                  <p className="text-xs text-gray-500">Counselor</p>
+                  <p className="text-xs text-gray-500">Counsellor</p>
                 </div>
                 <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -412,7 +412,7 @@ const CounselorDashboard = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-extrabold text-gray-800 capitalize">{activeView === 'dashboard' ? 'Counselor Dashboard' : activeView}</h1>
+            <h1 className="text-4xl font-extrabold text-gray-800 capitalize">{activeView === 'dashboard' ? 'Counsellor Dashboard' : activeView}</h1>
             <p className="text-gray-600 mt-2 text-lg">Monitor your students and manage appointments with modern insights.</p>
           </div>
           <Button
