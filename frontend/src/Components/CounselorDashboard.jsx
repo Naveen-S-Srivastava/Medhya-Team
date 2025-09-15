@@ -674,6 +674,7 @@ const CounselorDashboard = () => {
               loadMessages={loadMessages}
               loadDashboardData={loadDashboardData}
               loading={loading}
+              user={user}
             />
           )}
           {activeView === 'students' && (

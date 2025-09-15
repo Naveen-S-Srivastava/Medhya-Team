@@ -9,8 +9,10 @@ import {
   RefreshCw, Send, MessageSquare, Video, Search, MoreVertical, 
   ArrowLeft, Phone, UserPlus, Smile, Paperclip, Mic
 } from 'lucide-react';
+import { appointmentAPI } from '../services/api';
+import { API_BASE_URL } from '../config/environment.js';
 
-const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading }) => {
+const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading, user }) => {
   // All existing state (keeping exact same logic)
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -22,19 +24,52 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
 
   // Mock hooks and functions (keeping existing logic structure)
   const sendMessage = async (messageData) => {
-    // Your existing sendMessage logic
-    console.log('Sending message:', messageData);
+    try {
+      const response = await appointmentAPI.sendMessage(messageData);
+      console.log('Message sent successfully:', response);
+      return response;
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      throw error;
+    }
   };
 
   const markMessageAsRead = async (messageId) => {
-    // Your existing markMessageAsRead logic
-    console.log('Marking message as read:', messageId);
+    try {
+      // Use the correct API endpoint for marking messages as read
+      const response = await fetch(`${API_BASE_URL}/messages/${messageId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to mark message as read');
+      }
+      
+      console.log('Message marked as read:', messageId);
+    } catch (error) {
+      console.error('Failed to mark message as read:', error);
+    }
   };
 
   const getRecentMessages = async (options) => {
-    // Your existing getRecentMessages logic
-    console.log('Getting recent messages:', options);
-    return { messages: [] };
+    try {
+      if (selectedSessionId) {
+        // Use appointment messages if we have an appointment ID
+        const response = await appointmentAPI.getAppointmentMessages(selectedSessionId);
+        return { messages: response || [] };
+      } else {
+        // Fallback to general messages (this might need to be implemented)
+        console.log('Getting recent messages:', options);
+        return { messages: [] };
+      }
+    } catch (error) {
+      console.error('Failed to get recent messages:', error);
+      return { messages: [] };
+    }
   };
 
   // All your existing functions (keeping exact same logic)
@@ -72,12 +107,15 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
   };
 
   const handleSendChatMessage = async () => {
-    if (!newMessage.trim() || !selectedChatStudent?._id) return;
+    if (!newMessage.trim() || !selectedChatStudent?._id || !user?._id) return;
     console.log(selectedSessionId)
 
     try {
       const messageData = {
-        recipientId: selectedChatStudent._id,
+        sender: user._id,
+        senderModel: user.role === 'counselor' ? 'Counselor' : 'User',
+        recipient: selectedChatStudent._id,
+        recipientModel: 'User',
         content: newMessage.trim(),
         messageType: "text",
         appointmentId: selectedSessionId,
@@ -160,14 +198,19 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
   };
 
   const handleSendMessage = async () => {
-    if (!selectedStudent || !messageContent.trim()) return;
+    if (!selectedStudent || !messageContent.trim() || !user?._id) return;
 
     try {
-      await sendMessage({
-        recipientId: selectedStudent._id,
+      const messageData = {
+        sender: user._id,
+        senderModel: user.role === 'counselor' ? 'Counselor' : 'User',
+        recipient: selectedStudent._id,
+        recipientModel: 'User',
         content: messageContent.trim(),
         messageType: 'text'
-      });
+      };
+
+      await sendMessage(messageData);
 
       setShowMessageModal(false);
       setMessageContent('');
@@ -219,13 +262,13 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
                 >
                   <UserPlus className="w-5 h-5 text-gray-600" />
                 </Button>
-                <Button
+                {/* <Button
                   variant="ghost"
                   size="sm"
                   className="h-10 w-10 rounded-full hover:bg-gray-200"
                 >
                   <MoreVertical className="w-5 h-5 text-gray-600" />
-                </Button>
+                </Button> */}
               </div>
             </div>
             
@@ -383,7 +426,7 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
                     >
                       <Video className="w-5 h-5 text-gray-600" />
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="sm"
                       className="h-10 w-10 rounded-full hover:bg-gray-200"
@@ -396,7 +439,7 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
                       className="h-10 w-10 rounded-full hover:bg-gray-200"
                     >
                       <MoreVertical className="w-5 h-5 text-gray-600" />
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               </div>
@@ -441,13 +484,13 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
               {/* Message Input */}
               <div className="bg-white border-t border-gray-200 p-4">
                 <div className="flex items-center gap-3">
-                  <Button
+                  {/* <Button
                     variant="ghost"
                     size="sm"
                     className="h-10 w-10 rounded-full hover:bg-gray-100"
                   >
                     <Paperclip className="w-5 h-5 text-gray-500" />
-                  </Button>
+                  </Button> */}
                   
                   <div className="flex-1 relative">
                     <input
@@ -458,13 +501,13 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
                       className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
                     />
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="sm"
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full hover:bg-gray-100"
                     >
                       <Smile className="w-4 h-4 text-gray-500" />
-                    </Button>
+                    </Button> */}
                   </div>
 
                   {newMessage.trim() ? (
