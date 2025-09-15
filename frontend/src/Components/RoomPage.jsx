@@ -418,7 +418,7 @@ const RoomPage = () => {
   const handleDisconnect = () => {
     if (myStream) myStream.getTracks().forEach((t) => t.stop());
     socket.emit("room:leave", { room: roomId });
-    navigate("/");
+    navigate("/counsellordash");
   };
 
   return (
