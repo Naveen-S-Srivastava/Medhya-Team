@@ -312,13 +312,7 @@ const CounselorDashboard = () => {
       default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'sessions', label: 'Sessions', icon: Calendar },
-    { id: 'messages', label: 'Messages', icon: MessageSquare },
-    { id: 'students', label: 'Students', icon: Users },
-    { id: 'payments', label: 'Payments', icon: DollarSign },
-  ];
+
 
   // Show error message if there's an error
   if (error && !loading) {
