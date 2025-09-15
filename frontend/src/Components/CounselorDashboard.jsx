@@ -129,6 +129,7 @@ const CounselorDashboard = () => {
     try {
       await getDashboardOverview();
       await getPendingAppointments();
+      await loadMessages(); // Load messages for dashboard display
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     }

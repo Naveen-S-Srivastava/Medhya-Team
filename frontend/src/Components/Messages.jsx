@@ -23,6 +23,7 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
   const [newMessage, setNewMessage] = useState('');
   const [isStartingCall, setIsStartingCall] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
 
@@ -205,6 +206,22 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
     return Array.from(studentMap.values());
   };
 
+  // Filter students based on search query
+  const getFilteredStudents = () => {
+    const allStudents = getUniqueStudents();
+    if (!searchQuery.trim()) {
+      return allStudents;
+    }
+
+    return allStudents.filter(student => {
+      const fullName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase();
+      const email = (student.email || '').toLowerCase();
+      const query = searchQuery.toLowerCase();
+
+      return fullName.includes(query) || email.includes(query);
+    });
+  };
+
   const getAllStudents = () => {
     const messageStudents = getUniqueStudents();
     const allStudents = [...messageStudents];
@@ -302,6 +319,8 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
                 <input
                   type="text"
                   placeholder="Search conversations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -313,7 +332,7 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
                 <div className="flex items-center justify-center h-32">
                   <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
                 </div>
-              ) : getUniqueStudents().length === 0 ? (
+              ) : getFilteredStudents().length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center p-6">
                   <MessageSquare className="w-12 h-12 text-gray-300 mb-3" />
                   <h3 className="font-medium text-gray-700 mb-1">No conversations yet</h3>
@@ -330,7 +349,7 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
-                  {getUniqueStudents().map((student) => (
+                  {getFilteredStudents().map((student) => (
                     <div
                       key={student._id}
                       className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
