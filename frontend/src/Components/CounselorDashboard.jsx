@@ -575,10 +575,20 @@ const CounselorDashboard = () => {
                   </CardContent>
                 </Card>
               </div> */}
+{/* <div className=' gap-6 md:grid-cols-2'> */}
 
-              <div className="grid gap-6 md:grid-cols-1">
+              <div className="grid gap-6 md:grid-cols-2">
+                <Messages
+              sessions={sessions}
+              messages={messages}
+              loadMessages={loadMessages}
+              loadDashboardData={loadDashboardData}
+              loading={loading}
+              user={user}
+            />
                 <DashboardGraphs />
               </div>
+{/* </div> */}
             </>
           )}
           {activeView === 'sessions' && (

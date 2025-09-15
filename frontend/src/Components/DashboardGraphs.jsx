@@ -45,7 +45,7 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 
 const DashboardGraphs = () => {
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="grid flex flex-col gap-6 md:grid-cols-1">
       {/* Weekend Session Types Chart */}
       <Card className="bg-white border border-gray-200 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl">
         <CardHeader>
