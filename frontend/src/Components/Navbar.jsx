@@ -10,8 +10,7 @@ import {
   Building2, GraduationCap, ChevronDown, RefreshCw,
   Smile, Flame, CheckCircle, AlertCircle,
 } from 'lucide-react';
-import { authAPI } from '../services/api.js';
-import { moodAPI } from '../services/api.js';
+import { authAPI, moodAPI, API_BASE_URL } from '../services/api.js';
 import medha from '../assets/logo.png';
 import ChangePasswordModal from './ChangePasswordModal';
 import MoodTrackerModal from './MoodTrackerModal';
@@ -133,15 +132,29 @@ const Navbar = ({ userRole, user, onLogout, systemStats, onRefreshMoodData }) =>
 
     setIsLoadingStreak(true);
     try {
-      // For now, we'll use mock data since we need to implement the streak API
-      // In a real implementation, you'd call an API to get the user's streak
-      console.log('🔥 Loading streak data for user:', user);
-      console.log('🔥 User currentStreak:', user.currentStreak);
-      console.log('🔥 User longestStreak:', user.longestStreak);
+      // Call the profile API to get the latest user data including updated streak
+      const response = await fetch(`${API_BASE_URL}/users/profile`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      const data = await response.json();
+      const userData = data.data.user;
+
+      console.log('🔥 Fresh user data from API:', userData);
+      console.log('🔥 User currentStreak:', userData.currentStreak);
+      console.log('🔥 User longestStreak:', userData.longestStreak);
+      console.log('🔥 User lastStreakDate:', userData.lastStreakDate);
 
       setUserStreak({
-        current: user.currentStreak || 0,
-        longest: user.longestStreak || 0
+        current: userData.currentStreak || 0,
+        longest: userData.longestStreak || 0
       });
     } catch (error) {
       console.error('Error loading user streak:', error);
@@ -244,10 +257,9 @@ const Navbar = ({ userRole, user, onLogout, systemStats, onRefreshMoodData }) =>
   };
 
   // Handle streak button click
-  const handleStreakClick = () => {
-    // For now, just show an alert with streak info
-    // In the future, this could open a detailed streak view
-    alert(`Current Streak: ${userStreak.current} days\nLongest Streak: ${userStreak.longest} days\nKeep it up! 🔥`);
+  const handleStreakClick = async () => {
+    console.log('🔥 Streak button clicked, refreshing streak data...');
+    await loadUserStreak();
   };
 
   // --- Reusable UI Components ---

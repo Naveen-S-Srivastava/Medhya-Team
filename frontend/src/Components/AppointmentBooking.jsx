@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Calendar } from '../ui/Calendar';
 import { Badge } from '../ui/Badge';
 import { Alert, AlertDescription } from '../ui/Alert';
-import { Calendar as CalendarIcon, Clock, User, MapPin, Phone, Video, Shield, Loader2, CheckCircle, Search, MessageSquare } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, MapPin, Phone, Video, Shield, Loader2, CheckCircle, Search, MessageSquare, X } from 'lucide-react';
 import { appointmentAPI } from '../services/api';
 import { useApi, useOptimisticUpdate } from '../hooks/useApi';
 import { useCounselors } from '../hooks/useCounselors';
@@ -27,6 +27,7 @@ const AppointmentBooking = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [statusChangeNotification, setStatusChangeNotification] = useState(null);
+    const [showBookingInterface, setShowBookingInterface] = useState(false);
 
     // Get the actual logged-in user from context
     const { user } = useContext(UserContext);
@@ -434,8 +435,8 @@ const AppointmentBooking = () => {
                 </Alert>
             )}
 
-            {/* Hide booking interface when there's an active appointment */}
-            {!hasActiveAppointment && (
+            {/* Hide booking interface when there's an active appointment and user hasn't clicked the floating button */}
+            {(!hasActiveAppointment || showBookingInterface) && (
                 <>
             <div className="grid gap-6 lg:grid-cols-2">
                 <Card className="shadow-sm border-gray-200">
@@ -738,8 +739,35 @@ const AppointmentBooking = () => {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Floating Button for Active Appointments */}
+            {hasActiveAppointment && !showBookingInterface && (
+                <button
+                    onClick={() => setShowBookingInterface(true)}
+                    className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-50 group"
+                    title="Book Another Appointment"
+                >
+                    <CalendarIcon className="w-6 h-6" />
+                    <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                        Book Another Appointment
+                    </div>
+                </button>
+            )}
+
+            {/* Close Button when Booking Interface is shown with active appointment */}
+            {hasActiveAppointment && showBookingInterface && (
+                <button
+                    onClick={() => setShowBookingInterface(false)}
+                    className="fixed top-6 right-6 bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-50 group"
+                    title="Close Booking Interface"
+                >
+                    <X className="w-5 h-5" />
+                    <div className="absolute top-full right-0 mt-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                        Close Booking
+                    </div>
+                </button>
+            )}
         </div>
-        
     );
 };
 
