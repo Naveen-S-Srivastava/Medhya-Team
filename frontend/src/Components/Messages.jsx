@@ -12,6 +12,8 @@ import {
 import { appointmentAPI } from '../services/api';
 import { API_BASE_URL } from '../config/environment.js';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../utils/apiClient.js';
+import { useSocket } from '../context/SocketProvider.jsx';
 
 const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading, user }) => {
   // All existing state (keeping exact same logic)
@@ -26,6 +28,7 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
   const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
+  const socket = useSocket();
 
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
@@ -115,24 +118,48 @@ const Messages = ({ sessions, messages, loadMessages, loadDashboardData, loading
     await loadDashboardData();
   };
 
+  // const handleStartVideoCall = async (student) => {
+  //   console.log("Starting video call for student:", student);
+  //   setIsStartingCall(true);
+
+  //   try {
+  //     // Generate a unique room ID for the video call
+  //     // const roomId = `call_${user._id}_${student._id}_${Date.now()}`;
+
+  //     console.log(`Navigating to video call room: ${roomId}`);
+
+  //     // Navigate to the video call room
+  //     navigate(`/room/${roomId}`);
+
+  //   } catch (error) {
+  //     console.error('Failed to start video call:', error);
+  //     alert('Failed to start video call. Please try again.');
+  //   } finally {
+  //     setIsStartingCall(false);
+  //   }
+  // };
+
   const handleStartVideoCall = async (student) => {
-    console.log("Starting video call for student:", student);
-    setIsStartingCall(true);
-
+    console.log(student);
     try {
-      // Generate a unique room ID for the video call
-      const roomId = `call_${user._id}_${student._id}_${Date.now()}`;
+      const res = await apiClient.get(
+        `/appointments/find/${student._id}/${user?.counselorProfile}`
+      );
 
-      console.log(`Navigating to video call room: ${roomId}`);
+      if (res?.roomId) {
+        // console.log("Navigating to video room:", res.roomId);
+        console.log(user)
+        socket.emit("counselor-on-video_call", {
+          counselorProfile: user?.counselorProfile,
+          studentId: student._id,
+        });
 
-      // Navigate to the video call room
-      navigate(`/room/${roomId}`);
-
-    } catch (error) {
-      console.error('Failed to start video call:', error);
-      alert('Failed to start video call. Please try again.');
-    } finally {
-      setIsStartingCall(false);
+        navigate(`/room/${res.roomId}`); // Go to video call page
+      } else {
+        alert("No active appointment found for this student.");
+      }
+    } catch (err) {
+      console.error("Failed to start video call:", err);
     }
   };
 

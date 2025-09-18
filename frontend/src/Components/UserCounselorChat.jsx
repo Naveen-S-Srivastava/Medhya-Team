@@ -5,13 +5,14 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
-import { ArrowLeft, Send, MessageSquare, User, Clock } from 'lucide-react';
+import { ArrowLeft, Send, MessageSquare, User, Clock, Video } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import { appointmentAPI } from '../services/api';
 import { UserContext } from '../App';
 import { useContext } from 'react';
 import logo from '../assets/logo.png';
 import { useSocket } from '../context/SocketProvider';
+import apiClient from '../utils/apiClient';
 
 const UserCounselorChat = () => {
     const { counselorId } = useParams();
@@ -28,7 +29,6 @@ const UserCounselorChat = () => {
 
       console.log(user);
     //   socket.emit("counselor-online", { counselorID: counselorId });
-    
 
     // Get appointment and counselor info from navigation state
     const appointmentId = location.state?.appointmentId;
@@ -38,6 +38,23 @@ const UserCounselorChat = () => {
     
     socket.emit("student-online", user?._id);
 
+        const handleStartVideoCall = async () => {
+        try {
+            console.log(appointmentId)
+            const res = await apiClient.get(
+                `/appointments/find/${appointmentId}`
+            );
+            console.log(res);
+            if (res?.roomId) {
+                navigate(`/room/${res.roomId}`); // Go to video call page
+            } else {
+                alert("No active appointment found for this Counselor.");
+            }
+        } catch (err) {
+            console.error("Failed to start video call:", err);
+            alert("Error starting video call. Please try again later.");
+        }
+    };
 
     useEffect(() => {
         socket.on("counselor-status", ({ counselorID, isOnline }) => {
@@ -275,6 +292,9 @@ const UserCounselorChat = () => {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                        <div className="flex items-center pr-4" onClick={handleStartVideoCall}>
+                                            <Video size={35} />
+                                        </div>
                                         <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                                             <MessageSquare className="w-3 h-3 mr-1" />
                                             {isCounselorOnline ? "Online" : "Offline"}
