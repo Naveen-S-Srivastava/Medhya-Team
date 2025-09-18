@@ -54,5 +54,23 @@ router.get("/find/:studentId/:counselorId", async (req, res) => {
   }
 });
 
+router.get("/find/:appointmentId", async (req, res) => {
+  const { appointmentId } = req.params;
+
+  try {
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      console.log("No appointment found with id:", appointmentId);
+      return res.status(404).json({ message: "No appointment found" });
+    }
+
+    console.log("Found appointment:", appointment);
+    res.json(appointment);
+  } catch (err) {
+    console.error("Error fetching appointment:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 export default router;
