@@ -1162,7 +1162,7 @@ const RoomPage = () => {
     setMyStream(null);
     setRemoteStream(null);
     socket.emit("room:leave", { room: roomId });
-    navigate("/");
+    navigate("/dashboard");
   };
 
   // Socket listeners
